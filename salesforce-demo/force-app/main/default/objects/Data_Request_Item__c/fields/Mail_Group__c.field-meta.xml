@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Mail_Group__c</fullName>
+    <description>독촉 메일에서 이 자료를 어느 묶음에 넣을지 Salesforce가 정합니다. AI는 이 값대로만 묶습니다. 기한 초과가 보완 요청보다 먼저입니다.</description>
+    <formula>IF(ISPICKVAL(Status__c, &quot;수령&quot;), NULL, IF(Is_Overdue__c, &quot;기한 지난 자료&quot;, IF(ISPICKVAL(Status__c, &quot;보완 요청&quot;), &quot;보완이 필요한 자료&quot;, &quot;아직 기한 전인 자료&quot;)))</formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <label>메일 분류</label>
+    <type>Text</type>
+</CustomField>

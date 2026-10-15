@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Industry__c</fullName>
+    <label>주제</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>게임</fullName>
+                <default>false</default>
+                <label>게임</label>
+            </value>
+            <value>
+                <fullName>럭셔리</fullName>
+                <default>false</default>
+                <label>럭셔리</label>
+            </value>
+            <value>
+                <fullName>AI 제조업</fullName>
+                <default>false</default>
+                <label>AI 제조업</label>
+            </value>
+            <value>
+                <fullName>환경 컨설팅</fullName>
+                <default>false</default>
+                <label>환경 컨설팅</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

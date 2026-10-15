@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Researcher__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>담당 연구원</label>
+    <referenceTo>Employee__c</referenceTo>
+    <relationshipLabel>담당 인증 프로젝트</relationshipLabel>
+    <relationshipName>Led_EPD_Projects</relationshipName>
+    <type>Lookup</type>
+</CustomField>

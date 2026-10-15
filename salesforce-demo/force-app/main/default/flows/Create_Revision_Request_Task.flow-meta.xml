@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <decisions>
+        <name>Is_New_Task</name>
+        <label>같은 할 일이 이미 있나?</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>이미 있음 (중복 방지)</defaultConnectorLabel>
+        <rules>
+            <name>No_Open_Task</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Open_Task</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Revision_Task</targetReference>
+            </connector>
+            <label>없음</label>
+        </rules>
+    </decisions>
+    <description>데이터 요청 항목의 상태가 "보완 요청"이 되는 순간, 프로젝트 소유자에게 "[보완 요청] … 보완 요청 메일 보내기" 할 일을 만듭니다. 같은 제목의 열린 할 일이 있으면 새로 만들지 않습니다.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>fxDescription</name>
+        <dataType>String</dataType>
+        <expression>&quot;고객사: &quot; &amp; {!$Record.Project__r.Customer_Account__r.Name} &amp; BR() &amp;
+&quot;대상 제품: &quot; &amp; {!$Record.Project__r.Product_Name__c} &amp; BR() &amp;
+&quot;보완할 자료: &quot; &amp; TEXT({!$Record.Data_Category__c}) &amp; &quot; - &quot; &amp; {!$Record.Request_Detail__c} &amp; BR() &amp;
+&quot;보완 사유: &quot; &amp; {!$Record.Revision_Reason__c} &amp; BR() &amp;
+&quot;제출 기한: &quot; &amp; TEXT({!$Record.Due_Date__c}) &amp; BR() &amp; BR() &amp;
+&quot;할 일 화면의 [AI 메일 초안] 버튼에서 보완 요청 메일 초안을 만들고, 검토 후 발송해 주세요.&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>fxSubject</name>
+        <dataType>String</dataType>
+        <expression>&quot;[보완 요청] &quot; &amp; {!$Record.Project__r.Name} &amp; &quot; &quot; &amp; {!$Record.Project__r.Customer_Account__r.Name} &amp; &quot; · &quot; &amp; TEXT({!$Record.Data_Category__c}) &amp; &quot; 보완 요청 메일 보내기 (&quot; &amp; {!$Record.Name} &amp; &quot;)&quot;</expression>
+    </formulas>
+    <interviewLabel>보완 요청 할 일 생성 {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Create_Revision_Request_Task</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Create_Revision_Task</name>
+        <label>보완 요청 할 일 만들기</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>ActivityDate</field>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description</field>
+            <value>
+                <elementReference>fxDescription</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Record.Project__r.OwnerId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority</field>
+            <value>
+                <stringValue>Normal</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Not Started</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>fxSubject</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhatId</field>
+            <value>
+                <elementReference>$Record.Project__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordLookups>
+        <name>Get_Open_Task</name>
+        <label>같은 제목의 열린 할 일 찾기</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_New_Task</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>WhatId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Project__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Subject</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>fxSubject</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IsClosed</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Task</object>
+        <queriedFields>Id</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Open_Task</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>보완 요청</stringValue>
+            </value>
+        </filters>
+        <object>Data_Request_Item__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Received_Requests__c</fullName>
+    <label>수령 완료 수</label>
+    <summaryFilterItems>
+        <field>Data_Request_Item__c.Status__c</field>
+        <operation>equals</operation>
+        <value>수령</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Data_Request_Item__c.Project__c</summaryForeignKey>
+    <summaryOperation>count</summaryOperation>
+    <type>Summary</type>
+</CustomField>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Target_Certification_Date__c</fullName>
+    <label>목표 인증일</label>
+    <type>Date</type>
+</CustomField>

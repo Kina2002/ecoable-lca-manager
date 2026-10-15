@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reminder_Review_Status__c</fullName>
+    <label>메일 검토 상태</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>미검토</fullName><default>true</default><label>미검토</label></value>
+            <value><fullName>수정 필요</fullName><default>false</default><label>수정 필요</label></value>
+            <value><fullName>검토 완료</fullName><default>false</default><label>검토 완료</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

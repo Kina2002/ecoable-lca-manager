@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Data_Collection_Rate__c</fullName>
+    <formula>IF(Total_Requests__c = 0, NULL, Received_Requests__c / Total_Requests__c)</formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <label>데이터 수집률</label>
+    <precision>18</precision>
+    <scale>0</scale>
+    <type>Percent</type>
+</CustomField>

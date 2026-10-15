@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Draft_Type__c</fullName>
+    <description>AI 메일 초안 버튼으로 저장한 초안의 종류입니다. 메일 발송 완료 시 어떤 할 일을 닫을지 정하는 데 씁니다.</description>
+    <label>메일 종류</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>독촉 메일</fullName><default>false</default><label>독촉 메일</label></value>
+            <value><fullName>마감 임박 안내</fullName><default>false</default><label>마감 임박 안내</label></value>
+            <value><fullName>보완 요청</fullName><default>false</default><label>보완 요청</label></value>
+            <value><fullName>정보 확인</fullName><default>false</default><label>정보 확인</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

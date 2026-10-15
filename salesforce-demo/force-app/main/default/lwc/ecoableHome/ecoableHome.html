@@ -1,0 +1,245 @@
+<template>
+    <div class="home">
+        <div class="home__header">
+            <div>
+                <h1 class="home__title">에코에이블 인증 관리 현황</h1>
+                <p class="home__date">{todayLabel}</p>
+            </div>
+            <div class="home__actions">
+                <lightning-button
+                    label="새로 고침"
+                    icon-name="utility:refresh"
+                    onclick={handleRefresh}
+                    disabled={isRefreshing}
+                ></lightning-button>
+                <lightning-button
+                    class="slds-m-left_x-small"
+                    variant="brand"
+                    label="새 프로젝트"
+                    icon-name="utility:add"
+                    onclick={handleNewProject}
+                ></lightning-button>
+            </div>
+        </div>
+
+        <template lwc:if={isLoading}>
+            <div class="home__loading">
+                <lightning-spinner alternative-text="현황을 불러오는 중" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:if={errorMessage}>
+            <div class="home__error" role="alert">{errorMessage}</div>
+        </template>
+
+        <template lwc:if={summary}>
+            <div class="home__tiles">
+                <template for:each={tiles} for:item="tile">
+                    <button key={tile.key} class={tile.className} data-target={tile.target} onclick={handleOpenList}>
+                        <span class="home__tile-label">{tile.label}</span>
+                        <span class="home__tile-value">{tile.value}</span>
+                        <span class="home__tile-sub">{tile.sub}</span>
+                    </button>
+                </template>
+            </div>
+
+            <section class="home__card">
+                <h2 class="home__card-title">단계별 프로젝트 <span class="home__card-hint">{stageHint}</span></h2>
+                <ol class="home__stages">
+                    <template for:each={stages} for:item="s">
+                        <li key={s.stage} class={s.className}>
+                            <button class="home__stage-button" data-stage={s.stage} aria-pressed={s.pressed} onclick={handleStageClick}>
+                                <span class="home__stage-count">{s.count}</span>
+                                <span class="home__stage-name">{s.stage}</span>
+                            </button>
+                        </li>
+                    </template>
+                </ol>
+            </section>
+
+            <section class="home__card">
+                <div class="home__card-head">
+                    <h2 class="home__card-title">프로젝트 현황 <span class="home__card-hint">손이 많이 가는 프로젝트부터</span></h2>
+                    <span class="home__count">{projectCountText}</span>
+                </div>
+
+                <div class="home__filters">
+                    <lightning-input
+                        type="toggle"
+                        label="주의 필요만"
+                        message-toggle-active=""
+                        message-toggle-inactive=""
+                        checked={attentionOnly}
+                        disabled={attentionDisabled}
+                        onchange={handleAttentionOnly}
+                    ></lightning-input>
+                    <lightning-combobox
+                        class="home__filter-researcher"
+                        label="담당 연구원"
+                        variant="label-inline"
+                        value={researcherId}
+                        options={researcherOptions}
+                        onchange={handleResearcher}
+                    ></lightning-combobox>
+                    <lightning-input
+                        class="home__filter-search"
+                        type="search"
+                        label="검색"
+                        variant="label-hidden"
+                        placeholder="프로젝트 번호·고객사·제품 검색"
+                        value={searchInput}
+                        onchange={handleSearch}
+                    ></lightning-input>
+                    <lightning-input
+                        type="checkbox"
+                        label="인증 완료도 보기"
+                        checked={includeCompleted}
+                        disabled={completedDisabled}
+                        onchange={handleIncludeCompleted}
+                    ></lightning-input>
+                    <template lwc:if={hasActiveFilter}>
+                        <lightning-button variant="base" label="거르기 초기화" onclick={handleClearFilters}></lightning-button>
+                    </template>
+                </div>
+                <template lwc:if={isSearching}>
+                    <p class="home__filter-hint">🔍 검색 중에는 숨겨 둔 프로젝트(주의 없음·인증 완료)까지 모두 찾아요. 검색창을 비우면 원래대로 돌아가요.</p>
+                </template>
+
+                <template lwc:if={hasProjects}>
+                    <div class="home__table-wrap">
+                        <table class="home__table">
+                            <thead>
+                                <tr>
+                                    <th>프로젝트</th>
+                                    <th>고객사 / 대상 제품</th>
+                                    <th>인증 종류</th>
+                                    <th>진행 단계</th>
+                                    <th class="home__col-rate">데이터 수집률</th>
+                                    <th>주의</th>
+                                    <th>다음 마감</th>
+                                    <th>목표 인증일</th>
+                                    <th>추천 메일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={projects} for:item="p">
+                                    <tr key={p.id}>
+                                        <td>
+                                            <a href="#" data-id={p.id} onclick={handleOpenRecord}>{p.name}</a>
+                                            <div class="home__muted">{p.researcher}</div>
+                                        </td>
+                                        <td>
+                                            <div>{p.accountName}</div>
+                                            <div class="home__muted">{p.productName}</div>
+                                        </td>
+                                        <td>{p.certificationType}</td>
+                                        <td><span class={p.stageClass}>{p.stage}</span></td>
+                                        <td class="home__col-rate">
+                                            <lightning-progress-bar value={p.rateValue} size="small"></lightning-progress-bar>
+                                            <div class="home__muted">{p.rateText}</div>
+                                        </td>
+                                        <td>
+                                            <template lwc:if={p.hasBadges}>
+                                                <div class="home__badges">
+                                                    <template for:each={p.badges} for:item="b">
+                                                        <span key={b.key} class={b.className}>{b.label}</span>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template lwc:else>
+                                                <span class="home__muted">-</span>
+                                            </template>
+                                        </td>
+                                        <td>{p.nextDue}</td>
+                                        <td>{p.target}</td>
+                                        <td><span class={p.recommendClass}>{p.recommendText}</span></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:elseif={isProjectsLoading}>
+                    <div class="home__loading">
+                        <lightning-spinner alternative-text="프로젝트를 불러오는 중" size="small"></lightning-spinner>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="home__empty">{emptyProjectsText}</p>
+                </template>
+
+                <div class="home__more">
+                    <template lwc:if={hasMoreProjects}>
+                        <lightning-button label="10개 더 보기" icon-name="utility:chevrondown" onclick={handleMoreProjects}></lightning-button>
+                    </template>
+                    <lightning-button variant="base" label="전체 프로젝트 목록 열기 →" data-target="projects" onclick={handleOpenList}></lightning-button>
+                </div>
+            </section>
+
+            <div class="home__columns">
+                <section class="home__card">
+                    <div class="home__card-head">
+                        <h2 class="home__card-title">주의가 필요한 요청 항목</h2>
+                        <span class="home__count">{attentionCountText}</span>
+                    </div>
+                    <template lwc:if={hasAttentionItems}>
+                        <ul class="home__list">
+                            <template for:each={attentionItems} for:item="i">
+                                <li key={i.id} class="home__list-item">
+                                    <span class={i.badgeClass}>{i.label}</span>
+                                    <div class="home__list-body">
+                                        <a href="#" data-id={i.id} onclick={handleOpenRecord}>{i.category}</a>
+                                        <span class="home__muted"> · {i.detail}</span>
+                                        <div class="home__muted">
+                                            <a href="#" data-id={i.projectId} onclick={handleOpenRecord}>{i.projectName}</a>
+                                            {i.accountName} · 제출 기한 {i.due}
+                                        </div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template lwc:else>
+                        <p class="home__empty">기한이 지났거나 임박한 요청, 보완 요청이 없어요.</p>
+                    </template>
+                    <div class="home__more">
+                        <template lwc:if={hasMoreAttention}>
+                            <lightning-button label="10개 더 보기" icon-name="utility:chevrondown" onclick={handleMoreAttention}></lightning-button>
+                        </template>
+                        <lightning-button variant="base" label="기한 초과 목록 →" data-target="overdue" onclick={handleOpenList}></lightning-button>
+                        <lightning-button variant="base" label="마감 임박 목록 →" data-target="dueSoon" onclick={handleOpenList}></lightning-button>
+                    </div>
+                </section>
+
+                <section class="home__card">
+                    <div class="home__card-head">
+                        <h2 class="home__card-title">열린 메일 할 일</h2>
+                        <span class="home__count">{taskCountText}</span>
+                    </div>
+                    <template lwc:if={hasTasks}>
+                        <ul class="home__list">
+                            <template for:each={tasks} for:item="t">
+                                <li key={t.id} class="home__list-item">
+                                    <span class={t.badgeClass}>{t.kindLabel}</span>
+                                    <div class="home__list-body">
+                                        <a href="#" data-id={t.id} onclick={handleOpenRecord}>{t.title}</a>
+                                        <div class="home__muted">기한 {t.due} · 할 일을 열어 AI 메일 초안 버튼을 누르세요</div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template lwc:else>
+                        <p class="home__empty">보내야 할 안내·독촉 메일이 없어요.</p>
+                    </template>
+                    <div class="home__more">
+                        <template lwc:if={hasMoreTasks}>
+                            <lightning-button label="10개 더 보기" icon-name="utility:chevrondown" onclick={handleMoreTasks}></lightning-button>
+                        </template>
+                        <lightning-button variant="base" label="할 일 목록 열기 →" data-target="tasks" onclick={handleOpenList}></lightning-button>
+                    </div>
+                </section>
+            </div>
+        </template>
+    </div>
+</template>

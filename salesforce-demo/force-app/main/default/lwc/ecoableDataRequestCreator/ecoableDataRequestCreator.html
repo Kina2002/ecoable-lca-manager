@@ -1,0 +1,78 @@
+<template>
+    <lightning-quick-action-panel header="데이터 요청 항목 만들기">
+        <div class="req">
+            <template lwc:if={setup}>
+                <p class="req__project"><strong>{setup.projectLabel}</strong></p>
+                <p class="req__intro">고객사에 요청할 자료를 골라 주세요. 요청 내용은 제품에 맞게 바로 고칠 수 있어요.</p>
+                <template lwc:if={isIntake}>
+                    <p class="req__notice">🚦 만들면 진행 단계가 <strong>데이터 수집</strong>으로 넘어가요.</p>
+                </template>
+
+                <ul class="req__list">
+                    <template for:each={displayRows} for:item="row">
+                        <li key={row.category} class={row.rowClass}>
+                            <div class="req__head">
+                                <lightning-input
+                                    type="checkbox"
+                                    label={row.category}
+                                    checked={row.selected}
+                                    disabled={row.exists}
+                                    data-category={row.category}
+                                    onchange={handleToggle}
+                                ></lightning-input>
+                                <template lwc:if={row.exists}>
+                                    <span class="req__badge">이미 있어요 · 건너뜀</span>
+                                </template>
+                            </div>
+                            <template lwc:if={row.showDetail}>
+                                <lightning-input
+                                    class="req__detail"
+                                    label={row.category}
+                                    variant="label-hidden"
+                                    value={row.detail}
+                                    max-length="255"
+                                    data-category={row.category}
+                                    onchange={handleDetail}
+                                ></lightning-input>
+                            </template>
+                        </li>
+                    </template>
+                </ul>
+
+                <lightning-input
+                    class="req__due"
+                    type="date"
+                    label="제출 마감일"
+                    value={dueDate}
+                    min={today}
+                    message-when-range-underflow="오늘 이후 날짜로 골라 주세요."
+                    required
+                    onchange={handleDue}
+                ></lightning-input>
+                <p class="req__hint">목록에 없는 데이터 구분은 설정에서 "데이터 구분" 값을 추가하면 이 창에 자동으로 나타나요.</p>
+            </template>
+
+            <template lwc:if={isLoading}>
+                <div class="req__loading">
+                    <lightning-spinner alternative-text="불러오는 중" size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <template lwc:if={errorMessage}>
+                <div class="req__error" role="alert">{errorMessage}</div>
+            </template>
+        </div>
+
+        <div slot="footer">
+            <lightning-button label="취소" onclick={handleClose}></lightning-button>
+            <lightning-button
+                class="slds-m-left_x-small"
+                variant="brand"
+                label={createLabel}
+                icon-name="utility:add"
+                onclick={handleCreate}
+                disabled={isCreateDisabled}
+            ></lightning-button>
+        </div>
+    </lightning-quick-action-panel>
+</template>

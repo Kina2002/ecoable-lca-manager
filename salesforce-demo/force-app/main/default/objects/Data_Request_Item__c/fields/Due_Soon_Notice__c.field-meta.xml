@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Due_Soon_Notice__c</fullName>
+    <description>오늘이 사전 안내일(D-3 또는 D-1)이면 표시됩니다.</description>
+    <formula>IF(Days_To_Due__c = 3, &quot;D-3 안내&quot;, IF(Days_To_Due__c = 1, &quot;D-1 안내&quot;, NULL))</formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <label>마감 임박 안내</label>
+    <type>Text</type>
+</CustomField>

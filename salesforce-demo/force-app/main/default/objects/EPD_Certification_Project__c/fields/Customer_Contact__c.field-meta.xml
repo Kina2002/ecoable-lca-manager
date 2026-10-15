@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Customer_Contact__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>고객 담당자</label>
+    <referenceTo>Contact</referenceTo>
+    <relationshipLabel>담당 인증 프로젝트</relationshipLabel>
+    <relationshipName>EPD_Contact_Projects</relationshipName>
+    <type>Lookup</type>
+</CustomField>

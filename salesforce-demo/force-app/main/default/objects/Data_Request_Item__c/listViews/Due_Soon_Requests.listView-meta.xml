@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Due_Soon_Requests</fullName>
+    <columns>NAME</columns>
+    <columns>Project__c</columns>
+    <columns>Data_Category__c</columns>
+    <columns>Request_Detail__c</columns>
+    <columns>Due_Date__c</columns>
+    <columns>Days_To_Due__c</columns>
+    <columns>Due_Soon_Notice__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Days_To_Due__c</field>
+        <operation>greaterOrEqual</operation>
+        <value>0</value>
+    </filters>
+    <filters>
+        <field>Days_To_Due__c</field>
+        <operation>lessOrEqual</operation>
+        <value>3</value>
+    </filters>
+    <label>마감 임박 요청 (3일 이내)</label>
+</ListView>

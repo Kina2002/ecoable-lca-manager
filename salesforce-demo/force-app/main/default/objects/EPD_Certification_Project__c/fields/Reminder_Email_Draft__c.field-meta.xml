@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reminder_Email_Draft__c</fullName>
+    <description>Prompt Builder로 생성한 독촉·마감 임박 안내 메일 초안을 사람이 검토 후 붙여 넣는 칸입니다.</description>
+    <label>AI 메일 초안</label>
+    <length>32768</length>
+    <type>LongTextArea</type>
+    <visibleLines>8</visibleLines>
+</CustomField>

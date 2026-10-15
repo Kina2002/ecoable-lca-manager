@@ -1,0 +1,80 @@
+.req__project {
+    font-size: 0.8125rem;
+    color: #3e3e3c;
+    margin-bottom: 0.25rem;
+}
+
+.req__intro {
+    font-size: 0.8125rem;
+    color: #5c6b70;
+    margin-bottom: 0.75rem;
+}
+
+.req__notice {
+    padding: 0.5rem 0.875rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    background: #fff8e6;
+    border: 1px solid #f2d27a;
+    font-size: 0.8125rem;
+    color: #3e3e3c;
+}
+
+.req__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.req__row {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #d8dde6;
+    border-radius: 0.75rem;
+    background: #ffffff;
+}
+
+.req__row--exists {
+    background: #f3f3f3;
+}
+
+.req__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.req__badge {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #5c6b70;
+    background: #e5e5e5;
+    border-radius: 999px;
+    padding: 0.0625rem 0.5rem;
+    white-space: nowrap;
+}
+
+.req__detail {
+    margin-top: 0.375rem;
+}
+
+.req__hint {
+    font-size: 0.75rem;
+    color: #5c6b70;
+    margin-top: 0.5rem;
+}
+
+.req__loading {
+    position: relative;
+    min-height: 4rem;
+}
+
+.req__error {
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    background: #fdecea;
+    color: #c23934;
+    font-size: 0.8125rem;
+    margin-top: 0.75rem;
+}

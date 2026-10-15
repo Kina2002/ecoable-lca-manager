@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>EcoAble_Client__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>에코에이블 인증 관리 앱의 고객사인지 표시합니다.</description>
+    <label>에코에이블 고객사</label>
+    <type>Checkbox</type>
+</CustomField>

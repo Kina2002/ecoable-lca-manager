@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Days_To_Due__c</fullName>
+    <description>제출 기한까지 남은 날 수입니다. 수령했거나 기한이 없으면 비어 있습니다. 음수면 기한이 지난 일수입니다.</description>
+    <formula>IF(OR(ISPICKVAL(Status__c, &quot;수령&quot;), ISBLANK(Due_Date__c)), NULL, Due_Date__c - TODAY())</formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <label>마감까지 남은 날</label>
+    <precision>18</precision>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stage__c</fullName>
+    <label>진행 단계</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>접수</fullName><default>true</default><label>접수</label></value>
+            <value><fullName>데이터 수집</fullName><default>false</default><label>데이터 수집</label></value>
+            <value><fullName>LCA 산정</fullName><default>false</default><label>LCA 산정</label></value>
+            <value><fullName>검증 심사 대응</fullName><default>false</default><label>검증 심사 대응</label></value>
+            <value><fullName>인증 완료</fullName><default>false</default><label>인증 완료</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

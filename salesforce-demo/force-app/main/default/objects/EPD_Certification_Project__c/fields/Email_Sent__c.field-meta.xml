@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Email_Sent__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>메일을 실제로 보낸 뒤 체크합니다. 체크하면 이 메일에 포함된 안내·독촉 할 일이 완료되고, 검토 상태와 발송 시각이 기록됩니다.</description>
+    <inlineHelpText>메일을 실제로 보낸 뒤에 체크해 주세요. 관련 할 일이 자동으로 완료됩니다.</inlineHelpText>
+    <label>메일 발송 완료</label>
+    <type>Checkbox</type>
+</CustomField>

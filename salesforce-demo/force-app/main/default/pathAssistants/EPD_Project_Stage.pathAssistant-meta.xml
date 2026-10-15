@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PathAssistant xmlns="http://soap.sforce.com/2006/04/metadata">
+    <active>true</active>
+    <entityName>EPD_Certification_Project__c</entityName>
+    <fieldName>Stage__c</fieldName>
+    <masterLabel>인증 컨설팅 진행 단계</masterLabel>
+    <pathAssistantSteps>
+        <fieldNames>Customer_Contact__c</fieldNames>
+        <fieldNames>Certification_Type__c</fieldNames>
+        <fieldNames>Target_Certification_Date__c</fieldNames>
+        <fieldNames>Missing_Info__c</fieldNames>
+        <fieldNames>Lead_Researcher__c</fieldNames>
+        <info>&lt;ul&gt;&lt;li&gt;고객 담당자·인증 종류·목표 인증일·담당 연구원을 채워 주세요.&lt;/li&gt;&lt;li&gt;&lt;b&gt;확인 필요 정보&lt;/b&gt;에 항목이 있으면 &lt;b&gt;AI 메일 초안 → 정보 확인&lt;/b&gt; 메일로 고객사에 여쭤볼 수 있어요.&lt;/li&gt;&lt;li&gt;평가 범위가 정해지면 &lt;b&gt;요청 항목 만들기&lt;/b&gt; 버튼으로 받을 자료와 마감일을 골라 주세요. 만들면 &lt;b&gt;데이터 수집&lt;/b&gt;으로 자동으로 넘어가요.&lt;/li&gt;&lt;/ul&gt;</info>
+        <picklistValueName>접수</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Kickoff_Date__c</fieldNames>
+        <fieldNames>Total_Requests__c</fieldNames>
+        <fieldNames>Received_Requests__c</fieldNames>
+        <fieldNames>Data_Collection_Rate__c</fieldNames>
+        <fieldNames>Target_Certification_Date__c</fieldNames>
+        <info>&lt;ul&gt;&lt;li&gt;원료 투입량, 전력·연료 사용량, 운송 정보, 폐기물 등 활동 데이터를 고객사에서 받는 단계예요.&lt;/li&gt;&lt;li&gt;자료를 받으면 요청 항목을 &lt;b&gt;수령&lt;/b&gt;으로 바꾸고 수령일을 넣어 주세요.&lt;/li&gt;&lt;li&gt;마감 3일·1일 전과 기한 초과 시 할 일이 자동으로 생기고, 모든 항목을 수령하면 &lt;b&gt;LCA 산정&lt;/b&gt;으로 자동 전환돼요.&lt;/li&gt;&lt;/ul&gt;</info>
+        <picklistValueName>데이터 수집</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Data_Collection_Rate__c</fieldNames>
+        <fieldNames>Lead_Researcher__c</fieldNames>
+        <fieldNames>Target_Certification_Date__c</fieldNames>
+        <info>&lt;ul&gt;&lt;li&gt;받은 데이터로 전과정평가(LCA)를 산정하고 결과를 정리하는 단계예요.&lt;/li&gt;&lt;li&gt;자료에 빠진 부분이 있으면 요청 항목을 &lt;b&gt;보완 요청&lt;/b&gt;으로 바꾸고 보완 사유를 적어 주세요. 보완 요청 할 일이 바로 생겨요.&lt;/li&gt;&lt;li&gt;산정이 끝나면 &lt;b&gt;검증 심사 대응&lt;/b&gt;으로 넘겨 주세요.&lt;/li&gt;&lt;/ul&gt;</info>
+        <picklistValueName>LCA 산정</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Certification_Type__c</fieldNames>
+        <fieldNames>Lead_Researcher__c</fieldNames>
+        <fieldNames>Target_Certification_Date__c</fieldNames>
+        <info>&lt;ul&gt;&lt;li&gt;검증 심사에서 나온 의견에 대응하는 단계예요.&lt;/li&gt;&lt;li&gt;추가 자료가 필요하면 요청 항목을 새로 등록하거나 &lt;b&gt;보완 요청&lt;/b&gt;으로 바꿔 주세요.&lt;/li&gt;&lt;li&gt;목표 인증일까지 남은 일정을 확인해 주세요.&lt;/li&gt;&lt;/ul&gt;</info>
+        <picklistValueName>검증 심사 대응</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Certification_Type__c</fieldNames>
+        <fieldNames>Target_Certification_Date__c</fieldNames>
+        <fieldNames>Lead_Researcher__c</fieldNames>
+        <info>&lt;ul&gt;&lt;li&gt;인증을 받았어요! 🎉&lt;/li&gt;&lt;li&gt;인증 번호, 유효기간 같은 인증 정보를 메모에 남겨 주세요.&lt;/li&gt;&lt;li&gt;인증 완료 프로젝트는 정보 확인 메일·할 일 대상에서 빠져요.&lt;/li&gt;&lt;/ul&gt;</info>
+        <picklistValueName>인증 완료</picklistValueName>
+    </pathAssistantSteps>
+    <recordTypeName>__MASTER__</recordTypeName>
+</PathAssistant>
