@@ -1,6 +1,6 @@
 # 제품 LCA 업무 자료조사 — 에코에이블 LCA 관리 앱 설계용
 
-조사일: 2026-10-15 · 범위: 에코에이블컨설팅 전과정정책본부의 **제품 전과정평가(LCA) 수행** (고객사 요구 대응 · 규제 대응 · 제품 환경성 진단). PCF·환경성적표지·해외 EPD는 "LCA 결과를 어디에 쓰는지"로만 다룬다.
+조사일: 2026-10-15 · 버전: v02 (공개 데이터 추가 조사 반영: EU 배터리법 일정 정정, 국가 LCI DB 건수·EPD 유효기간 보완) · 범위: 에코에이블컨설팅 전과정정책본부의 **제품 전과정평가(LCA) 수행** (고객사 요구 대응 · 규제 대응 · 제품 환경성 진단). PCF·환경성적표지·해외 EPD는 "LCA 결과를 어디에 쓰는지"로만 다룬다.
 
 > 모든 내용은 조사원이 직접 열어 본 웹페이지를 근거로 했다. 원문을 열지 못한 항목은 **확인 필요**로 표시했다. 출처 번호는 맨 아래 목록과 같다.
 
@@ -43,7 +43,7 @@
 
 | 규제 | 대상 | 요구 내용 | 필요한 데이터 | 검증 | 주요 일정 |
 |---|---|---|---|---|---|
-| EU 배터리법 (EU) 2023/1542 | EV, 2kWh 초과 산업용, LMT 배터리. 모델·공장별 | 탄소발자국 선언 → 성능등급 → 최대 임계치 | 주 생산단계 1차 데이터 필수, kgCO2e/kWh, 생애단계별, 사용단계 제외, PEF 기반 규칙 [G2] | Notified body, 자가인증 불가 [G2] | 선언: EV 2025.2.18 / 산업용 2026.2.18 / LMT 2028.8.18, 각 "위임법 발효 + 12개월"과 비교해 늦은 날. 산정 위임법은 2026.9 기사 기준 미채택 → **조건부·확인 필요**. 배터리 여권 2027.2.18 [G1] |
+| EU 배터리법 (EU) 2023/1542 | EV, 2kWh 초과 산업용, LMT 배터리. 모델·공장별 | 탄소발자국 선언 → 성능등급 → 최대 임계치 | 주 생산단계 1차 데이터 필수, kgCO2e/kWh, 생애단계별, 사용단계 제외, PEF 기반 규칙 [G2] | Notified body, 자가인증 불가 [G2] | 선언: EV 2025.2.18("위임법 발효 + 12개월"과 비교) / 산업용(외부저장 제외) 2026.2.18 / LMT 2028.8.18 / 외부저장 산업용 2030.8.18(각 "위임법 발효 + 18개월"과 비교), 둘 중 늦은 날 [G2][G32]. 산정 위임법은 2026.9 기사 기준 미채택 → **조건부·확인 필요** [G33]. 배터리 여권 2027.2.18 [G1] |
 | EU CBAM (EU) 2023/956 | 시멘트·철강·알루미늄·비료·전력·수소 [G4]. 한국 생산자는 EU 수입자에게 데이터 제공 | 전환기 보고 → 확정기 인증서 구매·반납 [G5] | 설비·생산경로별 직접/간접 배출, 전구체 [G5] | 공인 검증인 [G6][G7] | 전환기 2023.10.1~2025.12, 확정기 2026.1.1~ [G4][G5]. 2026년분 신고 마감 2027.9.30 [G7] |
 | EU ESPR (EU) 2024/1781 + DPP | 위임법 대상(철강·알루미늄, 섬유, 가구, 타이어, 매트리스 우선) [G10] | 제품별 위임법, 환경정보는 DPP로 [G10] | 위임법별(확인 필요) | — | 발효 2024.7.18 [G9]. 첫 DPP 적용은 대형 배터리 2027.2.18 [G11] |
 | EU ECGT (EU) 2024/825 | B2C 환경주장 기업 | 일반적 환경주장·상쇄 기반 "중립" 주장 금지 [G13] | 전과정 근거 | 제3자 | 적용 2026.9.27 [G13] |
@@ -78,8 +78,8 @@
 | **환경성적표지 (국내)** | 환경성적표지 작성지침(공통지침: 일반제품·건축자재·에너지사용제품 + 개별지침) [K-L3] | 신청·수수료 → (사전심의) → 서류심사 → 현장심사 → 종합심사 → 심의위원회 → 결과통보 → 사용계획서 승인 → 인증서 → 사후관리 [K-E2][K-G]. 총 처리기간 **90일** [K-G] | KEITI 심사원 | **3년**, 연장 신청 시 3년 연장 [K-L1]. 공정·성분 변경 시 변경인증. 1년간 미유통이면 취소 사유 |
 | 저탄소제품 | 저탄소제품 기준 [K-L5] | 환경성적표지 인증 제품 중 최대허용탄소배출량 이하 | — | 갱신 때 탄소발자국이 늘면 탈락 [K-L5] |
 | International EPD | ISO 14040/44/14025 + PCR [G27] | PCR 선택 → LCA → EPD 작성 → 검증 → 등록·게시 [G27] | 개별 검증인 / 인증기관 / 사전검증 툴 | **5년**, 매년 내부 점검, 지표 10% 이상 증가 시 재검증 [G28] |
-| EPD Norway | EN 15804+A2, ISO 14025 [G31] | PCR → LCA → 검증 → 게시 | 독립 검증인 | 5년(확인 필요). 2024.11 한국 환경성적표지와 상호인정 협정 [K-E1] |
-| UL EPD | ISO 14025, 14040/44, PCR [G29] | LCA → 제3자 검증 → 등록 | 작성자와 검증자 분리 | 5년(확인 필요) |
+| EPD Norway | EN 15804+A2, ISO 14025 [G31] | PCR → LCA → 검증 → 게시 | 독립 검증인 | 5년(프로그램 규정 GPI v4, 2019 기준. 최신판 확인 필요) [G34]. 2024.11 한국 환경성적표지와 상호인정 협정 [K-E1] |
+| UL EPD | ISO 14025, 14040/44, PCR [G29] | LCA → 제3자 검증 → 등록 | 작성자와 검증자 분리 | 선언일부터 5년, 만료 60일 전 갱신 요청(2018년판 약관 기준, 최신판 확인 필요) [G35] |
 | Carbon Trust 라벨 | Requirements for Assurance [G30] | 산정 → 제3자 검증 → 라벨 | 독립 제3자 | 확인 필요. 탄소중립 클레임은 2023.9 폐지 |
 
 **환경성적표지 상세** [K-E1][K-L2][K-L3][K-L4]
@@ -162,7 +162,7 @@ ISO 14040/44 단계 [R-GHG][R-LEC]와 실무 흐름 [W1~W13]을 합친 것이다
 | 12개월 미만 데이터 | 정당화 + 민감도 분석, 1년치 확보 후 재평가 [R-ENO] |
 | 부피·질량 혼재 | 밀도 함께 요청 [R-EPA] |
 | 공급사 응답 저조 | 표준 템플릿, 공급사 교육 [R-RT] |
-| 국내 DB 부족 (국가 LCI DB 794개) [R-KR] | ecoinvent·Sphera로 대체하고 공개 |
+| 국내 DB 부족 (국가 LCI DB 794개 [R-KR], 2026.10 에코스퀘어 목록 849건 [K-E1]) | ecoinvent·Sphera로 대체하고 공개 |
 | 품질 평가를 나중에 몰아서 함 | 수집 시점에 품질 입력 [R-GHG] |
 
 - 배경 DB: 국가 LCI DB, ecoinvent(v3.12, 26,000개 이상) [R-ECO], Sphera. 소프트웨어: SimaPro, LCA for Experts(구 GaBi), openLCA, KEITI TOTAL.
@@ -214,8 +214,10 @@ ISO 14040/44 단계 [R-GHG][R-LEC]와 실무 흐름 [W1~W13]을 합친 것이다
 - LCABLE의 기능과 고객사별 Tool 개발과의 관계
 - 환경성적표지 공통지침의 데이터 수집기간·컷오프·DB 우선순위 세부 규칙
 - EU 배터리법 탄소발자국 산정 위임법 채택 시점
-- EPD Norway·UL EPD의 유효기간, Carbon Trust 라벨 유효기간
+- EPD Norway·UL EPD 유효기간의 최신 규정(조사한 자료는 2019·2018년판), Carbon Trust 라벨 유효기간
 - 프로젝트 관리에 지금 쓰는 도구(엑셀, 그룹웨어 등)와 가장 시간이 많이 드는 단계
+
+> 앱에 쓸 수 있는 공개 데이터(환경성적표지 인증현황, 평가계수, PACT·Catena-X 모델, 공공 배출계수 등)와 이용 조건은 별도 문서 「LCA 관리 앱에 쓸 수 있는 공개 데이터 조사」(public-data-sources.md)에 정리했다.
 
 ---
 
@@ -227,6 +229,6 @@ ISO 14040/44 단계 [R-GHG][R-LEC]와 실무 흐름 [W1~W13]을 합친 것이다
 
 **LCA 표준·데이터** [R-GHG] https://ghgprotocol.org/sites/default/files/standards/Product-Life-Cycle-Accounting-Reporting-Standard_041613.pdf · [R-RT] https://GHGprotocol.org/sites/default/files/ghgp/road-testing-summary_product-life-cycle-accounting-and-reporting-standard_final.pdf · [R-LEC] https://moodle2.units.it/pluginfile.php/393848/mod_resource/content/2/04_LCA-3.pdf · [R-ESU] https://esu-services.ch/ourservices/review/ · [R-GPI] https://epd.inti.gob.ar/assets/uploads/1617181375-general-programme-instructions-v-4.pdf (v4.0, 최신 v5.0.1 확인 필요) · [R-PEF] https://eplca.jrc.ec.europa.eu/permalink/PEFCR_guidance_v6.3-2.pdf · [R-PRE] https://pre-sustainability.com/articles/pef-series-data-requirements-in-the-pef-approach/ · [R-CX] https://catena-x.net/wp-content/uploads/2025/10/Catena-X-Product-Carbon-Footprint-Rulebook_v4-with-line-numbers.pdf · [R-PTS] https://docs.carbon-transparency.org/tr/data-exchange-protocol/latest/ · [R-ENO] https://epd-global.com/faq/data-collection-periods-shorter-than-12-months · [R-EPA] https://19january2021snapshot.epa.gov/sites/static/files/2015-04/documents/wire_appendix.pdf · [R-KR] https://koreascience.or.kr/article/JAKO202315167127229.pdf · [R-ECO] https://ecoinvent.org/database/
 
-**규제·고객 요구·해외 EPD** [G1] https://www.arianee.com/en/blog/battery-passport-timeline-2027-2036 · [G2] https://psqr.eu/publications-resources/carbon-footprint-batterie/ · [G4] https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en · [G5] https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-archive_en · [G6] https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en · [G7] https://globaltaxnews.ey.com/news/2025-2136-eu-adopts-cbam-omnibus-regulation · [G9] https://environment.ec.europa.eu/strategy/circular-economy/ecodesign-sustainable-products-regulation_en · [G10] https://www.packagingeurope.com/steel-and-aluminium-held-to-new-eu-eco-design-and-energy-labelling-rules/ · [G11] https://circulareconomy.europa.eu/node/10178 · [G13] https://www.lw.com/en/insights/eu-empowering-consumers-directive-new-rules-on-green-claims-apply-from-27-september-2026 · [G15] https://www.kiwa.com/en/de/areas-of-expertise/sustainable-solutions/construction-products-regulation/ · [G16] https://news.seoul.go.kr/env/archives/10609 · [G22] https://www.wbcsd.org/resources/pact-methodology-version-3/ · [G23] https://catena-x.net/use-case-cluster/product-carbon-footprint/ · [G24] https://www.tanso.de/en/blog/from-iso-14067-to-catena-x-pcfs · [G25] https://www.tfs-initiative.com/news/tfs-announces-new-updates-to-the-pcf-guideline · [G26] https://www.apple.com/newsroom/2022/10/apple-calls-on-global-supply-chain-to-decarbonize-by-2030/ · [G27] https://environdec.com/services/epd-creation · [G28] https://environdec.com/news/epd-internal-follow-up · [G29] https://www.ul.com/services/environmental-product-declaration-epds-certification · [G30] https://www.carbontrust.com/what-we-do/product-carbon-footprint-labelling/product-carbon-footprint-label · [G31] https://www.epd-global.com/
+**규제·고객 요구·해외 EPD** [G1] https://www.arianee.com/en/blog/battery-passport-timeline-2027-2036 · [G2] https://psqr.eu/publications-resources/carbon-footprint-batterie/ · [G4] https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en · [G5] https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-archive_en · [G6] https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en · [G7] https://globaltaxnews.ey.com/news/2025-2136-eu-adopts-cbam-omnibus-regulation · [G9] https://environment.ec.europa.eu/strategy/circular-economy/ecodesign-sustainable-products-regulation_en · [G10] https://www.packagingeurope.com/steel-and-aluminium-held-to-new-eu-eco-design-and-energy-labelling-rules/ · [G11] https://circulareconomy.europa.eu/node/10178 · [G13] https://www.lw.com/en/insights/eu-empowering-consumers-directive-new-rules-on-green-claims-apply-from-27-september-2026 · [G15] https://www.kiwa.com/en/de/areas-of-expertise/sustainable-solutions/construction-products-regulation/ · [G16] https://news.seoul.go.kr/env/archives/10609 · [G22] https://www.wbcsd.org/resources/pact-methodology-version-3/ · [G23] https://catena-x.net/use-case-cluster/product-carbon-footprint/ · [G24] https://www.tanso.de/en/blog/from-iso-14067-to-catena-x-pcfs · [G25] https://www.tfs-initiative.com/news/tfs-announces-new-updates-to-the-pcf-guideline · [G26] https://www.apple.com/newsroom/2022/10/apple-calls-on-global-supply-chain-to-decarbonize-by-2030/ · [G27] https://environdec.com/services/epd-creation · [G28] https://environdec.com/news/epd-internal-follow-up · [G29] https://www.ul.com/services/environmental-product-declaration-epds-certification · [G30] https://www.carbontrust.com/what-we-do/product-carbon-footprint-labelling/product-carbon-footprint-label · [G31] https://www.epd-global.com/ · [G32] https://www.compliancegate.com/eu-batteries-regulation-timeline-and-dates/ · [G33] https://traceable.digital/resources/blog/battery-carbon-footprint-declaration-deadline-not-started/ · [G34] https://digi.epd-norge.no/epder/ (GPI v4) · [G35] https://spot.ul.com (UL EPD 약관, 2018)
 
 **실무 흐름·플랫폼** [W1] https://projetcelsius.com/en/faq/acv-eco-conception/combien-de-temps-prend-une-premiere-acv-produit/ · [W2] https://ktr.or.kr/educonsulting/lca/contentsid/2024/index.do · [W6] https://www.keiti.re.kr/site/keiti/02/10202100000002023101610.jsp · [W7] https://helpcenter.ecochain.com/en/articles/9117564-how-to-obtain-data-for-lca · [W8] https://helpcenter.ecochain.com/en/articles/9686921-how-to-interpret-lca-results · [W9] https://pre-sustainability.com/articles/pef-series-hotspot-analysis-in-the-pef-approach/ · [W10] https://go.ipoint-systems.com/blog/obtain-lca-data-from-suppliers-insights-from-a-sustainability-consultant · [W11] https://www.epdhub.com/help/epd-verification-process · [W12] https://www.epdhub.com/help/duration-publishing-and-verification · [W13] https://circularecology.com/verification-process-of-an-epd.html · [W14] https://en.wikipedia.org/wiki/ISO_14006 · [W16] https://www.boutique.afnor.org/en-gb/standard/xp-iso-tr-14062/environmental-management-integrating-environmental-aspects-into-product-des/fa117399/547 · [W17] https://support.makersite.io/request-pcf-from-your-suppliers · [W18] https://makersite.io/masterclass-from-supplier-requests-to-usable-pcf-data-at-scale/ · [W19] https://oneclicklca.com/software/manufacturing/epd-generator · [W20] https://help.oneclicklca.com/en/articles/275657-internal-verification · [W21] https://sphera.com/solutions/supply-chain-transparency/supply-chain-sustainability-solution/product-carbon-footprint-assessment · [W23] https://greendelta.github.io/lca-collaboration-server-manual/print.html · [W27] https://www.wbcsd.org/news/pact-updated-tech-specifications-emissions-data/

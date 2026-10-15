@@ -13,14 +13,15 @@
 | 1 | Salesforce로 먼저 만든 시연 앱 (인증 컨설팅 데이터 수집 관리) | ✅ 완료 |
 | 2 | LCA 업무 자료조사 (업무 프로세스, 받아야 할 자료, 규제·고객 요구, 인증 제도) | ✅ 완료 |
 | 3 | Salesforce 없이 링크 하나로 여는 웹앱 설계 | ✅ 완료 |
-| 4 | 웹앱 1차 핵심 기능 개발 | 🚧 진행 중 |
+| 3-1 | 앱에 쓸 수 있는 공개 데이터 조사, 설계 반영 (v02) | ✅ 완료 |
+| 4 | 웹앱 1차 핵심 기능 개발 | ⏳ 예정 |
 | 5 | 웹앱 2차 기능, 배포(GitHub Pages), 제출 패키지 | ⏳ 예정 |
 
 ## 저장소 구조
 
 ```
 docs/
-  01-research/        LCA 업무 자료조사 (마크다운 + PDF)
+  01-research/        LCA 업무 자료조사, 공개 데이터 조사 (마크다운 + PDF)
   02-design/          LCA 관리 웹앱 설계서 (마크다운 + PDF)
   03-salesforce-demo/ Salesforce 시연판 PRD·SPEC
 web/                  웹앱 (HTML·CSS·JavaScript, 빌드 도구 없음)  ← 개발 중
@@ -32,7 +33,8 @@ salesforce-demo/      Salesforce 시연 앱 소스 (Salesforce DX 프로젝트)
 | 문서 | 내용 |
 | --- | --- |
 | [LCA 업무 자료조사](docs/01-research/lca-research.md) | 에코에이블 LCA 업무 현황, LCA를 하는 이유(규제·고객 요구·진단), 13단계 업무 흐름, 고객사에서 받아야 할 자료 체크리스트, 데이터 품질 기준, 시중 LCA 플랫폼 비교. 출처 포함 |
-| [LCA 관리 웹앱 설계서](docs/02-design/lca-webapp-design.md) | 목표, 사용자 시나리오, 10단계 프로세스와 단계 조건, 기능 17개, 데이터 구조, 업무 규칙, 화면 설계, 기술 설계, Salesforce 시연에서 배운 점 |
+| [공개 데이터 조사](docs/01-research/public-data-sources.md) | 앱에 쓸 수 있는 실제 공개 데이터(환경성적표지 인증현황·평가계수, 작성지침, PACT·Catena-X 모델, 공공 배출계수, EPD 제도 규칙, 규제 일정)와 이용 조건 |
+| [LCA 관리 웹앱 설계서](docs/02-design/lca-webapp-design.md) | 목표, 사용자 시나리오, 10단계 프로세스와 단계 조건, 기능 18개, 데이터 구조, 업무 규칙, 화면 설계, 기술 설계, 공개 데이터 적용 계획, Salesforce 시연에서 배운 점 |
 | [Salesforce 시연판 PRD](docs/03-salesforce-demo/PRD.md) · [SPEC](docs/03-salesforce-demo/SPEC.md) | 먼저 만든 Salesforce 앱의 요구사항과 구현 명세 |
 
 ## 진행 과정 요약
@@ -40,6 +42,7 @@ salesforce-demo/      Salesforce 시연 앱 소스 (Salesforce DX 프로젝트)
 1. **Salesforce 시연 앱** — 커스텀 오브젝트, Flow 5개, Prompt Builder AI 메일 초안, LWC 버튼·홈 화면, Apex 테스트 22개(커버리지 96~99%)로 데이터 수집 관리 앱을 만들었습니다. 자세한 내용: [salesforce-demo/README.md](salesforce-demo/README.md)
 2. **자료조사** — 회사 포트폴리오, ISO 14040/44·14067, 환경성적표지 제도, EU 배터리법·CBAM, PACT·Catena-X, 시중 LCA 플랫폼을 조사했습니다.
 3. **재설계** — 회사에 링크로 제출할 수 있도록 Salesforce 없이 동작하는 웹앱으로 다시 설계했습니다.
+4. **공개 데이터 조사** — 샘플 데이터를 실제 제도에 맞추기 위해 공공데이터포털·환경성적표지 작성지침·PACT·Catena-X 등을 조사하고, "실제 제품 종류 + 가상 회사" 원칙으로 설계에 반영했습니다.
 
 ## Salesforce 시연에서 배운 점 (웹앱 설계에 반영)
 
