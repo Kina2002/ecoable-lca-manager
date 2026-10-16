@@ -390,6 +390,7 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 /* WEB-010: 범위 합의와 전체 업무 단계의 구분 */
 .scope-status { display: block; margin-top: 6px; color: var(--green, #174c3d); font-size: 12px; font-weight: 600; }
 .scope-editor { margin-top: 24px; }
+.kickoff-card { margin-bottom: 24px; }
 .scope-editor { scroll-margin-top: 24px; }
 .scope-status-button { border: 1px solid #cbd8ce; border-radius: 8px; padding: 8px 12px; min-height: 44px; background: #f1f7f2; color: #174c3d; font: inherit; cursor: pointer; text-align: left; }
 .scope-status-button:hover { background: #dfefe3; }

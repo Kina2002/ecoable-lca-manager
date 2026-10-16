@@ -2,6 +2,8 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.scope = (() => {
   function init(project, store, loadResult, onChanged) {
+    const kickoffHost = document.querySelector('#kickoff-editor');
+    kickoffHost.replaceChildren();
     const host = document.querySelector('#scope-editor');
     const section = document.createElement('section');
     section.className = 'detail-card scope-editor';
@@ -27,6 +29,91 @@ LCA.views.scope = (() => {
       return;
     }
     let expected = LCA.scope.snapshot(project);
+    let scopeDirty = false;
+    let assigneesDirty = false;
+    let kickoffStart = null;
+    let kickoffReadiness = null;
+    function updateKickoff() {
+      if (!kickoffStart) return;
+      kickoffStart.disabled = scopeDirty || assigneesDirty || !LCA.scope.assigned(project);
+      kickoffReadiness.textContent = scopeDirty || assigneesDirty ? '입력 중인 담당자 또는 범위 변경을 먼저 저장해 주세요.'
+        : LCA.scope.assigned(project) ? '두 담당자가 저장됐어요. 범위 정의 시작을 누르면 다음 단계로 이동해요.' : '고객 담당자와 담당 연구원을 모두 저장하면 범위 정의를 시작할 수 있어요.';
+    }
+    if (project.stage === 1) {
+      const section = document.createElement('section');
+      section.className = 'detail-card kickoff-card';
+      const heading = document.createElement('h2');
+      heading.textContent = '담당자와 착수 준비';
+      const intro = document.createElement('p');
+      intro.className = 'detail-help';
+      intro.textContent = '고객 쪽 협의 대상과 우리 쪽 업무 담당자의 이름을 기록해요. 이름 저장만으로 단계가 바뀌지는 않아요. 가상 이름으로 체험해 주세요.';
+      const form = document.createElement('form');
+      form.className = 'scope-form';
+      form.noValidate = true;
+      const controls = {};
+      for (const [key, label, help] of [
+        ['customerContactName', '고객 담당자', '고객 회사에서 자료 요청이나 범위 협의를 할 사람이에요.'],
+        ['researcherName', '담당 연구원', '우리 쪽에서 이 프로젝트를 맡을 사람이에요.']
+      ]) {
+        const box = document.createElement('div');
+        const caption = document.createElement('label');
+        caption.textContent = `${label} (최대 100자)`;
+        caption.htmlFor = `kickoff-${key}`;
+        const input = document.createElement('input');
+        input.id = caption.htmlFor;
+        input.type = 'text';
+        input.maxLength = 100;
+        input.value = project[key] || '';
+        const description = document.createElement('p');
+        description.className = 'detail-help';
+        description.id = `kickoff-${key}-help`;
+        description.textContent = help;
+        input.setAttribute('aria-describedby', description.id);
+        box.append(caption, input, description);
+        form.append(box);
+        controls[key] = input;
+      }
+      const feedback = document.createElement('p');
+      feedback.setAttribute('role', 'status');
+      feedback.setAttribute('aria-live', 'polite');
+      const save = document.createElement('button');
+      save.type = 'submit';
+      save.className = 'primary-button';
+      save.textContent = '담당자 저장';
+      kickoffStart = document.createElement('button');
+      kickoffStart.type = 'button';
+      kickoffStart.className = 'request-action-button';
+      kickoffStart.textContent = '범위 정의 시작';
+      kickoffReadiness = document.createElement('p');
+      kickoffReadiness.className = 'detail-help';
+      const actions = document.createElement('div');
+      actions.className = 'scope-actions';
+      actions.append(save, kickoffStart);
+      form.append(actions, kickoffReadiness, feedback);
+      form.addEventListener('input', () => { assigneesDirty = true; updateKickoff(); });
+      form.addEventListener('change', () => { assigneesDirty = true; updateKickoff(); });
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const draft = Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value]));
+        const result = store.saveAssignees(project.id, draft, expected);
+        feedback.textContent = result.ok ? '담당자를 저장했어요. 현재 단계는 계약·착수 그대로예요.' : result.error;
+        if (result.ok) {
+          expected = LCA.scope.snapshot(project);
+          for (const [key, input] of Object.entries(controls)) input.value = project[key];
+          assigneesDirty = false;
+          updateKickoff();
+          onChanged(false);
+        }
+      });
+      kickoffStart.addEventListener('click', () => {
+        const result = store.startScope(project.id, expected);
+        if (!result.ok) { feedback.textContent = result.error; return; }
+        onChanged(true);
+      });
+      section.append(heading, intro, form);
+      kickoffHost.append(section);
+      updateKickoff();
+    }
     const form = document.createElement('form');
     form.className = 'scope-form';
     form.noValidate = true;
@@ -118,6 +205,8 @@ LCA.views.scope = (() => {
     const readiness = document.createElement('p');
     readiness.className = 'detail-help';
     function updateReadiness(dirty = false) {
+      scopeDirty = dirty;
+      updateKickoff();
       const missing = LCA.scope.missing(project);
       start.disabled = dirty || project.scopeStatus !== '확정' || missing.length > 0;
       readiness.textContent = project.stage === 1 ? '현재는 계약·착수 단계예요. 이 버튼은 범위 정의 단계에서 사용할 수 있어요.'

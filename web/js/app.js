@@ -126,7 +126,7 @@
         LCA.views.requests.init(project, requestStore);
         bindScope(project);
         const message = document.querySelector('#scope-editor [role="status"]');
-        message.textContent = '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
+        message.textContent = project.stage === 2 ? '범위 정의 단계로 이동했어요. 고객과 협의할 평가 범위를 아래에 기록해 주세요.' : '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
         message.tabIndex = -1;
         message.focus();
       } else {
