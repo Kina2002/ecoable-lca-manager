@@ -7,15 +7,18 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-006">
+    <link rel="stylesheet" href="./css/app.css?v=web-007">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
     <script src="./js/views/stage-filter.js" defer></script>
     <script src="./js/views/project-list.js?v=web-003" defer></script>
-    <script src="./js/requests.js?v=web-006" defer></script>
+    <script src="./js/received-data.js?v=web-007" defer></script>
+    <script src="./js/requests.js?v=web-007" defer></script>
     <script src="./js/views/project-detail.js?v=web-005" defer></script>
-    <script src="./js/views/requests.js?v=web-006.1" defer></script>
+    <script src="./js/views/date-input.js?v=web-007" defer></script>
+    <script src="./js/views/received-data.js?v=web-007" defer></script>
+    <script src="./js/views/requests.js?v=web-007.1" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
     <script src="./js/app.js?v=web-005" defer></script>
@@ -147,7 +150,7 @@
               <section class="request-list-card" aria-labelledby="request-list-title">
                 <div class="request-list-heading">
                   <h2 id="request-list-title" tabindex="-1">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>
-                  <span class="request-status-label">등록 시 상태: 요청</span>
+                  <span class="request-status-label">받은 자료를 기록하면 ‘제출됨’으로 바뀌어요.</span>
                 </div>
                 <p id="request-storage-error" class="form-error" role="alert" hidden></p>
                 <p id="request-action-error" class="form-error" role="alert" hidden></p>
@@ -161,6 +164,81 @@
                 </details>
               </section>
             </div>
+          </template>
+
+          <template id="receipt-editor-template">
+            <dialog id="receipt-dialog" class="receipt-dialog" aria-labelledby="receipt-title" aria-describedby="receipt-intro">
+              <div class="receipt-dialog-heading">
+                <div><p class="eyebrow">RECEIVED DATA</p><h2 id="receipt-title">받은 자료 기록하기</h2></div>
+                <button id="receipt-close" class="request-action-button" type="button" aria-label="받은 자료 입력 닫기">닫기</button>
+              </div>
+              <p id="receipt-intro" class="receipt-intro">고객사에서 받은 자료를 보고 적어 주세요. 저장하면 ‘제출됨’이 되며, 내용 검토와 승인은 다음 과정이에요.</p>
+              <div id="receipt-request-context" class="receipt-request-context"></div>
+              <form id="receipt-form" novalidate>
+                <div class="request-input">
+                  <label for="receipt-kind">자료 형태 <span>필수</span></label>
+                  <select id="receipt-kind" required aria-describedby="receipt-kind-error"><option value="quantity">수치 자료 — 사용량·중량 등</option><option value="document">문서·설명 자료 — 사업장 정보·사양 등</option></select>
+                  <p id="receipt-kind-error" class="field-error" hidden></p>
+                </div>
+                <div id="receipt-quantity-fields">
+                  <div class="receipt-field-row">
+                    <div class="request-input">
+                      <label for="receipt-value">제출 값 <span>필수</span></label>
+                      <input id="receipt-value" type="text" inputmode="decimal" maxlength="50" placeholder="예: 12000" required aria-describedby="receipt-value-help receipt-value-error">
+                      <p id="receipt-value-help" class="input-help">0 이상 숫자예요. 쉼표와 소수점을 사용할 수 있어요.</p>
+                      <p id="receipt-value-error" class="field-error" hidden></p>
+                    </div>
+                    <div class="request-input">
+                      <label for="receipt-unit">단위 <span>필수</span></label>
+                      <select id="receipt-unit" required aria-describedby="receipt-unit-help receipt-unit-error"></select>
+                      <p id="receipt-unit-help" class="input-help">예: 전력 kWh, 중량 kg. 원자료에 적힌 단위를 골라 주세요.</p>
+                      <p id="receipt-unit-error" class="field-error" hidden></p>
+                    </div>
+                  </div>
+                  <div id="receipt-density-field" class="request-input" hidden>
+                    <label for="receipt-density">밀도 (kg/m³) <span>부피 단위일 때 필수</span></label>
+                    <input id="receipt-density" type="text" inputmode="decimal" maxlength="50" aria-describedby="receipt-density-help receipt-density-error">
+                    <p id="receipt-density-help" class="input-help">같은 부피라도 물질마다 무게가 달라요. 부피를 무게로 바꿀 때 참고할 밀도를 원자료에서 확인해 적어 주세요.</p>
+                    <p id="receipt-density-error" class="field-error" hidden></p>
+                  </div>
+                </div>
+                <div id="receipt-document-fields" class="request-input" hidden>
+                  <label for="receipt-description">받은 내용 <span>필수</span></label>
+                  <textarea id="receipt-description" rows="3" maxlength="1000" placeholder="받은 문서에 어떤 내용이 있는지 적어 주세요." aria-describedby="receipt-description-error"></textarea>
+                  <p id="receipt-description-error" class="field-error" hidden></p>
+                </div>
+                <div class="receipt-field-row">
+                  <div class="request-input">
+                    <label for="receipt-periodStart">자료 기간 시작일 <span>필수</span></label>
+                    <div class="request-date-control">
+                      <input id="receipt-periodStart" type="text" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off" required aria-describedby="receipt-period-help receipt-periodStart-error">
+                      <button id="receipt-start-button" class="request-calendar-button" type="button" aria-label="달력에서 자료 기간 시작일 선택">달력</button>
+                      <input id="receipt-start-calendar" class="request-calendar-native" type="date" min="0001-01-01" max="9999-12-31" tabindex="-1" aria-hidden="true">
+                    </div>
+                    <p id="receipt-periodStart-error" class="field-error" hidden></p>
+                  </div>
+                  <div class="request-input">
+                    <label for="receipt-periodEnd">자료 기간 종료일 <span>필수</span></label>
+                    <div class="request-date-control">
+                      <input id="receipt-periodEnd" type="text" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off" required aria-describedby="receipt-period-help receipt-periodEnd-error">
+                      <button id="receipt-end-button" class="request-calendar-button" type="button" aria-label="달력에서 자료 기간 종료일 선택">달력</button>
+                      <input id="receipt-end-calendar" class="request-calendar-native" type="date" min="0001-01-01" max="9999-12-31" tabindex="-1" aria-hidden="true">
+                    </div>
+                    <p id="receipt-periodEnd-error" class="field-error" hidden></p>
+                  </div>
+                </div>
+                <p id="receipt-period-help" class="input-help">자료가 어느 기간을 다루는지 적어요. 예: 2025년 연간 전력 사용량 → 2025-01-01~2025-12-31. 숫자 8자리 입력과 달력 선택이 가능해요. 특정 시점의 문서는 시작일·종료일을 같게 적을 수 있어요.</p>
+                <div class="request-input">
+                  <label for="receipt-evidenceFileName">증빙 파일 이름 <span>필수</span></label>
+                  <input id="receipt-evidenceFileName" type="text" maxlength="200" placeholder="예: 2025년_전기요금고지서.xlsx" required aria-describedby="receipt-evidence-help receipt-evidenceFileName-error">
+                  <p id="receipt-evidence-help" class="input-help">이 값을 어디서 확인했는지 찾을 수 있도록 파일 이름을 기록해요. 파일 내용은 업로드하지 않아요.</p>
+                  <p id="receipt-evidenceFileName-error" class="field-error" hidden></p>
+                </div>
+                <p id="receipt-form-error" class="form-error" role="alert" hidden></p>
+                <div class="receipt-form-actions"><button id="receipt-cancel" class="request-action-button" type="button">취소</button><button class="primary-button" type="submit">받은 자료 저장</button></div>
+                <p class="request-save-note">저장한 기록은 이 브라우저에 남아요. 요청 한 건에는 현재 받은 자료 기록 한 건을 보관하며, 다시 열어 고칠 수 있어요.</p>
+              </form>
+            </dialog>
           </template>
 
           <section id="glossary-view" aria-labelledby="glossary-title" hidden>

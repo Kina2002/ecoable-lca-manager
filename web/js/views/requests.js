@@ -1,4 +1,4 @@
-/* 한 프로젝트의 필요한 자료 목록과 입력창. 실제 제출 값은 다음 기능에서 다룬다. */
+/* 한 프로젝트의 필요한 자료와 받은 자료를 연결해 보여준다. */
 window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 
@@ -69,51 +69,12 @@ LCA.views.requests = (() => {
       field.addEventListener('input', () => clearError(key));
     }
 
-    fields.dueDate.addEventListener('keydown', (event) => {
-      const field = fields.dueDate;
-      if (field.selectionStart !== field.selectionEnd) return;
-      const cursor = field.selectionStart;
-      // 구분 기호를 지우다 월·일이 연도에 합쳐지지 않도록 기호만 건너뛴다.
-      if (event.key === 'Backspace' && field.value[cursor - 1] === '-') {
-        event.preventDefault();
-        field.setSelectionRange(cursor - 1, cursor - 1);
-      } else if (event.key === 'Delete' && field.value[cursor] === '-') {
-        event.preventDefault();
-        field.setSelectionRange(cursor + 1, cursor + 1);
-      }
-    });
-    fields.dueDate.addEventListener('input', () => {
-      const field = fields.dueDate;
-      const before = field.value;
-      const digitCount = before.slice(0, field.selectionStart).replace(/\D/g, '').length;
-      field.value = LCA.requests.formatDateInput(before);
-      // 구분 기호가 생겨도 사용자가 고치던 숫자 위치에 커서를 둔다.
-      let cursor = 0;
-      let digits = 0;
-      while (cursor < field.value.length && digits < digitCount) {
-        if (/\d/.test(field.value[cursor])) digits++;
-        cursor++;
-      }
-      field.setSelectionRange(cursor, cursor);
-    });
-    const calendar = find('#request-calendar');
-    const calendarButton = find('#request-calendar-button');
-    calendarButton.hidden = typeof calendar.showPicker !== 'function';
-    calendarButton.addEventListener('click', () => {
-      calendar.value = LCA.requests.validDate(fields.dueDate.value) ? fields.dueDate.value : '';
-      try {
-        calendar.showPicker();
-      } catch {
-        const error = find('#request-date-error');
-        error.textContent = '달력을 열 수 없어요. 날짜를 숫자 8자리로 입력해 주세요.';
-        error.hidden = false;
-        fields.dueDate.focus();
-      }
-    });
-    calendar.addEventListener('change', () => {
-      fields.dueDate.value = LCA.requests.formatDateInput(calendar.value);
-      clearError('dueDate');
-      fields.dueDate.focus();
+    LCA.views.dateInput.bind(fields.dueDate, find('#request-calendar'), find('#request-calendar-button'), () => clearError('dueDate'), find('#request-date-error'));
+    const receiptEditor = LCA.views.receivedData.init(panel, project, store, (item) => {
+      renderItems();
+      find('#request-action-error').hidden = true;
+      find('#request-feedback').textContent = `${item.id}의 받은 자료를 저장했어요. 상태는 ‘제출됨’이며 내용 검토는 다음 과정이에요.`;
+      find(`#request-items button[data-receipt-id="${item.id}"]`)?.focus({ preventScroll: true });
     });
 
     function renderItems() {
@@ -140,7 +101,7 @@ LCA.views.requests = (() => {
         action.dataset.requestAction = deleted ? 'restore' : 'remove';
         action.dataset.requestId = item.id;
         action.setAttribute('aria-label', `${item.id} ${category.name} 자료 요청 ${deleted ? '복원' : '삭제'}`);
-        actions.append(textElement('span', 'request-state', deleted ? '삭제됨' : item.status), action);
+        actions.append(textElement('span', `request-state${!deleted && item.receipt ? ' request-state-received' : ''}`, deleted ? '삭제됨' : item.status), action);
         top.append(textElement('span', 'request-code', item.id), actions);
         const due = textElement('p', 'request-item-due', '제출 기한 ');
         const date = textElement('time', '', item.dueDate.replaceAll('-', '.'));
@@ -149,7 +110,16 @@ LCA.views.requests = (() => {
         const reference = document.createElement('details');
         reference.className = 'request-reference';
         reference.append(textElement('summary', '', '지침 근거 보기'), referenceContent(item.guideline));
-        card.append(top, textElement('h3', '', category.name), textElement('p', 'request-item-detail', item.detail), due, reference);
+        card.append(top, textElement('h3', '', category.name), textElement('p', 'request-item-detail', item.detail), due);
+        if (item.receipt) card.append(LCA.views.receivedData.summary(item.receipt));
+        if (!deleted) {
+          const record = textElement('button', 'request-action-button receipt-open-button', item.receipt ? '받은 자료 보기·수정' : '받은 자료 기록');
+          record.type = 'button';
+          record.dataset.receiptId = item.id;
+          record.setAttribute('aria-label', `${item.id} ${category.name} ${record.textContent}`);
+          card.append(record);
+        }
+        card.append(reference);
         return card;
       }
       find('#request-items').replaceChildren(...result.items.map((item) => requestCard(item, false)));
@@ -168,6 +138,8 @@ LCA.views.requests = (() => {
     }
 
     find('.request-list-card').addEventListener('click', (event) => {
+      const receiptButton = event.target.closest('button[data-receipt-id]');
+      if (receiptButton) { receiptEditor.open(receiptButton.dataset.receiptId, receiptButton); return; }
       const button = event.target.closest('button[data-request-action]');
       if (!button) return;
       const action = button.dataset.requestAction;

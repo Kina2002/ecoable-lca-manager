@@ -57,7 +57,9 @@ LCA.requests = (() => {
           const guide = item.guideline;
           if (!Number.isSafeInteger(number) || number < 1 || number >= data.nextNumber || ids.has(item.id)
             || !knownProjects.has(item.projectId) || (!item.deletedAt && projectCategories.has(pair))
-            || Object.keys(validate(item)).length || item.status !== '요청'
+            || Object.keys(validate(item)).length
+            || (item.status !== '요청' && item.status !== '제출됨')
+            || (item.status === '제출됨' ? !LCA.receivedData.validRecord(item.receipt) : 'receipt' in item)
             || typeof item.createdAt !== 'string' || !Number.isFinite(Date.parse(item.createdAt))
             || ('deletedAt' in item && (typeof item.deletedAt !== 'string' || !Number.isFinite(Date.parse(item.deletedAt))))
             || !guide || typeof guide.source !== 'string' || typeof guide.section !== 'string'
@@ -127,7 +129,26 @@ LCA.requests = (() => {
       }
     }
 
-    return { list, add, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
+    function recordReceipt(projectId, id, draft) {
+      const errors = LCA.receivedData.validate(draft);
+      if (Object.keys(errors).length) return { ok: false, errors };
+      const current = read();
+      if (!current.ok) return current;
+      const item = current.data.requests.find((value) => value.projectId === projectId && value.id === id && !value.deletedAt);
+      if (!knownProjects.has(projectId) || !item) return failure('받은 자료를 연결할 요청을 찾지 못했습니다. 프로젝트를 다시 열어 확인해 주세요.');
+      const now = new Date().toISOString();
+      const receipt = { ...LCA.receivedData.normalize(draft), recordedAt: item.receipt?.recordedAt || now, updatedAt: now };
+      const changed = { ...item, status: '제출됨', receipt };
+      const data = { ...current.data, requests: current.data.requests.map((value) => value.id === id ? changed : value) };
+      try {
+        getStorage().setItem(STORAGE_KEY, JSON.stringify(data));
+        return { ok: true, item: changed };
+      } catch {
+        return failure('받은 자료를 저장하지 못했습니다. 입력은 남겨 두었어요. 저장 설정을 확인한 뒤 다시 시도해 주세요.');
+      }
+    }
+
+    return { list, add, recordReceipt, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };
