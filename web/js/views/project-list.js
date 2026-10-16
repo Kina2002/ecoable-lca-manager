@@ -29,7 +29,7 @@ LCA.views.projectList = (() => {
     return 'setup';
   }
 
-  function render(projects, selectedStage = null, totalCount = projects.length, filtersActive = false) {
+  function render(projects, selectedStage = null, totalCount = projects.length, filtersActive = false, deadlines = {}) {
     const rows = document.querySelector('#project-rows');
     const fragment = document.createDocumentFragment();
 
@@ -76,7 +76,9 @@ LCA.views.projectList = (() => {
         stageCell.append(textElement('span', 'purpose', '단계 확인 필요'));
       }
 
-      const target = cell('목표 완료일');
+      const target = cell('일정 · 자료 현황');
+      target.append(textElement('span', 'deadline-label', '프로젝트 목표'));
+      target.append(LCA.views.deadlines.badge(LCA.deadlines.project(project)));
       if (project.targetDate) {
         const time = textElement('time', 'target-date', project.targetDate.replaceAll('-', '.'));
         time.dateTime = project.targetDate;
@@ -84,6 +86,20 @@ LCA.views.projectList = (() => {
       } else {
         target.append(textElement('span', 'target-date', '미정'));
       }
+      const materials = textElement('div', 'project-deadline-materials', '');
+      materials.append(textElement('span', 'deadline-label', '자료 현황'));
+      if (!deadlines.requests?.ok) {
+        const warning = textElement('span', 'deadline-badge deadline-badge--unknown', '자료 확인 필요');
+        warning.title = deadlines.requests?.message || '자료 기록을 읽을 수 없어요.';
+        materials.append(warning);
+      } else {
+        const state = LCA.deadlines.summary(project.id, deadlines.requests.items);
+        materials.append(LCA.views.deadlines.badge(state));
+        if (state.status) materials.append(textElement('span', `request-state${state.status === '보완 요청' ? ' request-state-revision' : ['제출됨', '검토 중'].includes(state.status) ? ' request-state-received' : ''}`, state.status));
+        if (state.total) materials.append(textElement('span', 'deadline-detail', `승인 ${state.approved}/${state.total}건${state.sourceId ? ` · ${state.sourceId}` : ''}`));
+        if (state.sourceId) materials.title = `미승인 자료 중 가장 이른 제출 기한 · ${state.sourceId} · ${state.date}`;
+      }
+      target.append(materials);
 
       row.append(company, product, purpose, stageCell, target);
       fragment.append(row);

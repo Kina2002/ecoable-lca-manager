@@ -123,6 +123,7 @@ LCA.views.projectDetail = (() => {
       time.dateTime = project.targetDate;
       target.querySelector('.detail-value').replaceWith(time);
     }
+    target.querySelector('dd').append(LCA.views.deadlines.badge(LCA.deadlines.project(project)));
     summary.append(
       field('고객사 업종', project.industry),
       field('프로젝트 유형', project.type),

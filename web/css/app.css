@@ -438,6 +438,20 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .project-list-controls input, .project-list-controls select { width: 100%; min-height: 44px; box-sizing: border-box; padding: 9px 10px; border: 1px solid #cbd8ce; border-radius: 8px; background: white; color: #233b31; font: inherit; font-size: 12px; }
 .project-list-controls > button { min-height: 44px; }
 .project-list-heading #list-context { margin: 0; }
+.deadline-badge { display: inline-block; max-width: 100%; padding: 4px 8px; margin: 4px 5px 4px 0; border-radius: 7px; font-size: 12px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+.deadline-badge--upcoming { background: #edf3ed; color: #355440; }
+.deadline-badge--soon { background: #fff1d8; color: #875900; }
+.deadline-badge--elapsed { background: #fde9e4; color: #a53a25; }
+.deadline-badge--review { background: #eaf1f8; color: #355978; }
+.deadline-badge--complete { background: #dfefe4; color: #24633d; }
+.deadline-badge--unknown, .deadline-badge--muted { background: #f0f2ef; color: #667260; }
+.deadline-label { display: block; color: #62735d; font-size: 10px; }
+.deadline-detail { display: block; margin-top: 3px; color: #697760; font-size: 10px; }
+.project-deadline-materials { margin-top: 9px; padding-top: 8px; border-top: 1px dashed #dfe7dd; }
+.project-table th:nth-child(2) { width: 24%; }
+.project-table th:nth-child(3) { width: 14%; }
+.project-table th:nth-child(4) { width: 17%; }
+.project-table th:nth-child(5) { width: 21%; }
 #researcher-list-error { color: #943624; }
 @media (max-width: 760px) { .researcher-grid { grid-template-columns: 1fr; } }
 .scope-form button:disabled { opacity: .55; cursor: not-allowed; }

@@ -7,33 +7,35 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-015">
+    <link rel="stylesheet" href="./css/app.css?v=web-016">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js?v=web-014" defer></script>
     <script src="./js/views/stage-filter.js?v=web-009.2" defer></script>
     <script src="./js/project-filter.js?v=web-015" defer></script>
     <script src="./js/views/project-filter.js?v=web-015" defer></script>
-    <script src="./js/views/project-list.js?v=web-015" defer></script>
+    <script src="./js/views/project-list.js?v=web-016" defer></script>
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
     <script src="./js/requests.js?v=web-009.2" defer></script>
+    <script src="./js/deadlines.js?v=web-016" defer></script>
+    <script src="./js/views/deadlines.js?v=web-016" defer></script>
     <script src="./js/researchers.js?v=web-014" defer></script>
     <script src="./js/views/researchers.js?v=web-015" defer></script>
     <script src="./js/projects.js?v=web-012" defer></script>
     <script src="./js/scope.js?v=web-014" defer></script>
     <script src="./js/views/scope.js?v=web-014" defer></script>
     <script src="./js/request-filter.js?v=web-009.2" defer></script>
-    <script src="./js/views/collection.js?v=web-012" defer></script>
-    <script src="./js/views/project-detail.js?v=web-015" defer></script>
+    <script src="./js/views/collection.js?v=web-016" defer></script>
+    <script src="./js/views/project-detail.js?v=web-016" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
     <script src="./js/views/project-create.js?v=web-012" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
     <script src="./js/views/review.js?v=web-008" defer></script>
-    <script src="./js/views/requests.js?v=web-009" defer></script>
+    <script src="./js/views/requests.js?v=web-016" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
-    <script src="./js/app.js?v=web-015" defer></script>
+    <script src="./js/app.js?v=web-016" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -124,14 +126,14 @@
             </div>
             <div class="table-container">
               <table class="project-table">
-                <caption class="sr-only">가상 고객사별 제품, 평가 범위, 업무 목적, 현재 단계와 목표 완료일</caption>
+                <caption class="sr-only">가상 고객사별 제품, 평가 범위, 업무 목적, 현재 단계, 목표일과 자료 현황 D-day</caption>
                 <thead>
                   <tr>
                     <th scope="col">고객사 · 프로젝트</th>
                     <th scope="col">제품 · 평가 범위</th>
                     <th scope="col">업무 목적</th>
                     <th scope="col">현재 단계</th>
-                    <th scope="col">목표 완료일</th>
+                    <th scope="col">일정 · 자료 현황</th>
                   </tr>
                 </thead>
                 <tbody id="project-rows"></tbody>

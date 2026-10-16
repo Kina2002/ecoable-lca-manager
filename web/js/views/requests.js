@@ -149,6 +149,7 @@ LCA.views.requests = (() => {
         const date = textElement('time', '', item.dueDate.replaceAll('-', '.'));
         date.dateTime = item.dueDate;
         due.append(date);
+        if (!deleted) due.append(document.createTextNode(' '), LCA.views.deadlines.badge(LCA.deadlines.item(item)));
         const reference = document.createElement('details');
         reference.className = 'request-reference';
         reference.append(textElement('summary', '', '지침 근거 보기'), referenceContent(item.guideline));

@@ -57,6 +57,7 @@ LCA.views.collection = (() => {
       const date = text('time', '', item.dueDate.replaceAll('-', '.'));
       date.dateTime = item.dueDate;
       due.append(date);
+      due.append(document.createTextNode(' '), LCA.views.deadlines.badge(LCA.deadlines.item(item)));
       const button = text('button', 'request-action-button', '자료 보기');
       button.type = 'button';
       button.dataset.collectionRequest = item.id;

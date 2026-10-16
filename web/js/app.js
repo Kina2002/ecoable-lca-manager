@@ -1,13 +1,16 @@
 /* 시작 버튼 역할: 기준 날짜를 정하고, 명단을 받아서 화면에 전달한다. */
 (() => {
   const referenceDate = LCA.rules.today();
-  const [year, month, day] = referenceDate.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  const dateLabel = document.querySelector('#reference-date');
-  dateLabel.dateTime = referenceDate;
-  dateLabel.textContent = `${new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
-  }).format(date)} 기준`;
+  function updateReferenceDate(value) {
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const dateLabel = document.querySelector('#reference-date');
+    dateLabel.dateTime = value;
+    dateLabel.textContent = `${new Intl.DateTimeFormat('ko-KR', {
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+    }).format(date)} 기준`;
+  }
+  updateReferenceDate(referenceDate);
 
   const samples = LCA.data.createSampleProjects(referenceDate);
   const projectStore = LCA.projects.createStore(samples, referenceDate);
@@ -63,7 +66,7 @@
   function renderProjectList() {
     projectFilters.refreshOptions();
     const visible = LCA.projectFilter.select(projects, selectedStage, projectFilters.state);
-    LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state));
+    LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state), { requests: requestStore.listAll() });
   }
   function showStage(stageNo) {
     selectedStage = stageNo;
@@ -258,4 +261,12 @@
     event.preventDefault();
     openResearchers();
   });
+  // 날짜만 갱신한다. 입력 중인 폼이나 선택한 필터를 다시 만들지 않는다.
+  function refreshDates() {
+    updateReferenceDate(LCA.rules.today());
+    LCA.views.deadlines.refresh();
+  }
+  window.setInterval(refreshDates, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDates(); });
+  window.addEventListener('pageshow', refreshDates);
 })();
