@@ -13,8 +13,22 @@
   let selectedStage = null; // null은 '전체 보기'라는 뜻이다. 새로고침하면 전체로 돌아온다.
   const listView = document.querySelector('#project-list-view');
   const detailView = document.querySelector('#project-detail-view');
+  const glossaryView = document.querySelector('#glossary-view');
   let listScrollY = 0;
   let detailOpener = null;
+  let projectView = listView;
+  let projectPageTitle = '프로젝트 목록 | 에코에이블 LCA 관리';
+  let projectScrollY = 0;
+
+  function setPage(label, title, section) {
+    document.querySelector('#current-view-label').textContent = label;
+    document.title = title;
+    for (const name of ['project', 'glossary']) {
+      const link = document.querySelector(`#${name}-navigation`);
+      if (name === section) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    }
+  }
 
   function showStage(stageNo) {
     selectedStage = stageNo;
@@ -26,6 +40,7 @@
   // 위의 건수는 전체 명단에서 만들고, 아래 목록만 선택한 조건으로 거른다.
   LCA.views.stageFilter.render(projects);
   showStage(null);
+  LCA.views.glossary.init();
 
   document.querySelector('#stage-filters').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-stage]');
@@ -44,8 +59,9 @@
     LCA.views.projectDetail.render(project);
     listView.hidden = true;
     detailView.hidden = false;
-    document.querySelector('#current-view-label').textContent = '프로젝트 상세';
-    document.title = `${project.companyName} 상세 | 에코에이블 LCA 관리`;
+    projectView = detailView;
+    projectPageTitle = `${project.companyName} 상세 | 에코에이블 LCA 관리`;
+    setPage('프로젝트 상세', projectPageTitle, 'project');
     document.querySelector('#project-detail-title').focus({ preventScroll: true });
     window.scrollTo(0, 0);
   }
@@ -54,8 +70,9 @@
     if (detailView.hidden) return;
     detailView.hidden = true;
     listView.hidden = false;
-    document.querySelector('#current-view-label').textContent = '프로젝트';
-    document.title = '프로젝트 목록 | 에코에이블 LCA 관리';
+    projectView = listView;
+    projectPageTitle = '프로젝트 목록 | 에코에이블 LCA 관리';
+    setPage('프로젝트', projectPageTitle, 'project');
     // 목록을 다시 만들지 않고 펼쳐, 선택한 단계·키보드 초점·스크롤 위치를 이어 간다.
     if (detailOpener && detailOpener.isConnected) detailOpener.focus({ preventScroll: true });
     window.scrollTo(0, listScrollY);
@@ -68,6 +85,27 @@
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {
     event.preventDefault();
-    showList();
+    if (glossaryView.hidden) {
+      showList();
+      return;
+    }
+    // 사전을 열기 전의 목록 또는 상세를 그대로 펼친다.
+    glossaryView.hidden = true;
+    projectView.hidden = false;
+    setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
+    projectView.querySelector('h1').focus({ preventScroll: true });
+    window.scrollTo(0, projectScrollY);
+  });
+  document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
+    event.preventDefault();
+    if (glossaryView.hidden) {
+      projectScrollY = window.scrollY;
+      listView.hidden = true;
+      detailView.hidden = true;
+      glossaryView.hidden = false;
+      setPage('용어사전', '용어사전 | 에코에이블 LCA 관리', 'glossary');
+    }
+    document.querySelector('#glossary-search').focus({ preventScroll: true });
+    window.scrollTo(0, 0);
   });
 })();

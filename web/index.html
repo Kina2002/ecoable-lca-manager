@@ -7,14 +7,16 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-003">
+    <link rel="stylesheet" href="./css/app.css?v=web-004">
     <script src="./js/constants.js" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
     <script src="./js/views/stage-filter.js" defer></script>
     <script src="./js/views/project-list.js?v=web-003" defer></script>
     <script src="./js/views/project-detail.js?v=web-003" defer></script>
-    <script src="./js/app.js?v=web-003" defer></script>
+    <script src="./js/glossary.js?v=web-004.1" defer></script>
+    <script src="./js/views/glossary.js?v=web-004" defer></script>
+    <script src="./js/app.js?v=web-004" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -31,6 +33,10 @@
           <a id="project-navigation" class="nav-item" href="./" aria-current="page">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>
             프로젝트
+          </a>
+          <a id="glossary-navigation" class="nav-item" href="#glossary-view">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v14"/></svg>
+            용어사전
           </a>
         </nav>
         <div class="sidebar-note">
@@ -50,7 +56,7 @@
           <div class="page-heading">
             <div>
               <p class="eyebrow">PROJECT OVERVIEW</p>
-              <h1>프로젝트 한눈에</h1>
+              <h1 id="project-overview-title" tabindex="-1">프로젝트 한눈에</h1>
               <p class="page-description">고객사별 제품과 업무 목적, 현재 진행 단계를 확인하세요.</p>
             </div>
             <span class="demo-pill"><span class="small-dot"></span> 가상 데이터로 체험 중</span>
@@ -98,6 +104,35 @@
           <section id="project-detail-view" aria-labelledby="project-detail-title" hidden>
             <button id="back-to-projects" class="back-button" type="button"><span aria-hidden="true">←</span> 목록으로</button>
             <div id="project-detail-content"></div>
+          </section>
+
+          <section id="glossary-view" aria-labelledby="glossary-title" hidden>
+            <div class="page-heading">
+              <div>
+                <p class="eyebrow">LCA GLOSSARY</p>
+                <h1 id="glossary-title">용어사전</h1>
+                <p class="page-description">낯선 말은 찾아보면서 익혀요. 쉬운 뜻과 가상 예시를 함께 읽어보세요.</p>
+              </div>
+              <span class="demo-pill">내용 확인일 <time id="glossary-checked-on"></time></span>
+            </div>
+            <div class="glossary-search-panel" role="search" aria-label="용어 검색">
+              <label for="glossary-search">궁금한 용어 검색</label>
+              <div class="glossary-search-row">
+                <input id="glossary-search" type="search" placeholder="예: 요람, PCF, 기능단위" aria-describedby="glossary-search-help" aria-controls="glossary-results" autocomplete="off" spellcheck="false">
+                <button id="clear-glossary-search" type="button" disabled>검색 지우기</button>
+              </div>
+              <p id="glossary-search-help">한글·영문·약어와 설명에서 찾아요. 대소문자와 띄어쓰기 차이는 괜찮아요.</p>
+            </div>
+            <div class="section-heading glossary-results-heading">
+              <h2>용어 목록 <span id="glossary-result-count" class="count-badge">0</span></h2>
+              <p id="glossary-search-status" role="status" aria-live="polite" aria-atomic="true"></p>
+            </div>
+            <ul id="glossary-results" class="glossary-grid"></ul>
+            <div id="glossary-empty" class="glossary-empty" hidden>
+              <h3>일치하는 용어가 없어요.</h3>
+              <p>짧은 단어나 다른 이름으로 찾아보세요. ‘검색 지우기’를 누르면 전체 용어가 다시 보여요.</p>
+            </div>
+            <p class="glossary-footnote">예시는 모두 이해를 돕기 위한 가상 상황이에요. ‘이 앱의 업무 용어’는 화면에서 쓰는 뜻이며, 전문 용어는 참고 원문도 함께 볼 수 있어요.</p>
           </section>
 
           <footer class="page-footer">
