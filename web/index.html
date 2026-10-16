@@ -7,7 +7,7 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-008">
+    <link rel="stylesheet" href="./css/app.css?v=web-009">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
@@ -16,11 +16,12 @@
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
     <script src="./js/requests.js?v=web-008" defer></script>
+    <script src="./js/request-filter.js?v=web-009" defer></script>
     <script src="./js/views/project-detail.js?v=web-005" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
     <script src="./js/views/review.js?v=web-008" defer></script>
-    <script src="./js/views/requests.js?v=web-008" defer></script>
+    <script src="./js/views/requests.js?v=web-009" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
     <script src="./js/app.js?v=web-005" defer></script>
@@ -153,6 +154,11 @@
                 <div class="request-list-heading">
                   <h2 id="request-list-title" tabindex="-1">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>
                   <span class="request-status-label">요청 → 제출됨 → 검토 중 → 보완 요청 / 승인</span>
+                </div>
+                <div id="request-status-controls">
+                  <p class="input-help">이 프로젝트의 자료를 상태별로 골라 봐요. 숫자는 해당 상태의 요청 건수예요.</p>
+                  <div id="request-status-filters" class="request-status-filters" role="group" aria-label="자료 상태로 거르기"></div>
+                  <p id="request-filter-summary" class="request-filter-summary" role="status" aria-live="polite" aria-atomic="true"></p>
                 </div>
                 <p id="request-storage-error" class="form-error" role="alert" hidden></p>
                 <p id="request-action-error" class="form-error" role="alert" hidden></p>

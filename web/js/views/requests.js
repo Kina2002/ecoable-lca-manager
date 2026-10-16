@@ -40,7 +40,31 @@ LCA.views.requests = (() => {
       fields.categoryKey.append(option);
     });
     let selectedCategory = '';
+    let selectedStatus = null;
     const drafts = new Map();
+    const statusButtons = new Map();
+    for (const status of [null, ...LCA.requestFilter.STATUSES]) {
+      const button = textElement('button', 'request-status-filter', '');
+      button.type = 'button';
+      button.dataset.requestStatus = status || 'all';
+      button.setAttribute('aria-controls', 'request-items');
+      const label = textElement('span', '', status || '전체');
+      const count = textElement('span', 'count-badge', '0');
+      label.setAttribute('aria-hidden', 'true');
+      count.setAttribute('aria-hidden', 'true');
+      button.append(label, count);
+      statusButtons.set(status, { button, count });
+      find('#request-status-filters').append(button);
+    }
+    function showFeedback(item, message) {
+      const hint = selectedStatus && item.status !== selectedStatus && !item.deletedAt
+        ? ` 선택한 상태와 달라 현재 목록에서는 빠졌어요. ‘전체’ 또는 ‘${item.status}’에서 확인할 수 있어요.` : '';
+      find('#request-feedback').textContent = `${message}${hint}`;
+    }
+    function focusChanged(item, kind) {
+      const button = find(`#request-items button[data-${kind}-id="${item.id}"]`);
+      (button || statusButtons.get(selectedStatus).button).focus({ preventScroll: true });
+    }
 
     function showGuide() {
       const container = find('#request-guideline');
@@ -73,14 +97,14 @@ LCA.views.requests = (() => {
     const receiptEditor = LCA.views.receivedData.init(panel, project, store, (item) => {
       renderItems();
       find('#request-action-error').hidden = true;
-      find('#request-feedback').textContent = `${item.id}의 받은 자료를 저장했어요. 상태는 ‘제출됨’이며 내용 검토는 다음 과정이에요.`;
-      find(`#request-items button[data-receipt-id="${item.id}"]`)?.focus({ preventScroll: true });
+      showFeedback(item, `${item.id}의 받은 자료를 저장했어요. 상태는 ‘제출됨’이며 내용 검토는 다음 과정이에요.`);
+      focusChanged(item, 'receipt');
     });
     const reviewEditor = LCA.views.review.init(panel, project, store, (item, message) => {
       renderItems();
       find('#request-action-error').hidden = true;
-      find('#request-feedback').textContent = `${item.id} · ${message}`;
-      find(`#request-items button[data-review-id="${item.id}"]`)?.focus({ preventScroll: true });
+      showFeedback(item, `${item.id} · ${message}`);
+      focusChanged(item, 'review');
     });
 
     function renderItems() {
@@ -88,6 +112,7 @@ LCA.views.requests = (() => {
       find('#request-storage-error').hidden = result.ok;
       find('#request-storage-error').textContent = result.message || '';
       find('#register-request').disabled = !result.ok;
+      find('#request-status-controls').hidden = !result.ok;
       if (!result.ok) {
         find('#request-count').textContent = '—';
         document.querySelector('#detail-request-count').textContent = '—';
@@ -96,6 +121,16 @@ LCA.views.requests = (() => {
         find('#request-trash').hidden = true;
         return;
       }
+      const snapshot = LCA.requestFilter.snapshot(result.items, project.id, selectedStatus);
+      for (const [status, { button, count }] of statusButtons) {
+        const total = status === null ? snapshot.total : snapshot.counts[status];
+        count.textContent = total;
+        button.setAttribute('aria-pressed', String(status === selectedStatus));
+        button.setAttribute('aria-label', `${status || '전체'} ${total}건`);
+      }
+      find('#request-filter-summary').textContent = selectedStatus === null
+        ? `전체 ${snapshot.total}건 표시`
+        : `전체 ${snapshot.total}건 중 ‘${selectedStatus}’ ${snapshot.visible.length}건 표시`;
       function requestCard(item, deleted) {
         const category = LCA.constants.CATEGORIES.find((value) => value.key === item.categoryKey);
         const card = textElement('li', 'request-item', '');
@@ -138,13 +173,16 @@ LCA.views.requests = (() => {
         card.append(reference);
         return card;
       }
-      find('#request-items').replaceChildren(...result.items.map((item) => requestCard(item, false)));
+      find('#request-items').replaceChildren(...snapshot.visible.map((item) => requestCard(item, false)));
       find('#request-trash-items').replaceChildren(...result.deletedItems.map((item) => requestCard(item, true)));
       find('#request-trash-count').textContent = result.deletedItems.length;
       find('#request-trash').hidden = result.deletedItems.length === 0;
-      find('#request-count').textContent = result.items.length;
-      document.querySelector('#detail-request-count').textContent = result.items.length;
-      find('#request-empty').hidden = result.items.length !== 0;
+      find('#request-count').textContent = snapshot.total;
+      document.querySelector('#detail-request-count').textContent = snapshot.total;
+      find('#request-empty').hidden = snapshot.visible.length !== 0;
+      find('#request-empty').textContent = selectedStatus === null
+        ? '아직 등록한 자료 요청이 없어요. 필요한 자료를 하나씩 등록해 보세요.'
+        : `‘${selectedStatus}’ 상태의 자료 요청이 없어요. ‘전체’를 누르면 이 프로젝트의 현재 요청을 모두 볼 수 있어요.`;
       const registered = new Set(result.items.map((item) => item.categoryKey));
       for (const option of fields.categoryKey.options) {
         const category = LCA.constants.CATEGORIES.find((value) => value.key === option.value);
@@ -152,6 +190,16 @@ LCA.views.requests = (() => {
         if (category) option.textContent = `${category.name}${option.disabled ? ' · 등록됨' : ''}`;
       }
     }
+
+    find('#request-status-filters').addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-request-status]');
+      if (!button) return;
+      const status = button.dataset.requestStatus === 'all' ? null : button.dataset.requestStatus;
+      if (status !== null && !LCA.requestFilter.STATUSES.includes(status)) return;
+      selectedStatus = status;
+      find('#request-feedback').textContent = '';
+      renderItems();
+    });
 
     find('.request-list-card').addEventListener('click', (event) => {
       const reviewButton = event.target.closest('button[data-review-id]');
@@ -168,9 +216,9 @@ LCA.views.requests = (() => {
       find('#request-feedback').textContent = '';
       if (!result.ok) return;
       renderItems();
-      find('#request-feedback').textContent = action === 'remove'
+      showFeedback(result.item, action === 'remove'
         ? `${result.item.id} 자료 요청을 삭제했어요. 아래 ‘삭제한 자료 요청’에서 복원할 수 있어요.`
-        : `${result.item.id} 자료 요청을 복원했어요.`;
+        : `${result.item.id} 자료 요청을 복원했어요.`);
       find('#request-list-title').focus({ preventScroll: true });
     });
 
@@ -199,7 +247,6 @@ LCA.views.requests = (() => {
         return;
       }
       const category = LCA.constants.CATEGORIES.find((value) => value.key === result.item.categoryKey);
-      find('#request-feedback').textContent = `${result.item.id} · ${category.name} 자료 요청을 이 브라우저에 저장했어요.`;
       drafts.delete(selectedCategory);
       selectedCategory = '';
       fields.categoryKey.value = '';
@@ -207,6 +254,7 @@ LCA.views.requests = (() => {
       // 이어서 등록하기 쉽도록 제출 기한은 유지한다.
       showGuide();
       renderItems();
+      showFeedback(result.item, `${result.item.id} · ${category.name} 자료 요청을 이 브라우저에 저장했어요.`);
     });
     showGuide();
     renderItems();

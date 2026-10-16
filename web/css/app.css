@@ -168,6 +168,12 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .request-save-note { margin: 12px 0 0; color: #87917d; font-size: 10px; line-height: 1.85; }
 .request-list-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
 .request-status-label { color: #8b967e; font-size: 10px; }
+.request-status-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+.request-status-filter { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 9px 11px; border: 1px solid #d5dfd0; border-radius: 7px; color: #62765b; background: #fff; font: inherit; font-size: 11px; cursor: pointer; }
+.request-status-filter:hover { background: #f1f6ed; }
+.request-status-filter[aria-pressed="true"] { border-color: #608762; color: #2c6245; background: #e9f2e4; font-weight: 700; }
+.request-status-filter .count-badge { margin: 0; }
+.request-filter-summary { margin: 13px 0 0; color: #738369; font-size: 11px; line-height: 1.8; }
 .request-feedback { margin: 16px 0 0; color: #477147; font-size: 12px; line-height: 1.8; }
 .request-feedback:empty { display: none; }
 .request-items { display: grid; gap: 16px; margin: 22px 0 0; padding: 0; list-style: none; }
