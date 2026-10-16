@@ -54,14 +54,10 @@ LCA.views.projectList = (() => {
       const unit = project.functionalUnit;
       const quantity = unit?.qty && unit?.unit ? `${unit.qty} ${unit.unit}` : '기준량 미정';
       const scope = `${quantity} · ${project.boundary || '경계 미정'}${project.modules ? ` (${project.modules})` : ''}`;
-      const scopeButton = textElement('button', 'scope-status scope-status-button', `범위: ${project.scopeStatus || '미정'} · ${project.stage <= 2 ? '수정' : '기록 보기'}`);
-      scopeButton.type = 'button';
-      scopeButton.dataset.openScope = project.id;
-      scopeButton.setAttribute('aria-label', `${project.companyName} 범위 ${project.scopeStatus || '미정'} · 범위 기록 바로 가기`);
       product.append(
         textElement('span', 'product-name', project.productName),
         textElement('span', 'product-scope', scope),
-        scopeButton
+        textElement('span', 'scope-status', `범위: ${project.scopeStatus || '미정'}`)
       );
 
       const purpose = cell('업무 목적');

@@ -125,7 +125,7 @@
     // 저장 후 달라진 상태·단계 건수를 반영하고 선택한 단계와 스크롤을 이어 간다.
     if (detailOpener?.dataset.collectionRequest) collectionView.focusRequest(detailOpener.dataset.collectionRequest);
     else {
-      const opener = listView.querySelector(detailOpener?.dataset.openScope ? `[data-open-scope="${openedProjectId}"]` : `[data-open-project="${openedProjectId}"]`);
+      const opener = listView.querySelector(`[data-open-project="${openedProjectId}"]`);
       if (opener) opener.focus({ preventScroll: true });
       else document.querySelector(selectedStage ? `#stage-filters [data-stage="${selectedStage}"]` : '#all-stages').focus({ preventScroll: true });
     }
@@ -133,12 +133,6 @@
   }
 
   document.querySelector('#project-rows').addEventListener('click', (event) => {
-    const scope = event.target.closest('button[data-open-scope]');
-    if (scope) {
-      showDetail(scope.dataset.openScope, scope);
-      LCA.views.scope.focusEditor();
-      return;
-    }
     const button = event.target.closest('button[data-open-project]');
     if (button) showDetail(button.dataset.openProject, button);
   });
