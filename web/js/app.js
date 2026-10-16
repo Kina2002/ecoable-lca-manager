@@ -59,10 +59,15 @@
     }
   });
 
+  const projectFilters = LCA.views.projectFilter.init(projects, renderProjectList);
+  function renderProjectList() {
+    projectFilters.refreshOptions();
+    const visible = LCA.projectFilter.select(projects, selectedStage, projectFilters.state);
+    LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state));
+  }
   function showStage(stageNo) {
     selectedStage = stageNo;
-    const visibleProjects = LCA.rules.projectsForStage(projects, selectedStage);
-    LCA.views.projectList.render(visibleProjects, selectedStage, projects.length);
+    renderProjectList();
     LCA.views.stageFilter.select(selectedStage);
     collectionView.setStage(selectedStage);
   }
@@ -89,6 +94,7 @@
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     requestStore = LCA.requests.createStore(projects.map((project) => project.id));
+    projectFilters.reset();
     LCA.views.stageFilter.render(projects);
     showStage(1);
     const message = document.querySelector('#project-create-status');
@@ -184,6 +190,8 @@
     }
   }
   detailView.addEventListener('click', (event) => {
+    const researcher = event.target.closest('[data-open-researcher]');
+    if (researcher) { openResearchers(researcher.dataset.openResearcher); return; }
     if (event.target.closest('[data-edit-scope]')) {
       selectDetailTab('overview');
       LCA.views.scope.focusEditor();
@@ -211,7 +219,10 @@
     researcherView.hidden = true;
     projectView.hidden = false;
     setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
-    if (projectView === listView) collectionView.refresh();
+    if (projectView === listView) {
+      LCA.views.stageFilter.render(projects);
+      showStage(selectedStage);
+    }
     else LCA.views.scope.refreshResearchers();
     projectView.querySelector('h1').focus({ preventScroll: true });
     window.scrollTo(0, projectScrollY);
@@ -229,16 +240,22 @@
     document.querySelector('#glossary-search').focus({ preventScroll: true });
     window.scrollTo(0, 0);
   });
-  document.querySelector('#researcher-navigation').addEventListener('click', (event) => {
-    event.preventDefault();
+  function openResearchers(id = null) {
     if (researcherView.hidden && glossaryView.hidden) projectScrollY = window.scrollY;
     listView.hidden = true;
     detailView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = false;
-    researcherPage.refresh();
     setPage('담당 연구원', '담당 연구원 | 에코에이블 LCA 관리', 'researcher');
-    document.querySelector('#researcher-title').focus({ preventScroll: true });
-    window.scrollTo(0, 0);
+    if (id) researcherPage.focusResearcher(id);
+    else {
+      researcherPage.refresh();
+      document.querySelector('#researcher-title').focus({ preventScroll: true });
+      window.scrollTo(0, 0);
+    }
+  }
+  document.querySelector('#researcher-navigation').addEventListener('click', (event) => {
+    event.preventDefault();
+    openResearchers();
   });
 })();

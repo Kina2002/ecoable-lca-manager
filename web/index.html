@@ -7,23 +7,25 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-014">
+    <link rel="stylesheet" href="./css/app.css?v=web-015">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js?v=web-014" defer></script>
     <script src="./js/views/stage-filter.js?v=web-009.2" defer></script>
-    <script src="./js/views/project-list.js?v=web-011.1" defer></script>
+    <script src="./js/project-filter.js?v=web-015" defer></script>
+    <script src="./js/views/project-filter.js?v=web-015" defer></script>
+    <script src="./js/views/project-list.js?v=web-015" defer></script>
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
     <script src="./js/requests.js?v=web-009.2" defer></script>
     <script src="./js/researchers.js?v=web-014" defer></script>
-    <script src="./js/views/researchers.js?v=web-014" defer></script>
+    <script src="./js/views/researchers.js?v=web-015" defer></script>
     <script src="./js/projects.js?v=web-012" defer></script>
     <script src="./js/scope.js?v=web-014" defer></script>
     <script src="./js/views/scope.js?v=web-014" defer></script>
     <script src="./js/request-filter.js?v=web-009.2" defer></script>
     <script src="./js/views/collection.js?v=web-012" defer></script>
-    <script src="./js/views/project-detail.js?v=web-014" defer></script>
+    <script src="./js/views/project-detail.js?v=web-015" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
     <script src="./js/views/project-create.js?v=web-012" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
@@ -31,7 +33,7 @@
     <script src="./js/views/requests.js?v=web-009" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
-    <script src="./js/app.js?v=web-014" defer></script>
+    <script src="./js/app.js?v=web-015" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -110,8 +112,14 @@
           </section>
 
           <section id="project-list-section" class="project-section" aria-labelledby="project-list-title">
-            <div class="section-heading">
+            <div class="section-heading project-list-heading">
               <h2 id="project-list-title"><span id="project-list-label">전체 프로젝트</span> <span id="project-count" class="count-badge">0</span></h2>
+              <div class="project-list-controls" role="search" aria-label="프로젝트 검색과 필터">
+                <div><label for="project-search">프로젝트 검색</label><input id="project-search" type="search" maxlength="200" placeholder="회사·제품·번호·연구원" aria-controls="project-rows" autocomplete="off"></div>
+                <div><label for="project-researcher-filter">담당 연구원</label><select id="project-researcher-filter" aria-controls="project-rows"></select></div>
+                <div><label for="project-purpose-filter">업무 목적</label><select id="project-purpose-filter" aria-controls="project-rows"><option value="">업무 목적 전체</option></select></div>
+                <button id="project-filter-clear" class="request-action-button" type="button" aria-label="검색·연구원·업무 목적 조건 초기화, 위쪽 단계 선택은 유지">조건 초기화</button>
+              </div>
               <p id="list-context" role="status" aria-live="polite" aria-atomic="true"></p>
             </div>
             <div class="table-container">
@@ -335,6 +343,7 @@
 
           <section id="researcher-view" aria-labelledby="researcher-title" hidden>
             <div class="page-heading"><div><p class="eyebrow">RESEARCHERS</p><h1 id="researcher-title" tabindex="-1">담당 연구원</h1><p class="page-description">연구원을 등록하고 누가 어떤 프로젝트를 맡았는지 확인해요. 인물과 배정은 모두 가상이에요.</p></div><span id="researcher-count" class="demo-pill"></span></div>
+            <p id="researcher-jump-status" role="status" aria-live="polite" hidden></p>
             <section class="detail-card"><h2>가상 연구원 등록</h2>
               <form id="researcher-form" class="researcher-register-form" novalidate>
                 <label for="researcher-name">연구원 이름 (필수 · 최대 100자)</label>

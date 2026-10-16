@@ -10,6 +10,9 @@ LCA.views.researchers = (() => {
     const message = document.querySelector('#researcher-save-status');
     const results = document.querySelector('#researcher-results');
     const error = document.querySelector('#researcher-list-error');
+    const jumpStatus = document.querySelector('#researcher-jump-status');
+    const cardsById = new Map();
+    let unlinkedProjects = [];
     function projectList(projects, showRecordedName = false) {
       const list = text('ul', 'researcher-projects', '');
       if (!projects.length) list.append(text('li', 'detail-help', '맡은 프로젝트가 없어요. 계약 단계 상세에서 담당 연구원으로 선택할 수 있어요.'));
@@ -24,6 +27,10 @@ LCA.views.researchers = (() => {
       return list;
     }
     function refresh() {
+      cardsById.clear();
+      unlinkedProjects = [];
+      jumpStatus.hidden = true;
+      jumpStatus.textContent = '';
       const roster = store.list();
       const projectResult = getProjects();
       if (!roster.ok || !projectResult.ok) {
@@ -36,8 +43,11 @@ LCA.views.researchers = (() => {
       error.hidden = true;
       document.querySelector('#researcher-count').textContent = `${roster.items.length}명`;
       const overview = LCA.researchers.overview(roster.items, projectResult.items);
+      unlinkedProjects = overview.unlinked;
       const cards = overview.rows.map((person) => {
         const card = text('section', 'detail-card researcher-card', '');
+        cardsById.set(person.id, card);
+        card.setAttribute('aria-label', `${person.name} ${person.code} 담당 프로젝트`);
         const heading = text('h2', '', person.name);
         heading.append(text('span', 'fictional-tag', '가상'));
         card.append(heading, text('p', 'detail-help', `${person.code} · 담당 프로젝트 ${person.projects.length}개 (완료 포함)`), projectList(person.projects));
@@ -45,6 +55,8 @@ LCA.views.researchers = (() => {
       });
       if (overview.unlinked.length) {
         const card = text('section', 'detail-card researcher-card', '');
+        cardsById.set('unlinked', card);
+        card.setAttribute('aria-label', '연구원 연결 확인');
         card.append(text('h2', '', '연구원 연결 확인'), text('p', 'detail-help', '기존 이름만 기록했거나 연결을 확인할 수 없는 프로젝트예요. 이름은 유지했으며 등록 연구원의 담당 프로젝트로 자동 합산하지 않아요.'), projectList(overview.unlinked, true));
         cards.push(card);
       }
@@ -67,7 +79,19 @@ LCA.views.researchers = (() => {
       const button = event.target.closest('[data-researcher-project]');
       if (button) onOpenProject(button.dataset.researcherProject, button);
     });
-    return { refresh };
+    function focusResearcher(id) {
+      refresh();
+      const card = cardsById.get(id) || (unlinkedProjects.some((project) => project.researcherId === id) ? cardsById.get('unlinked') : null);
+      jumpStatus.hidden = false;
+      jumpStatus.textContent = card ? (cardsById.get('unlinked') === card ? '기존 이름 또는 연결 확인이 필요한 기록으로 이동했어요.' : '선택한 연구원의 담당 프로젝트로 이동했어요.') : '선택한 연구원 연결을 찾지 못했어요. 현재 목록과 안내를 확인해 주세요.';
+      if (card) {
+        card.classList.add('researcher-card--selected');
+        card.tabIndex = -1;
+        card.focus({ preventScroll: true });
+        card.scrollIntoView({ block: 'center' });
+      } else document.querySelector('#researcher-title').focus();
+    }
+    return { refresh, focusResearcher };
   }
   return { init };
 })();
