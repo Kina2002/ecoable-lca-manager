@@ -10,6 +10,7 @@
   }).format(date)} 기준`;
 
   const projects = LCA.data.createSampleProjects(referenceDate);
+  const requestStore = LCA.requests.createStore(projects.map((project) => project.id));
   let selectedStage = null; // null은 '전체 보기'라는 뜻이다. 새로고침하면 전체로 돌아온다.
   const listView = document.querySelector('#project-list-view');
   const detailView = document.querySelector('#project-detail-view');
@@ -57,6 +58,7 @@
     listScrollY = window.scrollY;
     detailOpener = opener;
     LCA.views.projectDetail.render(project);
+    LCA.views.requests.init(project, requestStore);
     listView.hidden = true;
     detailView.hidden = false;
     projectView = detailView;
@@ -81,6 +83,27 @@
   document.querySelector('#project-rows').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-open-project]');
     if (button) showDetail(button.dataset.openProject, button);
+  });
+  function selectDetailTab(key, focus = false) {
+    for (const tab of detailView.querySelectorAll('[data-detail-tab]')) {
+      const selected = tab.dataset.detailTab === key;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      document.querySelector(`#${tab.getAttribute('aria-controls')}`).hidden = !selected;
+      if (selected && focus) tab.focus();
+    }
+  }
+  detailView.addEventListener('click', (event) => {
+    const tab = event.target.closest('[data-detail-tab]');
+    if (tab) selectDetailTab(tab.dataset.detailTab);
+  });
+  detailView.addEventListener('keydown', (event) => {
+    const tab = event.target.closest('[data-detail-tab]');
+    if (!tab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const key = event.key === 'Home' ? 'overview' : event.key === 'End' ? 'requests'
+      : tab.dataset.detailTab === 'overview' ? 'requests' : 'overview';
+    selectDetailTab(key, true);
   });
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {

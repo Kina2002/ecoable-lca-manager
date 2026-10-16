@@ -7,16 +7,18 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-004">
-    <script src="./js/constants.js" defer></script>
+    <link rel="stylesheet" href="./css/app.css?v=web-005">
+    <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
     <script src="./js/views/stage-filter.js" defer></script>
     <script src="./js/views/project-list.js?v=web-003" defer></script>
-    <script src="./js/views/project-detail.js?v=web-003" defer></script>
+    <script src="./js/requests.js?v=web-005" defer></script>
+    <script src="./js/views/project-detail.js?v=web-005" defer></script>
+    <script src="./js/views/requests.js?v=web-005.2" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
-    <script src="./js/app.js?v=web-004" defer></script>
+    <script src="./js/app.js?v=web-005" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -105,6 +107,51 @@
             <button id="back-to-projects" class="back-button" type="button"><span aria-hidden="true">←</span> 목록으로</button>
             <div id="project-detail-content"></div>
           </section>
+
+          <template id="request-panel-template">
+            <p class="request-intro"></p>
+            <div class="request-workspace">
+              <section class="request-form-card" aria-labelledby="request-form-title">
+                <p class="eyebrow">NEW DATA REQUEST</p>
+                <h2 id="request-form-title">필요한 자료 등록</h2>
+                <p class="request-form-description">자료 구분과 내용을 확인하고, 자료를 받기로 한 날짜를 적어 주세요.</p>
+                <form id="request-form" novalidate>
+                  <div class="request-input">
+                    <label for="request-category">자료 구분 <span>필수</span></label>
+                    <select id="request-category" required aria-describedby="request-category-help request-category-error"></select>
+                    <p id="request-category-help" class="input-help">한 프로젝트에서 같은 구분은 한 번 등록해요. 같은 구분의 필요한 자료를 요청 내용에 함께 적어 주세요.</p>
+                    <p id="request-category-error" class="field-error" hidden></p>
+                  </div>
+                  <div class="request-input">
+                    <label for="request-detail">요청 내용 <span>필수</span></label>
+                    <textarea id="request-detail" rows="5" maxlength="1000" required placeholder="자료 구분을 고르면 기본 문장이 나와요." aria-describedby="request-detail-help request-detail-error"></textarea>
+                    <p id="request-detail-help" class="input-help">기본 문장을 고쳐 필요한 기간·자료·증빙을 구체적으로 적어 주세요. 최대 1,000자예요.</p>
+                    <p id="request-detail-error" class="field-error" hidden></p>
+                  </div>
+                  <div id="request-guideline" class="request-guideline" aria-live="polite"></div>
+                  <div class="request-input">
+                    <label for="request-due-date">제출 기한 <span>필수</span></label>
+                    <input id="request-due-date" type="date" required aria-describedby="request-date-help request-date-error">
+                    <p id="request-date-help" class="input-help">고객사에서 이 자료를 받기로 한 날짜예요.</p>
+                    <p id="request-date-error" class="field-error" hidden></p>
+                  </div>
+                  <p id="request-form-error" class="form-error" role="alert" hidden></p>
+                  <button id="register-request" class="primary-button" type="submit">자료 요청 등록</button>
+                  <p class="request-save-note">이 브라우저에 저장돼요. 등록은 요청 내용을 기록하는 것이며, 고객사에 메일을 보내지는 않아요.</p>
+                </form>
+              </section>
+              <section class="request-list-card" aria-labelledby="request-list-title">
+                <div class="request-list-heading">
+                  <h2 id="request-list-title">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>
+                  <span class="request-status-label">등록 시 상태: 요청</span>
+                </div>
+                <p id="request-storage-error" class="form-error" role="alert" hidden></p>
+                <p id="request-feedback" class="request-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
+                <ul id="request-items" class="request-items"></ul>
+                <p id="request-empty" class="request-empty">아직 등록한 자료 요청이 없어요.<br>필요한 자료를 하나씩 등록해 보세요.</p>
+              </section>
+            </div>
+          </template>
 
           <section id="glossary-view" aria-labelledby="glossary-title" hidden>
             <div class="page-heading">

@@ -85,6 +85,32 @@ LCA.views.projectDetail = (() => {
     );
     fragment.append(summary);
 
+    const tabs = textElement('div', 'detail-tabs', '');
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', '프로젝트 상세 내용');
+    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청']]) {
+      const tab = textElement('button', 'detail-tab', label);
+      tab.type = 'button';
+      tab.id = `detail-${key}-tab`;
+      tab.dataset.detailTab = key;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-controls', `project-${key}-panel`);
+      tab.setAttribute('aria-selected', String(key === 'overview'));
+      tab.tabIndex = key === 'overview' ? 0 : -1;
+      if (key === 'requests') {
+        const count = textElement('span', 'count-badge', '0');
+        count.id = 'detail-request-count';
+        tab.append(count);
+      }
+      tabs.append(tab);
+    }
+    fragment.append(tabs);
+
+    const overview = textElement('div', '', '');
+    overview.id = 'project-overview-panel';
+    overview.setAttribute('role', 'tabpanel');
+    overview.setAttribute('aria-labelledby', 'detail-overview-tab');
+    overview.tabIndex = 0;
     const columns = textElement('div', 'detail-columns', '');
     columns.append(card('업무 목적과 활용', '왜 시작했고, 결과를 어디에 쓸까요?', [
       field('업무 목적 · 왜 하나요?', project.purpose, PURPOSE_HELP[project.purpose] || '이 업무를 진행하는 이유예요.'),
@@ -110,7 +136,14 @@ LCA.views.projectDetail = (() => {
     const scope = card('제품과 평가 범위', '무엇을, 얼마만큼, 어디까지 살펴볼까요?', scopeFields);
     scope.append(textElement('p', 'detail-note', '기능·선언 단위는 여기서 기준량으로 간단히 표시했어요. 실제로 제품을 비교하려면 기능·성능·수명 같은 조건도 함께 정해야 해요.'));
     columns.append(scope);
-    fragment.append(columns);
+    overview.append(columns);
+    const requests = textElement('div', '', '');
+    requests.id = 'project-requests-panel';
+    requests.setAttribute('role', 'tabpanel');
+    requests.setAttribute('aria-labelledby', 'detail-requests-tab');
+    requests.tabIndex = 0;
+    requests.hidden = true;
+    fragment.append(overview, requests);
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 

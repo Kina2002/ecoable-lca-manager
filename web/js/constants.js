@@ -41,6 +41,33 @@ LCA.constants = (() => {
     { key: 'supply', name: '공급망', unit: 'kgCO₂e', detail: '주요 공급사 PCF, 1차 데이터 비중, 기준기간, 검증 여부' }
   ];
 
+  // 구분은 앱의 분류다. 확인한 별표 6의 관련 칸을 자료 준비용 근거로 연결한다.
+  // 모든 프로젝트에 국내 인증 지침이 의무 적용된다고 판정하는 기능은 아니다.
+  const REQUEST_GUIDELINE = {
+    source: '환경성적표지 작성지침 별표 6 · 인증신청보고서',
+    url: 'https://law.go.kr/flDownload.do?bylClsCd=200201&flNm=' + encodeURIComponent('[별표 6] 환경성적표지 인증신청보고서(제4조제7항 관련)') + '&flSeq=154685071',
+    checkedOn: '2026-10-16',
+    note: '국내 환경성적표지의 자료 준비를 위한 참고 근거예요. 프로젝트에 적용할 기준과 범위를 함께 확인하세요.'
+  };
+  const CATEGORY_REFERENCES = {
+    general: { section: 'I. 제품 개요 / II.3 데이터 수집', page: 2 },
+    product: { section: 'I. 제품정보 / II.1 계산기준', page: 2 },
+    material: { section: 'III.2.1 원부자재', page: 8 },
+    energy: { section: 'III.3.1 제품 생산 · 투입물 자료', page: 14 },
+    water: { section: 'III.3.1 제품 생산 · 투입·산출물 자료', page: 14 },
+    packaging: { section: 'III.1.2·1.3 / III.2.2·2.3 포장재', page: 7 },
+    transport: { section: 'III.2.4 원료 수송 / III.3.2 제품 유통', page: 13 },
+    emission: { section: 'III.3.1 제품 생산 · 산출물 자료', page: 14 },
+    allocation: { section: 'II.4 할당 / III.3.1 제품 생산', page: 4 },
+    useEol: { section: 'III.4 제품사용 / III.5 제품 폐기', page: 17 },
+    supply: { section: 'III.2.1 원부자재 · 근거자료와 LCI DB', page: 8,
+      note: '원료의 근거자료와 DB 기록을 참고해요. PCF·1차 데이터 비중 등의 세부 항목은 PACT·TfS 등 프로젝트의 적용 지침도 확인하세요.' }
+  };
+  function requestGuideline(categoryKey) {
+    const reference = CATEGORY_REFERENCES[categoryKey];
+    return reference ? { ...REQUEST_GUIDELINE, ...reference } : null;
+  }
+
   // 데이터 요청 항목 상태 (요청 → 제출됨 → 검토 중 → 보완 요청 → 승인 / 해당 없음)
   const STATUSES = ['요청', '제출됨', '검토 중', '보완 요청', '승인', '해당 없음'];
   const OPEN_STATUSES = ['요청', '보완 요청']; // 고객사가 아직 내야 하는 상태
@@ -74,7 +101,7 @@ LCA.constants = (() => {
   ];
 
   return {
-    STAGES, CATEGORIES, STATUSES, OPEN_STATUSES, SUBMITTED_STATUSES, PROJECT_TYPES, PURPOSES, DRIVERS, USES,
+    STAGES, CATEGORIES, REQUEST_GUIDELINE, requestGuideline, STATUSES, OPEN_STATUSES, SUBMITTED_STATUSES, PROJECT_TYPES, PURPOSES, DRIVERS, USES,
     STANDARDS, BOUNDARIES, DEADLINE_TYPES, INDUSTRIES, DEPTS, DATA_SOURCES, METHODS, EVIDENCE_TYPES,
     COMMENT_KINDS, COMMENT_STATUSES, MAIL_TYPES,
     categoryByName: (name) => CATEGORIES.find((c) => c.name === name),
