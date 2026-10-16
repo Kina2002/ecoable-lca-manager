@@ -10,6 +10,15 @@
   }).format(date)} 기준`;
 
   const projects = LCA.data.createSampleProjects(referenceDate);
+  const scopeStore = LCA.scope.createStore(projects);
+  let scopeLoadResult = scopeStore.load();
+  function showScopeStorageStatus() {
+    const notice = document.querySelector('#scope-storage-status');
+    notice.hidden = scopeLoadResult.ok;
+    notice.textContent = scopeLoadResult.ok ? '' : `${scopeLoadResult.error} 목록은 현재 화면의 마지막 값 또는 가상 샘플이며 저장된 최신 상태를 확인하지 못했어요.`;
+  }
+  showScopeStorageStatus();
+  let openedProjectId = null;
   const requestStore = LCA.requests.createStore(projects.map((project) => project.id));
   let selectedStage = null; // null은 '전체 보기'라는 뜻이다. 새로고침하면 전체로 돌아온다.
   const listView = document.querySelector('#project-list-view');
@@ -64,6 +73,9 @@
   document.querySelector('#all-stages').addEventListener('click', () => showStage(null));
 
   function showDetail(projectId, opener) {
+    scopeLoadResult = scopeStore.load();
+    showScopeStorageStatus();
+    openedProjectId = projectId;
     // 행의 위치가 아니라 고정 ID로 찾는다. 필터 후에도 다른 업무와 혼동하지 않는다.
     const project = projects.find((item) => item.id === projectId);
     if (!project) return;
@@ -71,6 +83,7 @@
     detailOpener = opener;
     LCA.views.projectDetail.render(project);
     LCA.views.requests.init(project, requestStore);
+    bindScope(project);
     listView.hidden = true;
     detailView.hidden = false;
     projectView = detailView;
@@ -80,6 +93,24 @@
     window.scrollTo(0, 0);
   }
 
+  function bindScope(project) {
+    LCA.views.scope.init(project, scopeStore, scopeLoadResult, (moved) => {
+      LCA.views.stageFilter.render(projects);
+      showStage(selectedStage);
+      if (moved) {
+        LCA.views.projectDetail.render(project);
+        LCA.views.requests.init(project, requestStore);
+        bindScope(project);
+        const message = document.querySelector('#scope-editor [role="status"]');
+        message.textContent = '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
+        message.tabIndex = -1;
+        message.focus();
+      } else {
+        LCA.views.projectDetail.refreshScope(project);
+      }
+    });
+  }
+
   function showList() {
     if (detailView.hidden) return;
     detailView.hidden = true;
@@ -87,10 +118,17 @@
     projectView = listView;
     projectPageTitle = '프로젝트 목록 | 에코에이블 LCA 관리';
     setPage('프로젝트', projectPageTitle, 'project');
-    collectionView.refresh();
-    // 목록을 다시 만들지 않고 펼쳐, 선택한 단계·키보드 초점·스크롤 위치를 이어 간다.
+    scopeLoadResult = scopeStore.load();
+    showScopeStorageStatus();
+    LCA.views.stageFilter.render(projects);
+    showStage(selectedStage);
+    // 저장 후 달라진 상태·단계 건수를 반영하고 선택한 단계와 스크롤을 이어 간다.
     if (detailOpener?.dataset.collectionRequest) collectionView.focusRequest(detailOpener.dataset.collectionRequest);
-    else if (detailOpener && detailOpener.isConnected) detailOpener.focus({ preventScroll: true });
+    else {
+      const opener = listView.querySelector(`[data-open-project="${openedProjectId}"]`);
+      if (opener) opener.focus({ preventScroll: true });
+      else document.querySelector(selectedStage ? `#stage-filters [data-stage="${selectedStage}"]` : '#all-stages').focus({ preventScroll: true });
+    }
     window.scrollTo(0, listScrollY);
   }
 

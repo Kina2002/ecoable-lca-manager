@@ -56,6 +56,34 @@ LCA.views.projectDetail = (() => {
     return section;
   }
 
+  function scopeCard(project) {
+    const unit = project.functionalUnit;
+    const quantity = unit && unit.qty != null && unit.unit ? `${unit.qty} ${unit.unit}` : '미정';
+    const scopeFields = [
+      field('범위 상태', project.scopeStatus || '미정', '경계가 적혀 있어도 고객과 합의한 확정안인지 따로 확인해요.'),
+      field('평가 대상 제품', project.productName),
+      field('평가 기준량 · 얼마만큼을 기준으로 하나요?', quantity,
+        unit && unit.unit ? `${UNIT_HELP[unit.unit] || ''} 평가 결과를 제품 ${quantity} 기준으로 정리한다는 뜻이에요. 공장의 실제 생산량이 아니에요.`.trim() : '결과를 정리할 기준 수량과 단위를 정해요.'),
+      field('시스템 경계 · 어디까지 살펴보나요?', project.boundary,
+        BOUNDARY_HELP[project.boundary] || '평가가 시작되고 끝나는 범위를 정해요.')
+    ];
+    scopeFields.push(field('기준기간', project.refStart && project.refEnd ? `${project.refStart} ~ ${project.refEnd}` : '미정'));
+    scopeFields.push(field('적용 기준', project.standards || []));
+    if (project.periodReason) scopeFields.push(field('기준기간 사유', project.periodReason));
+    if (project.modules) {
+      scopeFields.push(field('평가 모듈', project.modules,
+        project.modules === 'A1–A3' ? '건설제품 평가의 단계 표기예요. A1은 원료 공급, A2는 원료 운송, A3는 제품 제조를 뜻해요.' : '이 프로젝트에서 평가할 과정의 구분이에요.'));
+    }
+    const scope = card('제품과 평가 범위', '무엇을, 얼마만큼, 어디까지 살펴볼까요?', scopeFields);
+    scope.append(textElement('p', 'detail-note', '기능·선언 단위는 여기서 기준량으로 간단히 표시했어요. 실제로 제품을 비교하려면 기능·성능·수명 같은 조건도 함께 정해야 해요.'));
+    scope.id = 'scope-summary';
+    return scope;
+  }
+
+  function refreshScope(project) {
+    document.querySelector('#scope-summary').replaceWith(scopeCard(project));
+  }
+
   function render(project) {
     const fragment = document.createDocumentFragment();
     const heading = textElement('div', 'page-heading detail-heading', '');
@@ -120,23 +148,12 @@ LCA.views.projectDetail = (() => {
         '결과를 쓰려는 곳이에요. 여기에 인증 이름이 있어도 이미 인증을 받았다는 뜻은 아니에요.')
     ]));
 
-    const unit = project.functionalUnit;
-    const quantity = unit && unit.qty != null && unit.unit ? `${unit.qty} ${unit.unit}` : '미정';
-    const scopeFields = [
-      field('평가 대상 제품', project.productName),
-      field('평가 기준량 · 얼마만큼을 기준으로 하나요?', quantity,
-        unit && unit.unit ? `${UNIT_HELP[unit.unit] || ''} 평가 결과를 제품 ${quantity} 기준으로 정리한다는 뜻이에요. 공장의 실제 생산량이 아니에요.`.trim() : '결과를 정리할 기준 수량과 단위를 정해요.'),
-      field('시스템 경계 · 어디까지 살펴보나요?', project.boundary,
-        BOUNDARY_HELP[project.boundary] || '평가가 시작되고 끝나는 범위를 정해요.')
-    ];
-    if (project.modules) {
-      scopeFields.push(field('평가 모듈', project.modules,
-        project.modules === 'A1–A3' ? '건설제품 평가의 단계 표기예요. A1은 원료 공급, A2는 원료 운송, A3는 제품 제조를 뜻해요.' : '이 프로젝트에서 평가할 과정의 구분이에요.'));
-    }
-    const scope = card('제품과 평가 범위', '무엇을, 얼마만큼, 어디까지 살펴볼까요?', scopeFields);
-    scope.append(textElement('p', 'detail-note', '기능·선언 단위는 여기서 기준량으로 간단히 표시했어요. 실제로 제품을 비교하려면 기능·성능·수명 같은 조건도 함께 정해야 해요.'));
+    const scope = scopeCard(project);
     columns.append(scope);
     overview.append(columns);
+    const editor = document.createElement('div');
+    editor.id = 'scope-editor';
+    overview.append(editor);
     const requests = textElement('div', '', '');
     requests.id = 'project-requests-panel';
     requests.setAttribute('role', 'tabpanel');
@@ -147,5 +164,5 @@ LCA.views.projectDetail = (() => {
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 
-  return { render };
+  return { render, refreshScope };
 })();

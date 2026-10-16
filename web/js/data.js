@@ -50,9 +50,19 @@ LCA.data = (() => {
       }
     ];
 
+    // 프로젝트별 합의 상태를 명시한다. 단계 번호로 상태를 자동 추론하지 않는다.
+    const scopeSamples = {
+      'project-001': '확정', 'project-002': '확정', 'project-003': '확정',
+      'project-004': '확정', 'project-005': '협의 중', 'project-006': '확정', 'project-007': '고객 요청안'
+    };
     return definitions.map(({ targetOffset, ...project }) => ({
       ...project,
       isFictional: true,
+      scopeStatus: scopeSamples[project.id],
+      refStart: project.id === 'project-007' ? '' : '2025-01-01',
+      refEnd: project.id === 'project-007' ? '' : '2025-12-31',
+      periodReason: '',
+      standards: project.id === 'project-007' ? [] : ['ISO 14040/44'],
       targetDate: LCA.rules.addDays(referenceDate, targetOffset)
     }));
   }

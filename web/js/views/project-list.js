@@ -52,10 +52,12 @@ LCA.views.projectList = (() => {
 
       const product = cell();
       const unit = project.functionalUnit;
-      const scope = `${unit.qty} ${unit.unit} · ${project.boundary}${project.modules ? ` (${project.modules})` : ''}`;
+      const quantity = unit?.qty && unit?.unit ? `${unit.qty} ${unit.unit}` : '기준량 미정';
+      const scope = `${quantity} · ${project.boundary || '경계 미정'}${project.modules ? ` (${project.modules})` : ''}`;
       product.append(
         textElement('span', 'product-name', project.productName),
-        textElement('span', 'product-scope', scope)
+        textElement('span', 'product-scope', scope),
+        textElement('span', 'scope-status', `범위: ${project.scopeStatus || '미정'}`)
       );
 
       const purpose = cell('업무 목적');

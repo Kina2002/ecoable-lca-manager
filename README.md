@@ -90,3 +90,6 @@ python -m http.server 5173
 - 웹앱: HTML · CSS · JavaScript (프레임워크·빌드 도구 없음), 브라우저 저장(localStorage), 규칙 기반 메일 템플릿
 - 시연 앱: Salesforce (Custom Object, Flow, Apex, LWC, Prompt Builder)
 - 디자인 참고: 에코에이블컨설팅 홈페이지의 글꼴(Pretendard)과 색 분위기 (로고는 사용하지 않음)
+
+
+범위 상태는 **미정·고객 요청안·협의 중·확정**으로 별도 표시합니다. 계약·범위 정의 단계 상세에서 범위 정보를 저장하고, 범위 정의 단계의 확정안은 별도 **데이터 수집 시작** 버튼으로 넘깁니다. 확정 저장만으로 단계가 바뀌지는 않습니다. 시연은 해든솔라(범위 정의·협의 중)에서 시작할 수 있습니다. 최소 준비 조건과 검증 한계는 [WEB-010 SPEC](docs/04-webapp-spec/WEB-010-scope-status.md)을 참고하세요.

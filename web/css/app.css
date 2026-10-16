@@ -385,3 +385,17 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+
+/* WEB-010: 범위 합의와 전체 업무 단계의 구분 */
+.scope-status { display: block; margin-top: 6px; color: var(--green, #174c3d); font-size: 12px; font-weight: 600; }
+.scope-editor { margin-top: 24px; }
+.scope-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 20px; }
+.scope-form label { display: block; margin-bottom: 8px; font-size: 13px; }
+.scope-form input:not([type=checkbox]), .scope-form select, .scope-form textarea { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; box-sizing: border-box; }
+.scope-form fieldset, .scope-form > p, .scope-actions { grid-column: 1 / -1; }
+.scope-form fieldset { border: 1px solid #cbd8ce; border-radius: 8px; padding: 15px; }
+.scope-form fieldset label { display: inline-flex; align-items: center; gap: 6px; margin: 8px 18px 8px 0; }
+.scope-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.scope-form .scope-calendar { position: absolute; width: 1px !important; height: 1px; min-height: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
+.scope-form button:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 760px) { .scope-form { grid-template-columns: 1fr; } }
