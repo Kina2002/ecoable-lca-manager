@@ -8,7 +8,7 @@ vm.runInContext('window = globalThis;', context);
 for (const file of ['constants.js', 'requests.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', file), 'utf8'), context, { filename: file });
 }
-const { createStore, STORAGE_KEY, validDate, validate } = context.LCA.requests;
+const { createStore, STORAGE_KEY, validDate, formatDateInput, validate } = context.LCA.requests;
 const projects = ['project-a', 'project-b'];
 const draft = (categoryKey = 'energy', detail = ' 지난해 전력 사용량과 고지서 ', dueDate = '2026-10-23') => ({ categoryKey, detail, dueDate });
 function memoryStorage(initial = null) {
@@ -123,4 +123,86 @@ test('다른 저장 객체가 추가한 최신 기록과 일련번호를 이어 
   second.add('project-b', draft('material'));
   assert.equal(first.add('project-a', draft()).item.id, 'DRQ-0002');
   assert.equal(second.list('project-b').items.length, 1);
+});
+
+test('삭제는 현재 목록에서 제외하고 새로 열어도 보존하며 원래 내용으로 복원한다', () => {
+  const storage = memoryStorage();
+  const store = createStore(projects, () => storage);
+  const original = store.add('project-a', draft()).item;
+  store.add('project-b', draft());
+  assert.equal(store.remove('project-a', original.id).ok, true);
+  const reloaded = createStore(projects, () => storage);
+  assert.equal(reloaded.list('project-a').items.length, 0);
+  assert.equal(reloaded.list('project-a').deletedItems[0].id, original.id);
+  assert.equal(reloaded.list('project-b').items.length, 1);
+  const restored = reloaded.restore('project-a', original.id);
+  assert.equal(restored.ok, true);
+  assert.equal(JSON.stringify(restored.item), JSON.stringify(original));
+  assert.equal(reloaded.list('project-a').deletedItems.length, 0);
+});
+
+test('삭제 후 같은 구분을 새 번호로 등록하고 중복 구분의 복원을 막는다', () => {
+  const storage = memoryStorage();
+  const store = createStore(projects, () => storage);
+  store.add('project-a', draft());
+  store.remove('project-a', 'DRQ-0001');
+  assert.equal(store.add('project-a', draft()).item.id, 'DRQ-0002');
+  const before = storage.raw;
+  assert.match(store.restore('project-a', 'DRQ-0001').message, /같은 자료 구분/);
+  assert.equal(storage.raw, before);
+  store.remove('project-a', 'DRQ-0002');
+  assert.equal(store.restore('project-a', 'DRQ-0001').ok, true);
+  assert.equal(store.list('project-a').items[0].id, 'DRQ-0001');
+});
+
+test('다른 프로젝트·없는 번호·이미 처리된 요청은 삭제나 복원하지 않는다', () => {
+  const storage = memoryStorage();
+  const store = createStore(projects, () => storage);
+  store.add('project-a', draft());
+  for (const [projectId, id] of [['project-b', 'DRQ-0001'], ['unknown', 'DRQ-0001'], ['project-a', 'DRQ-9999']]) {
+    assert.equal(store.remove(projectId, id).ok, false);
+    assert.equal(store.restore(projectId, id).ok, false);
+  }
+  assert.equal(store.restore('project-a', 'DRQ-0001').ok, false);
+  assert.equal(storage.writes, 1);
+  store.remove('project-a', 'DRQ-0001');
+  assert.equal(store.remove('project-a', 'DRQ-0001').ok, false);
+  assert.equal(storage.writes, 2);
+});
+
+test('삭제·복원 쓰기 실패와 손상 기록에서 기존 저장본을 보존한다', () => {
+  const storage = memoryStorage();
+  const store = createStore(projects, () => storage);
+  store.add('project-a', draft());
+  const denied = createStore(projects, () => ({ getItem: storage.getItem, setItem() { throw new Error('quota'); } }));
+  const active = storage.raw;
+  assert.equal(denied.remove('project-a', 'DRQ-0001').ok, false);
+  assert.equal(storage.raw, active);
+  store.remove('project-a', 'DRQ-0001');
+  const deleted = storage.raw;
+  assert.equal(denied.restore('project-a', 'DRQ-0001').ok, false);
+  assert.equal(storage.raw, deleted);
+  const corrupt = JSON.parse(deleted);
+  corrupt.requests[0].deletedAt = 'invalid';
+  const broken = memoryStorage(JSON.stringify(corrupt));
+  const badStore = createStore(projects, () => broken);
+  assert.equal(badStore.remove('project-a', 'DRQ-0001').ok, false);
+  assert.equal(badStore.restore('project-a', 'DRQ-0001').ok, false);
+  assert.equal(broken.writes, 0);
+});
+
+test('숫자 연속 입력과 붙여넣기를 정리하고 연도 4자리·전체 숫자 8자리를 넘기지 않는다', () => {
+  let typed = '';
+  for (const digit of '20261023') typed = formatDateInput(typed + digit);
+  assert.equal(typed, '2026-10-23');
+  assert.equal(formatDateInput('2026102399'), '2026-10-23');
+  assert.equal(formatDateInput('123456-10-23'), '1234-10-23');
+  assert.equal(formatDateInput('2026.10.23'), '2026-10-23');
+  assert.equal(formatDateInput('2026/10/23'), '2026-10-23');
+  assert.equal(formatDateInput('202-10-23'), '202-10-23');
+  assert.equal(formatDateInput(''), '');
+  assert.equal(formatDateInput('abcd'), '');
+  assert.equal(validDate(formatDateInput('20260229')), false);
+  assert.equal(validDate(formatDateInput('20240229')), true);
+  assert.equal(validDate('123456-10-23'), false);
 });

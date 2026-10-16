@@ -7,15 +7,15 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-005">
+    <link rel="stylesheet" href="./css/app.css?v=web-006">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
     <script src="./js/views/stage-filter.js" defer></script>
     <script src="./js/views/project-list.js?v=web-003" defer></script>
-    <script src="./js/requests.js?v=web-005" defer></script>
+    <script src="./js/requests.js?v=web-006" defer></script>
     <script src="./js/views/project-detail.js?v=web-005" defer></script>
-    <script src="./js/views/requests.js?v=web-005.2" defer></script>
+    <script src="./js/views/requests.js?v=web-006.1" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
     <script src="./js/app.js?v=web-005" defer></script>
@@ -131,8 +131,12 @@
                   <div id="request-guideline" class="request-guideline" aria-live="polite"></div>
                   <div class="request-input">
                     <label for="request-due-date">제출 기한 <span>필수</span></label>
-                    <input id="request-due-date" type="date" required aria-describedby="request-date-help request-date-error">
-                    <p id="request-date-help" class="input-help">고객사에서 이 자료를 받기로 한 날짜예요.</p>
+                    <div class="request-date-control">
+                      <input id="request-due-date" type="text" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off" required aria-describedby="request-date-help request-date-error">
+                      <button id="request-calendar-button" class="request-calendar-button" type="button" aria-label="달력에서 제출 기한 선택">달력</button>
+                      <input id="request-calendar" class="request-calendar-native" type="date" min="0001-01-01" max="9999-12-31" tabindex="-1" aria-hidden="true">
+                    </div>
+                    <p id="request-date-help" class="input-help">자료를 받기로 한 날짜예요. 숫자 8자리(예: 20261023)를 입력하면 2026-10-23으로 정리돼요. 연도는 4자리까지예요.</p>
                     <p id="request-date-error" class="field-error" hidden></p>
                   </div>
                   <p id="request-form-error" class="form-error" role="alert" hidden></p>
@@ -142,13 +146,19 @@
               </section>
               <section class="request-list-card" aria-labelledby="request-list-title">
                 <div class="request-list-heading">
-                  <h2 id="request-list-title">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>
+                  <h2 id="request-list-title" tabindex="-1">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>
                   <span class="request-status-label">등록 시 상태: 요청</span>
                 </div>
                 <p id="request-storage-error" class="form-error" role="alert" hidden></p>
+                <p id="request-action-error" class="form-error" role="alert" hidden></p>
                 <p id="request-feedback" class="request-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
                 <ul id="request-items" class="request-items"></ul>
                 <p id="request-empty" class="request-empty">아직 등록한 자료 요청이 없어요.<br>필요한 자료를 하나씩 등록해 보세요.</p>
+                <details id="request-trash" class="request-trash" hidden>
+                  <summary>삭제한 자료 요청 <span id="request-trash-count">0</span>건</summary>
+                  <p class="input-help">현재 요청 개수에서 제외돼요. 잘못 삭제했다면 복원할 수 있어요. 같은 구분의 현재 요청이 있으면 복원할 수 없어요.</p>
+                  <ul id="request-trash-items" class="request-items"></ul>
+                </details>
               </section>
             </div>
           </template>

@@ -7,6 +7,19 @@ LCA.requests = (() => {
   const MAX_DETAIL = 1000;
   const categoryByKey = (key) => LCA.constants.CATEGORIES.find((category) => category.key === key);
 
+  // 숫자만 이어 쓰면 앞의 네 자리는 연도, 다음 두 자리씩은 월·일이다.
+  function formatDateInput(value) {
+    const parts = String(value).split(/[-./]/);
+    if (parts.length > 1) {
+      const year = parts[0].replace(/\D/g, '').slice(0, 4);
+      const month = parts[1].replace(/\D/g, '');
+      const day = (parts.length > 2 ? parts[2].replace(/\D/g, '') : month.slice(2)).slice(0, 2);
+      return `${year}-${month.slice(0, 2)}${parts.length > 2 || day ? `-${day}` : ''}`;
+    }
+    const digits = String(value).replace(/\D/g, '').slice(0, 8);
+    return [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)].filter(Boolean).join('-');
+  }
+
   function validDate(value) {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const [year, month, day] = value.split('-').map(Number);
@@ -43,25 +56,27 @@ LCA.requests = (() => {
           const pair = `${item.projectId}:${item.categoryKey}`;
           const guide = item.guideline;
           if (!Number.isSafeInteger(number) || number < 1 || number >= data.nextNumber || ids.has(item.id)
-            || !knownProjects.has(item.projectId) || projectCategories.has(pair)
+            || !knownProjects.has(item.projectId) || (!item.deletedAt && projectCategories.has(pair))
             || Object.keys(validate(item)).length || item.status !== '요청'
             || typeof item.createdAt !== 'string' || !Number.isFinite(Date.parse(item.createdAt))
+            || ('deletedAt' in item && (typeof item.deletedAt !== 'string' || !Number.isFinite(Date.parse(item.deletedAt))))
             || !guide || typeof guide.source !== 'string' || typeof guide.section !== 'string'
             || guide.url !== LCA.constants.REQUEST_GUIDELINE.url || !validDate(guide.checkedOn)
             || !Number.isInteger(guide.page) || guide.page < 1 || typeof guide.note !== 'string') throw new Error('invalid record');
           ids.add(item.id);
-          projectCategories.add(pair);
+          if (!item.deletedAt) projectCategories.add(pair);
         }
         return { ok: true, data };
       } catch {
-        return failure('저장한 자료 요청을 읽지 못했습니다. 기존 기록을 보호하기 위해 등록을 멈췄습니다. 브라우저의 저장 설정과 기록을 확인해 주세요.');
+        return failure('저장한 자료 요청을 읽지 못했습니다. 기존 기록을 보호하기 위해 변경을 멈췄습니다. 브라우저의 저장 설정과 기록을 확인해 주세요.');
       }
     }
 
     function list(projectId) {
       const result = read();
       if (!result.ok) return result;
-      return { ok: true, items: result.data.requests.filter((item) => item.projectId === projectId) };
+      const requests = result.data.requests.filter((item) => item.projectId === projectId);
+      return { ok: true, items: requests.filter((item) => !item.deletedAt), deletedItems: requests.filter((item) => item.deletedAt) };
     }
 
     function add(projectId, draft) {
@@ -71,7 +86,7 @@ LCA.requests = (() => {
       // 매번 최신 저장본을 읽어 다른 프로젝트의 기록과 번호를 이어 쓴다.
       const current = read();
       if (!current.ok) return current;
-      if (current.data.requests.some((item) => item.projectId === projectId && item.categoryKey === draft.categoryKey)) {
+      if (current.data.requests.some((item) => !item.deletedAt && item.projectId === projectId && item.categoryKey === draft.categoryKey)) {
         return { ok: false, errors: { categoryKey: '이 프로젝트에 이미 등록한 자료 구분이에요. 다른 구분을 골라 주세요.' } };
       }
       const number = current.data.nextNumber;
@@ -91,8 +106,29 @@ LCA.requests = (() => {
       }
     }
 
-    return { list, add };
+    function changeDeleted(projectId, id, deleting) {
+      if (!knownProjects.has(projectId)) return failure('프로젝트를 확인할 수 없습니다. 목록에서 다시 열어 주세요.');
+      const current = read();
+      if (!current.ok) return current;
+      const item = current.data.requests.find((value) => value.projectId === projectId && value.id === id);
+      if (!item || Boolean(item.deletedAt) === deleting) return failure('변경할 자료 요청을 찾지 못했습니다. 프로젝트를 다시 열어 확인해 주세요.');
+      if (!deleting && current.data.requests.some((value) => !value.deletedAt && value.projectId === projectId && value.categoryKey === item.categoryKey)) {
+        return failure('같은 자료 구분이 이미 등록되어 있어 복원할 수 없어요. 현재 요청을 먼저 확인해 주세요.');
+      }
+      const changed = { ...item };
+      if (deleting) changed.deletedAt = new Date().toISOString();
+      else delete changed.deletedAt;
+      const data = { ...current.data, requests: current.data.requests.map((value) => value.id === id ? changed : value) };
+      try {
+        getStorage().setItem(STORAGE_KEY, JSON.stringify(data));
+        return { ok: true, item: changed };
+      } catch {
+        return failure('변경 내용을 브라우저에 저장하지 못했습니다. 기존 요청은 그대로 두었어요. 저장 설정을 확인한 뒤 다시 시도해 주세요.');
+      }
+    }
+
+    return { list, add, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
   }
 
-  return { STORAGE_KEY, MAX_DETAIL, validDate, validate, createStore };
+  return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };
 })();
