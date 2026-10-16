@@ -14,7 +14,7 @@
 | 2 | LCA 업무 자료조사 (업무 프로세스, 받아야 할 자료, 규제·고객 요구, 인증 제도) | ✅ 완료 |
 | 3 | Salesforce 없이 링크 하나로 여는 웹앱 설계 | ✅ 완료 |
 | 3-1 | 앱에 쓸 수 있는 공개 데이터 조사, 설계 반영 (v02) | ✅ 완료 |
-| 4 | 웹앱 1차 핵심 기능 개발 | ⏳ 예정 |
+| 4 | 웹앱 1차 핵심 기능 개발 | 🚧 진행 중 — 첫 기능: 7개 가상 프로젝트 목록 조회 |
 | 5 | 웹앱 2차 기능, 배포(GitHub Pages), 제출 패키지 | ⏳ 예정 |
 
 ## 저장소 구조
@@ -24,6 +24,7 @@ docs/
   01-research/        LCA 업무 자료조사, 공개 데이터 조사 (마크다운 + PDF)
   02-design/          LCA 관리 웹앱 설계서 (마크다운 + PDF)
   03-salesforce-demo/ Salesforce 시연판 PRD·SPEC
+  04-webapp-spec/     함께 구현한 웹앱 기능별 SPEC·확인 결과
 web/                  웹앱 (HTML·CSS·JavaScript, 빌드 도구 없음)  ← 개발 중
 salesforce-demo/      Salesforce 시연 앱 소스 (Salesforce DX 프로젝트)
 ```
@@ -36,6 +37,7 @@ salesforce-demo/      Salesforce 시연 앱 소스 (Salesforce DX 프로젝트)
 | [공개 데이터 조사](docs/01-research/public-data-sources.md) | 앱에 쓸 수 있는 실제 공개 데이터(환경성적표지 인증현황·평가계수, 작성지침, PACT·Catena-X 모델, 공공 배출계수, EPD 제도 규칙, 규제 일정)와 이용 조건 |
 | [LCA 관리 웹앱 설계서](docs/02-design/lca-webapp-design.md) | 목표, 사용자 시나리오, 10단계 프로세스와 단계 조건, 기능 18개, 데이터 구조, 업무 규칙, 화면 설계, 기술 설계, 공개 데이터 적용 계획, Salesforce 시연에서 배운 점 |
 | [Salesforce 시연판 PRD](docs/03-salesforce-demo/PRD.md) · [SPEC](docs/03-salesforce-demo/SPEC.md) | 먼저 만든 Salesforce 앱의 요구사항과 구현 명세 |
+| [웹앱 기능별 SPEC](docs/04-webapp-spec/README.md) | 기능마다 목적·동작·예외·확인 결과·면접 설명을 기록. 현재 WEB-001 프로젝트 목록 조회 |
 
 ## 진행 과정 요약
 
@@ -62,6 +64,11 @@ python -m http.server 5173
 ```
 
 브라우저에서 `http://localhost:5173` 을 엽니다. 배포 후에는 공개 링크로 열 수 있습니다.
+
+현재 구현된 것은 **설계서 v02 9-3장의 7개 가상 프로젝트 목록 조회**입니다.
+회사·제품·목적·현재 단계·목표일을 보여주며 휴대폰에서는 카드로 표시합니다.
+프로젝트 등록·수정·상세·저장과 나머지 기능은 하나씩 함께 구현합니다.
+`web/js/constants.js`·`rules.js`의 나머지 v02 규칙은 해당 기능을 만들 때 반영합니다.
 
 ## 기술
 

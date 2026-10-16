@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#174c3d">
+    <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
+    <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./css/app.css">
+    <script src="./js/constants.js" defer></script>
+    <script src="./js/rules.js" defer></script>
+    <script src="./js/data.js" defer></script>
+    <script src="./js/views/project-list.js" defer></script>
+    <script src="./js/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="워크스페이스">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M8 23C4 10 14 5 25 7c1 12-5 19-14 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m7 26 12-12m-8 8 1-7m3 3 6-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <div><span class="brand-name">에코에이블</span><span class="brand-subtitle">LCA 프로젝트 관리</span></div>
+        </div>
+        <p class="nav-label">워크스페이스</p>
+        <nav aria-label="주 메뉴">
+          <a class="nav-item" href="./" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>
+            프로젝트
+          </a>
+        </nav>
+        <div class="sidebar-note">
+          <span class="note-label"><span class="small-dot"></span> 포트폴리오 시연</span>
+          <p>고객사와 프로젝트는<br>모두 가상의 사례입니다.</p>
+        </div>
+        <p class="sidebar-footer">Life cycle. Clear workflow.</p>
+      </aside>
+
+      <div class="main-shell">
+        <header class="topbar">
+          <span class="breadcrumb">워크스페이스 <span aria-hidden="true">/</span> <strong>프로젝트</strong></span>
+          <time id="reference-date" class="reference-date"></time>
+        </header>
+        <main id="main-content" tabindex="-1">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">PROJECT OVERVIEW</p>
+              <h1>프로젝트 한눈에</h1>
+              <p class="page-description">고객사별 제품과 업무 목적, 현재 진행 단계를 확인하세요.</p>
+            </div>
+            <span class="demo-pill"><span class="small-dot"></span> 가상 데이터로 체험 중</span>
+          </div>
+
+          <section class="project-section" aria-labelledby="project-list-title">
+            <div class="section-heading">
+              <h2 id="project-list-title">전체 프로젝트 <span id="project-count" class="count-badge">0</span></h2>
+              <p>제품 전과정평가 · LCA</p>
+            </div>
+            <div class="table-container">
+              <table class="project-table">
+                <caption class="sr-only">가상 고객사별 제품, 평가 범위, 업무 목적, 현재 단계와 목표 완료일</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">고객사 · 프로젝트</th>
+                    <th scope="col">제품 · 평가 범위</th>
+                    <th scope="col">업무 목적</th>
+                    <th scope="col">현재 단계</th>
+                    <th scope="col">목표 완료일</th>
+                  </tr>
+                </thead>
+                <tbody id="project-rows"></tbody>
+              </table>
+              <p id="empty-state" class="empty-state" hidden>아직 등록된 프로젝트가 없습니다.</p>
+            </div>
+            <div class="list-footnote">
+              <span>회사명 옆 ‘가상’은 시연을 위해 만든 회사라는 뜻입니다.</span>
+              <span>진행 단계는 총 10단계입니다.</span>
+            </div>
+          </section>
+          <footer class="page-footer">
+            <p>에코에이블컨설팅 지원을 위해 만든 포트폴리오이며, 회사의 공식 서비스가 아닙니다.</p>
+            <span>LCA MANAGEMENT</span>
+          </footer>
+          <noscript><p class="noscript-message">프로젝트 목록을 보려면 브라우저의 JavaScript를 켜주세요.</p></noscript>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
