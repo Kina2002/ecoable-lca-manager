@@ -11,7 +11,6 @@ LCA.views.collection = (() => {
   function init(projects, store, onOpenRequest) {
     const section = document.querySelector('#collection-section');
     const find = (selector) => section.querySelector(selector);
-    const byId = new Map(projects.map((project) => [project.id, project]));
     let selectedStatus = null;
     let currentStage = null;
     const buttons = new Map();
@@ -29,7 +28,7 @@ LCA.views.collection = (() => {
       buttons.set(status, { button, count });
     }
     function row(item) {
-      const project = byId.get(item.projectId);
+      const project = projects.find((value) => value.id === item.projectId);
       const category = LCA.constants.CATEGORIES.find((value) => value.key === item.categoryKey);
       const element = text('li', 'collection-row', '');
       const company = text('div', 'collection-company', '');

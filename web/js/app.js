@@ -9,8 +9,14 @@
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
   }).format(date)} 기준`;
 
-  const projects = LCA.data.createSampleProjects(referenceDate);
-  const scopeStore = LCA.scope.createStore(projects);
+  const samples = LCA.data.createSampleProjects(referenceDate);
+  const projectStore = LCA.projects.createStore(samples, referenceDate);
+  const projectLoadResult = projectStore.list();
+  const projectNotice = document.querySelector('#project-storage-status');
+  projectNotice.hidden = projectLoadResult.ok;
+  projectNotice.textContent = projectLoadResult.ok ? '' : `${projectLoadResult.error} 현재는 기본 가상 샘플만 표시해요.`;
+  const projects = projectLoadResult.ok ? projectLoadResult.items : samples;
+  let scopeStore = LCA.scope.createStore(projects);
   let scopeLoadResult = scopeStore.load();
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
@@ -19,7 +25,7 @@
   }
   showScopeStorageStatus();
   let openedProjectId = null;
-  const requestStore = LCA.requests.createStore(projects.map((project) => project.id));
+  let requestStore = LCA.requests.createStore(projects.map((project) => project.id));
   let selectedStage = null; // null은 '전체 보기'라는 뜻이다. 새로고침하면 전체로 돌아온다.
   const listView = document.querySelector('#project-list-view');
   const detailView = document.querySelector('#project-detail-view');
@@ -40,7 +46,7 @@
     }
   }
 
-  const collectionView = LCA.views.collection.init(projects, requestStore, (projectId, requestId, opener) => {
+  const collectionView = LCA.views.collection.init(projects, { listAll: () => requestStore.listAll() }, (projectId, requestId, opener) => {
     showDetail(projectId, opener);
     selectDetailTab('requests');
     const card = detailView.querySelector(`#request-items li[data-request-id="${requestId}"]`);
@@ -63,6 +69,24 @@
   LCA.views.stageFilter.render(projects);
   showStage(null);
   LCA.views.glossary.init();
+  document.querySelector('#new-project').disabled = !projectLoadResult.ok;
+  LCA.views.projectCreate.init(projectStore, (result) => {
+    // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
+    projects.splice(0, projects.length, ...result.items);
+    scopeStore = LCA.scope.createStore(projects);
+    scopeLoadResult = scopeStore.load();
+    showScopeStorageStatus();
+    requestStore = LCA.requests.createStore(projects.map((project) => project.id));
+    LCA.views.stageFilter.render(projects);
+    showStage(1);
+    const message = document.querySelector('#project-create-status');
+    message.textContent = `${result.item.companyName} · ${result.item.code} 프로젝트를 등록했어요. 계약·착수 단계와 범위 미정으로 시작해요.`;
+    const addedButton = listView.querySelector(`[data-open-project="${result.item.id}"]`);
+    if (addedButton) {
+      addedButton.focus({ preventScroll: true });
+      addedButton.scrollIntoView({ block: 'center' });
+    }
+  });
 
   document.querySelector('#stage-filters').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-stage]');

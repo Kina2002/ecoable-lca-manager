@@ -7,7 +7,7 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-011">
+    <link rel="stylesheet" href="./css/app.css?v=web-012">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js?v=web-010" defer></script>
@@ -16,18 +16,20 @@
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
     <script src="./js/requests.js?v=web-009.2" defer></script>
+    <script src="./js/projects.js?v=web-012" defer></script>
     <script src="./js/scope.js?v=web-011" defer></script>
     <script src="./js/views/scope.js?v=web-011" defer></script>
     <script src="./js/request-filter.js?v=web-009.2" defer></script>
-    <script src="./js/views/collection.js?v=web-009.2" defer></script>
-    <script src="./js/views/project-detail.js?v=web-011" defer></script>
+    <script src="./js/views/collection.js?v=web-012" defer></script>
+    <script src="./js/views/project-detail.js?v=web-012" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
+    <script src="./js/views/project-create.js?v=web-012" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
     <script src="./js/views/review.js?v=web-008" defer></script>
     <script src="./js/views/requests.js?v=web-009" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
-    <script src="./js/app.js?v=web-011.1" defer></script>
+    <script src="./js/app.js?v=web-012" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -64,6 +66,7 @@
         </header>
         <main id="main-content" tabindex="-1">
           <p id="scope-storage-status" role="alert" hidden></p>
+          <p id="project-storage-status" role="alert" hidden></p>
           <div id="project-list-view">
           <div class="page-heading">
             <div>
@@ -71,8 +74,9 @@
               <h1 id="project-overview-title" tabindex="-1">프로젝트 한눈에</h1>
               <p class="page-description">고객사별 제품과 업무 목적, 현재 진행 단계를 확인하세요.</p>
             </div>
-            <span class="demo-pill"><span class="small-dot"></span> 가상 데이터로 체험 중</span>
+            <div class="project-heading-actions"><span class="demo-pill"><span class="small-dot"></span> 가상 데이터로 체험 중</span><button id="new-project" class="primary-button" type="button" aria-haspopup="dialog">새 프로젝트 등록</button></div>
           </div>
+          <p id="project-create-status" role="status" aria-live="polite"></p>
 
           <section class="stage-overview" aria-labelledby="stage-overview-title">
             <div class="stage-heading">
@@ -126,6 +130,28 @@
             </div>
           </section>
           </div>
+
+          <dialog id="project-create-dialog" class="receipt-dialog" aria-labelledby="project-create-title" aria-describedby="project-create-intro">
+            <h2 id="project-create-title">새 가상 프로젝트 등록</h2>
+            <p id="project-create-intro" class="detail-help">새 업무의 이름표를 만드는 과정이에요. 계약·착수 단계와 범위 미정으로 시작하며, 범위는 나중에 협의해서 입력해요. 회사에는 ‘가상’ 표시가 붙어요.</p>
+            <form id="project-create-form" class="project-create-form" novalidate>
+              <label for="project-company-name">회사명 <span>(필수 · 최대 100자)</span></label>
+              <input id="project-company-name" name="companyName" type="text" maxlength="100" required autocomplete="off" placeholder="예: 푸른소재" aria-describedby="project-create-error">
+              <label for="project-product-name">제품명 <span>(필수 · 최대 100자)</span></label>
+              <input id="project-product-name" name="productName" type="text" maxlength="100" required autocomplete="off" placeholder="예: 재생 플라스틱 칩" aria-describedby="project-create-error">
+              <label for="project-purpose">업무 목적 <span>(필수)</span></label>
+              <select id="project-purpose" name="purpose" required aria-describedby="project-purpose-help project-create-error"><option value="">목적을 골라 주세요</option></select>
+              <p id="project-purpose-help" class="detail-help">거래처가 요구하면 고객사 요구 대응, 관련 제도에 대응하려면 규제 대응, 제품의 환경영향을 알아보려면 제품 환경성 진단을 선택해요.</p>
+              <label for="project-target-date">목표 완료일 <span>(필수)</span></label>
+              <input id="project-target-date" name="targetDate" type="text" inputmode="numeric" maxlength="10" required placeholder="YYYY-MM-DD" aria-describedby="project-target-help project-create-error">
+              <input id="project-target-calendar" class="scope-calendar" type="date" min="0001-01-01" max="9999-12-31" tabindex="-1" aria-hidden="true">
+              <button id="project-target-calendar-button" class="request-action-button" type="button">목표 완료일 달력</button>
+              <p id="project-target-help" class="detail-help">이 업무를 마치려는 날짜예요. 숫자 8자리로 입력하거나 달력을 사용할 수 있어요.</p>
+              <p id="project-create-error" role="alert" hidden></p>
+              <p class="detail-help">등록한 내용은 이 브라우저에 저장돼요. 같은 회사·제품의 다른 업무도 등록할 수 있으며 프로젝트 번호로 구분해요.</p>
+              <div class="receipt-form-actions"><button id="project-create-cancel" class="request-action-button" type="button">취소</button><button class="primary-button" type="submit">프로젝트 등록</button></div>
+            </form>
+          </dialog>
 
           <section id="project-detail-view" aria-labelledby="project-detail-title" hidden>
             <button id="back-to-projects" class="back-button" type="button"><span aria-hidden="true">←</span> 목록으로</button>

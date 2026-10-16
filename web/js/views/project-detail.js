@@ -106,7 +106,7 @@ LCA.views.projectDetail = (() => {
 
     const stage = LCA.constants.stageByNo(project.stage);
     const summary = textElement('dl', 'detail-summary', '');
-    const target = field('목표 완료일', project.targetDate ? project.targetDate.replaceAll('-', '.') : '미정', '앱을 연 날짜로 만든 시연용 일정이에요.');
+    const target = field('목표 완료일', project.targetDate ? project.targetDate.replaceAll('-', '.') : '미정', project.origin === 'user' ? '프로젝트 등록 때 직접 입력한 목표일이에요.' : '앱을 연 날짜로 만든 시연용 일정이에요.');
     if (project.targetDate) {
       const time = textElement('time', 'detail-value', project.targetDate.replaceAll('-', '.'));
       time.dateTime = project.targetDate;

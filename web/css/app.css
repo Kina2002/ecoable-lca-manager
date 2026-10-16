@@ -115,6 +115,7 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .back-button span { font-size: 17px; }
 .detail-heading { align-items: center; margin-bottom: 26px; }
 .detail-title { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.detail-title { overflow-wrap: anywhere; }
 .detail-title .fictional-tag { padding: 4px 7px; font-size: 11px; letter-spacing: 0; }
 .detail-title:focus { outline: none; }
 .detail-summary { display: grid; grid-template-columns: .85fr 1fr 1.3fr 1.1fr; gap: 24px; margin: 0 0 24px; padding: 24px; border: 1px solid #dce5da; border-radius: 13px; background: #edf3ea; }
@@ -403,5 +404,14 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .scope-form fieldset label { display: inline-flex; align-items: center; gap: 6px; margin: 8px 18px 8px 0; }
 .scope-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .scope-form .scope-calendar { position: absolute; width: 1px !important; height: 1px; min-height: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
+.project-heading-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.project-heading-actions .primary-button { margin: 0; }
+.project-create-form { margin-top: 24px; }
+.project-create-form label { display: block; margin: 18px 0 8px; font-size: 14px; font-weight: 600; }
+.project-create-form label span { font-size: 12px; font-weight: 400; }
+.project-create-form input:not([type=date]), .project-create-form select { display: block; width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; box-sizing: border-box; }
+.project-create-form .scope-calendar { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.project-create-form [aria-invalid=true] { border-color: #a43c2b !important; }
+#project-create-error, #project-storage-status { color: #943624; }
 .scope-form button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 760px) { .scope-form { grid-template-columns: 1fr; } }
