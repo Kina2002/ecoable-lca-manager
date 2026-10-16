@@ -32,6 +32,20 @@ LCA.rules = (() => {
   const isOpen = (item) => C.OPEN_STATUSES.includes(item.status);
   const counts = (item) => item.status !== '해당 없음';
 
+  // 전체 명단을 단계별로 센다. 필터로 줄인 명단을 전달하지 않는 것이 중요하다.
+  function stageCounts(projects) {
+    const result = Object.fromEntries(C.STAGES.map((stage) => [stage.no, 0]));
+    projects.forEach((project) => {
+      if (Object.hasOwn(result, project.stage)) result[project.stage] += 1;
+    });
+    return result;
+  }
+
+  // 실제 프로젝트의 단계는 그대로 두고, 화면에 보여줄 명단만 골라 돌려준다.
+  function projectsForStage(projects, stageNo = null) {
+    return stageNo === null ? projects.slice() : projects.filter((project) => project.stage === stageNo);
+  }
+
   // 아직 내야 하는 항목의 남은 날 (기한 - 오늘)
   function daysToDue(item, t = today()) {
     return isOpen(item) && item.dueDate ? daysBetween(t, item.dueDate) : null;
@@ -200,7 +214,7 @@ LCA.rules = (() => {
   }
 
   return {
-    today, setToday, addDays, daysBetween, daysToDue, isOverdue, dueNotice, kindOf, mailGroup,
+    today, setToday, addDays, daysBetween, stageCounts, projectsForStage, daysToDue, isOverdue, dueNotice, kindOf, mailGroup,
     isTwelveMonths, isEvidenceComplete, projectStats, missingInfo, recommendMail, gateCheck, urgency, todayTasks, isOpen
   };
 })();

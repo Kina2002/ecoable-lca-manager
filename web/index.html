@@ -7,12 +7,13 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css">
+    <link rel="stylesheet" href="./css/app.css?v=web-002">
     <script src="./js/constants.js" defer></script>
-    <script src="./js/rules.js" defer></script>
+    <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
-    <script src="./js/views/project-list.js" defer></script>
-    <script src="./js/app.js" defer></script>
+    <script src="./js/views/stage-filter.js" defer></script>
+    <script src="./js/views/project-list.js?v=web-002" defer></script>
+    <script src="./js/app.js?v=web-002" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -53,10 +54,21 @@
             <span class="demo-pill"><span class="small-dot"></span> 가상 데이터로 체험 중</span>
           </div>
 
-          <section class="project-section" aria-labelledby="project-list-title">
+          <section class="stage-overview" aria-labelledby="stage-overview-title">
+            <div class="stage-heading">
+              <div>
+                <h2 id="stage-overview-title">단계별 프로젝트</h2>
+                <p>단계를 누르면 해당 프로젝트만 보여요. 숫자는 현재 그 단계에 있는 프로젝트 수예요.</p>
+              </div>
+              <button id="all-stages" class="all-stages" type="button" aria-pressed="true" aria-controls="project-list-section">전체 보기 <span id="all-stages-count">0</span></button>
+            </div>
+            <div id="stage-filters" class="stage-grid" role="group" aria-label="업무 단계로 프로젝트 거르기"></div>
+          </section>
+
+          <section id="project-list-section" class="project-section" aria-labelledby="project-list-title">
             <div class="section-heading">
-              <h2 id="project-list-title">전체 프로젝트 <span id="project-count" class="count-badge">0</span></h2>
-              <p>제품 전과정평가 · LCA</p>
+              <h2 id="project-list-title"><span id="project-list-label">전체 프로젝트</span> <span id="project-count" class="count-badge">0</span></h2>
+              <p id="list-context" role="status" aria-live="polite" aria-atomic="true"></p>
             </div>
             <div class="table-container">
               <table class="project-table">

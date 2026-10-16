@@ -29,7 +29,7 @@ LCA.views.projectList = (() => {
     return 'setup';
   }
 
-  function render(projects) {
+  function render(projects, selectedStage = null, totalCount = projects.length) {
     const rows = document.querySelector('#project-rows');
     const fragment = document.createDocumentFragment();
 
@@ -80,7 +80,15 @@ LCA.views.projectList = (() => {
     });
 
     rows.replaceChildren(fragment);
+    const stage = LCA.constants.stageByNo(selectedStage);
+    document.querySelector('#project-list-label').textContent = stage ? `${stage.name} 프로젝트` : '전체 프로젝트';
     document.querySelector('#project-count').textContent = projects.length;
+    document.querySelector('#list-context').textContent = stage
+      ? `${stage.name} · 전체 ${totalCount}개 중 ${projects.length}개 표시`
+      : `전체 ${totalCount}개 표시`;
+    document.querySelector('#empty-state').textContent = stage
+      ? `${stage.name} 단계의 프로젝트가 없습니다.`
+      : '아직 등록된 프로젝트가 없습니다.';
     document.querySelector('.project-table').hidden = projects.length === 0;
     document.querySelector('#empty-state').hidden = projects.length !== 0;
   }
