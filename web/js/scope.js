@@ -4,9 +4,9 @@ LCA.scope = (() => {
   const STORAGE_KEY = 'ecoable-lca-manager.scope.v1';
   const STATUSES = ['미정', '고객 요청안', '협의 중', '확정'];
   const STANDARDS = ['ISO 14040/44', 'ISO 14067', 'GHG Protocol Product', 'PEF', 'EN 15804+A2', '작성지침(PCR)', 'PACT', 'Catena-X'];
-  const FIELDS = ['scopeStatus', 'functionalUnit', 'boundary', 'refStart', 'refEnd', 'periodReason', 'standards', 'stage'];
+  const FIELDS = ['scopeStatus', 'functionalUnit', 'boundary', 'refStart', 'refEnd', 'periodReason', 'standards', 'stage', 'scopeMemo'];
   function snapshot(project) {
-    return Object.fromEntries(FIELDS.map((key) => [key, project[key]]));
+    return Object.fromEntries(FIELDS.map((key) => [key, key === 'scopeMemo' && project[key] === undefined ? '' : project[key]]));
   }
   function twelveMonths(start, end) {
     if (!LCA.requests.validDate(start) || !LCA.requests.validDate(end)) return false;
@@ -38,6 +38,7 @@ LCA.scope = (() => {
       && (!record.refStart || LCA.requests.validDate(record.refStart)) && (!record.refEnd || LCA.requests.validDate(record.refEnd))
       && (!record.refStart || !record.refEnd || record.refStart <= record.refEnd)
       && record.periodReason.length <= 1000 && Array.isArray(record.standards)
+      && (record.scopeMemo === undefined || (typeof record.scopeMemo === 'string' && record.scopeMemo.length <= 2000))
       && record.standards.every((value) => STANDARDS.includes(value))
       && (record.scopeStatus !== '확정' || !missing({ ...record, productName: '제품' }).length)
       && (record.stage !== 3 || record.scopeStatus === '확정');
@@ -52,7 +53,8 @@ LCA.scope = (() => {
         if (!data || data.version !== 1 || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)
           || Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2].includes(originals.get(id).stage)
             || (value.stage !== originals.get(id).stage && !(originals.get(id).stage === 2 && value.stage === 3)))) throw Error();
-        return { ok: true, records: data.records };
+        // 기존 기록은 메모가 없다. 읽을 때만 빈 문자열로 보완하고 원본 저장본은 쓰지 않는다.
+        return { ok: true, records: Object.fromEntries(Object.entries(data.records).map(([id, value]) => [id, snapshot(value)])) };
       } catch { return { ok: false, error: '범위 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 저장과 단계 이동을 중단했어요.' }; }
     }
     function load() {

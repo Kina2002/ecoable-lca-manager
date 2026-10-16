@@ -118,3 +118,55 @@ test('다른 탭에서 바뀐 범위를 이전 화면이 덮어쓰지 않는다'
   assert.equal(s.store.start(p.id, expected).ok, false);
   assert.equal(p.scopeStatus, '확정');
 });
+
+test('협의 메모를 저장·재로딩하고 수집 시작 후에도 유지한다', () => {
+  const s = setup(), p = confirmed(s);
+  const memo = '고객 요청: 요람~무덤\n사용 단계 자료 확보 가능 여부 확인';
+  assert.equal(save(s, p, { scopeMemo: memo }).ok, true);
+  assert.equal(p.stage, 2);
+  assert.equal(s.store.start(p.id, S.snapshot(p)).ok, true);
+  const fresh = context.LCA.data.createSampleProjects('2026-10-16');
+  assert.equal(S.createStore(fresh, () => s.storage).load().ok, true);
+  assert.equal(fresh[4].scopeMemo, memo);
+  assert.equal(fresh[4].stage, 3);
+  assert.equal(fresh[6].scopeMemo, '');
+});
+
+test('메모 없는 기존 v1 기록을 쓰기 없이 읽고 이후 수정할 수 있다', () => {
+  const s = setup(), p = confirmed(s);
+  const previous = JSON.parse(s.raw);
+  delete previous.records[p.id].scopeMemo;
+  s.raw = JSON.stringify(previous);
+  const raw = s.raw, writes = s.writes;
+  const fresh = context.LCA.data.createSampleProjects('2026-10-16');
+  const store = S.createStore(fresh, () => s.storage);
+  assert.equal(store.load().ok, true);
+  assert.equal(fresh[4].scopeMemo, '');
+  assert.equal(fresh[4].scopeStatus, '확정');
+  assert.equal(s.raw, raw);
+  assert.equal(s.writes, writes);
+  assert.equal(store.save(p.id, { ...S.snapshot(fresh[4]), scopeMemo: '협의 결과 기록' }, S.snapshot(fresh[4])).ok, true);
+  assert.equal(fresh[4].scopeMemo, '협의 결과 기록');
+});
+
+test('협의 메모 길이·형식과 저장 실패를 검사하고 기존 메모를 지킨다', () => {
+  const s = setup(), p = confirmed(s);
+  assert.equal(save(s, p, { scopeMemo: '가'.repeat(2000) }).ok, true);
+  const before = s.raw;
+  for (const memo of ['가'.repeat(2001), null, 123]) {
+    assert.equal(save(s, p, { scopeMemo: memo }).ok, false);
+    assert.equal(s.raw, before);
+  }
+  s.storage.setItem = () => { throw Error('quota'); };
+  assert.equal(save(s, p, { scopeMemo: '변경' }).ok, false);
+  assert.equal(p.scopeMemo.length, 2000);
+});
+
+test('다른 화면에서 메모만 수정해도 이전 화면의 저장·시작을 막는다', () => {
+  const s = setup(), p = confirmed(s), expected = S.snapshot(p);
+  assert.equal(save(s, p, { scopeMemo: '새 합의 내용' }).ok, true);
+  assert.equal(s.store.save(p.id, { ...expected, scopeMemo: '이전 화면 내용' }, expected).ok, false);
+  assert.equal(s.store.start(p.id, expected).ok, false);
+  assert.equal(p.scopeMemo, '새 합의 내용');
+  assert.equal(p.stage, 2);
+});

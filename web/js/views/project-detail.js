@@ -59,8 +59,14 @@ LCA.views.projectDetail = (() => {
   function scopeCard(project) {
     const unit = project.functionalUnit;
     const quantity = unit && unit.qty != null && unit.unit ? `${unit.qty} ${unit.unit}` : '미정';
+    const status = field('범위 상태', project.scopeStatus || '미정', '경계가 적혀 있어도 고객과 합의한 확정안인지 따로 확인해요. 상태 버튼을 누르면 범위 기록으로 바로 이동해요.');
+    const jump = textElement('button', 'scope-status-button', `${project.scopeStatus || '미정'} · ${project.stage <= 2 ? '수정' : '기록 보기'}`);
+    jump.type = 'button';
+    jump.dataset.editScope = '';
+    jump.setAttribute('aria-controls', 'scope-editor');
+    status.querySelector('.detail-value').replaceWith(jump);
     const scopeFields = [
-      field('범위 상태', project.scopeStatus || '미정', '경계가 적혀 있어도 고객과 합의한 확정안인지 따로 확인해요.'),
+      status,
       field('평가 대상 제품', project.productName),
       field('평가 기준량 · 얼마만큼을 기준으로 하나요?', quantity,
         unit && unit.unit ? `${UNIT_HELP[unit.unit] || ''} 평가 결과를 제품 ${quantity} 기준으로 정리한다는 뜻이에요. 공장의 실제 생산량이 아니에요.`.trim() : '결과를 정리할 기준 수량과 단위를 정해요.'),
@@ -70,6 +76,7 @@ LCA.views.projectDetail = (() => {
     scopeFields.push(field('기준기간', project.refStart && project.refEnd ? `${project.refStart} ~ ${project.refEnd}` : '미정'));
     scopeFields.push(field('적용 기준', project.standards || []));
     if (project.periodReason) scopeFields.push(field('기준기간 사유', project.periodReason));
+    scopeFields.push(field('협의 메모', project.scopeMemo || '기록한 메모가 없어요.'));
     if (project.modules) {
       scopeFields.push(field('평가 모듈', project.modules,
         project.modules === 'A1–A3' ? '건설제품 평가의 단계 표기예요. A1은 원료 공급, A2는 원료 운송, A3는 제품 제조를 뜻해요.' : '이 프로젝트에서 평가할 과정의 구분이에요.'));

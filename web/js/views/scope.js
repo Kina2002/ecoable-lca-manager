@@ -6,6 +6,8 @@ LCA.views.scope = (() => {
     const section = document.createElement('section');
     section.className = 'detail-card scope-editor';
     const title = document.createElement('h2');
+    title.id = 'scope-editor-title';
+    title.tabIndex = -1;
     title.textContent = '범위 합의 기록';
     section.append(title);
     const intro = document.createElement('p');
@@ -34,7 +36,7 @@ LCA.views.scope = (() => {
       const caption = document.createElement('label');
       caption.htmlFor = `scope-${key}`;
       caption.textContent = label;
-      const input = document.createElement(options ? 'select' : key === 'periodReason' ? 'textarea' : 'input');
+      const input = document.createElement(options ? 'select' : ['periodReason', 'scopeMemo'].includes(key) ? 'textarea' : 'input');
       input.id = caption.htmlFor;
       input.name = key;
       if (options) for (const option of options) {
@@ -43,7 +45,7 @@ LCA.views.scope = (() => {
         node.textContent = option || '미정';
         input.append(node);
       }
-      else input.maxLength = key === 'periodReason' ? 1000 : 30;
+      else input.maxLength = key === 'scopeMemo' ? 2000 : key === 'periodReason' ? 1000 : 30;
       input.value = value || '';
       box.append(caption, input);
       form.append(box);
@@ -51,6 +53,10 @@ LCA.views.scope = (() => {
       return input;
     }
     field('scopeStatus', '범위 상태', project.scopeStatus, LCA.scope.STATUSES);
+    const memo = field('scopeMemo', '협의 메모 (선택 · 최대 2,000자)', project.scopeMemo);
+    memo.rows = 4;
+    memo.parentElement.className = 'scope-memo-field';
+    memo.placeholder = '예: 고객은 요람~무덤을 요청했으며, 사용 단계 자료를 확보할 수 있는지 확인 중이에요.';
     field('qty', '평가 기준량 (0보다 큰 수)', project.functionalUnit?.qty);
     controls.qty.inputMode = 'decimal';
     field('unit', '기준량 단위 (예: kg, t, 장)', project.functionalUnit?.unit);
@@ -74,6 +80,12 @@ LCA.views.scope = (() => {
       LCA.views.dateInput.bind(input, calendar, button, () => updateReadiness(true), message);
     }
     field('periodReason', '12개월이 아닌 기간을 사용하는 사유', project.periodReason);
+    const periodHelp = document.createElement('p');
+    periodHelp.id = 'scope-period-help';
+    periodHelp.className = 'detail-help';
+    periodHelp.textContent = '선택한 자료 기간이 12개월과 다른 이유예요. 예: 7월에 생산을 시작해 6개월 자료만 있어요. 이 앱의 기본 기간은 12개월이며 실제 기간은 적용 기준과 상황에 맞춰 확인해요.';
+    controls.periodReason.parentElement.append(periodHelp);
+    controls.periodReason.setAttribute('aria-describedby', periodHelp.id);
     const standards = document.createElement('fieldset');
     const legend = document.createElement('legend');
     legend.textContent = '적용 기준 (하나 이상 선택)';
@@ -122,6 +134,7 @@ LCA.views.scope = (() => {
         functionalUnit: { qty: controls.qty.value.trim(), unit: controls.unit.value.trim() },
         boundary: controls.boundary.value, refStart: controls.refStart.value, refEnd: controls.refEnd.value,
         periodReason: controls.periodReason.value.trim(),
+        scopeMemo: controls.scopeMemo.value.trim(),
         standards: Array.from(standards.querySelectorAll('input:checked'), (input) => input.value)
       };
       const result = store.save(project.id, draft, expected);
@@ -138,5 +151,11 @@ LCA.views.scope = (() => {
     section.append(form);
     updateReadiness();
   }
-  return { init };
+  function focusEditor() {
+    const target = document.querySelector('#scope-scopeStatus') || document.querySelector('#scope-editor-title');
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    document.querySelector('#scope-editor').scrollIntoView({ block: 'start' });
+  }
+  return { init, focusEditor };
 })();

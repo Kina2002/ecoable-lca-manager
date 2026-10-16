@@ -389,6 +389,12 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 /* WEB-010: 범위 합의와 전체 업무 단계의 구분 */
 .scope-status { display: block; margin-top: 6px; color: var(--green, #174c3d); font-size: 12px; font-weight: 600; }
 .scope-editor { margin-top: 24px; }
+.scope-editor { scroll-margin-top: 24px; }
+.scope-status-button { border: 1px solid #cbd8ce; border-radius: 8px; padding: 8px 12px; min-height: 44px; background: #f1f7f2; color: #174c3d; font: inherit; cursor: pointer; text-align: left; }
+.scope-status-button:hover { background: #dfefe3; }
+.scope-status-button:focus-visible { outline: 3px solid #247158; outline-offset: 3px; }
+.scope-memo-field { grid-column: 1 / -1; }
+#scope-summary .detail-value { white-space: pre-wrap; overflow-wrap: anywhere; }
 .scope-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 20px; }
 .scope-form label { display: block; margin-bottom: 8px; font-size: 13px; }
 .scope-form input:not([type=checkbox]), .scope-form select, .scope-form textarea { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; box-sizing: border-box; }
