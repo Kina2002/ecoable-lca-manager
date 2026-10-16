@@ -31,11 +31,23 @@
     }
   }
 
+  const collectionView = LCA.views.collection.init(projects, requestStore, (projectId, requestId, opener) => {
+    showDetail(projectId, opener);
+    selectDetailTab('requests');
+    const card = detailView.querySelector(`#request-items li[data-request-id="${requestId}"]`);
+    if (card) {
+      card.tabIndex = -1;
+      card.focus({ preventScroll: true });
+      card.scrollIntoView({ block: 'center' });
+    }
+  });
+
   function showStage(stageNo) {
     selectedStage = stageNo;
     const visibleProjects = LCA.rules.projectsForStage(projects, selectedStage);
     LCA.views.projectList.render(visibleProjects, selectedStage, projects.length);
     LCA.views.stageFilter.select(selectedStage);
+    collectionView.setStage(selectedStage);
   }
 
   // 위의 건수는 전체 명단에서 만들고, 아래 목록만 선택한 조건으로 거른다.
@@ -75,8 +87,10 @@
     projectView = listView;
     projectPageTitle = '프로젝트 목록 | 에코에이블 LCA 관리';
     setPage('프로젝트', projectPageTitle, 'project');
+    collectionView.refresh();
     // 목록을 다시 만들지 않고 펼쳐, 선택한 단계·키보드 초점·스크롤 위치를 이어 간다.
-    if (detailOpener && detailOpener.isConnected) detailOpener.focus({ preventScroll: true });
+    if (detailOpener?.dataset.collectionRequest) collectionView.focusRequest(detailOpener.dataset.collectionRequest);
+    else if (detailOpener && detailOpener.isConnected) detailOpener.focus({ preventScroll: true });
     window.scrollTo(0, listScrollY);
   }
 
@@ -116,6 +130,7 @@
     glossaryView.hidden = true;
     projectView.hidden = false;
     setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
+    if (projectView === listView) collectionView.refresh();
     projectView.querySelector('h1').focus({ preventScroll: true });
     window.scrollTo(0, projectScrollY);
   });

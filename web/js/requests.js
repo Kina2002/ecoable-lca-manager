@@ -82,6 +82,12 @@ LCA.requests = (() => {
       return { ok: true, items: requests.filter((item) => !item.deletedAt), deletedItems: requests.filter((item) => item.deletedAt) };
     }
 
+    function listAll() {
+      const result = read();
+      if (!result.ok) return result;
+      return { ok: true, items: result.data.requests.filter((item) => !item.deletedAt) };
+    }
+
     function add(projectId, draft) {
       const errors = validate(draft);
       if (Object.keys(errors).length) return { ok: false, errors };
@@ -193,7 +199,7 @@ LCA.requests = (() => {
       return writeReview(current, { ...current.item, status, review });
     }
 
-    return { list, add, recordReceipt, startReview, saveReview, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
+    return { list, listAll, add, recordReceipt, startReview, saveReview, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };

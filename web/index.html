@@ -7,16 +7,17 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-009">
+    <link rel="stylesheet" href="./css/app.css?v=web-009.2">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
-    <script src="./js/views/stage-filter.js" defer></script>
+    <script src="./js/views/stage-filter.js?v=web-009.2" defer></script>
     <script src="./js/views/project-list.js?v=web-003" defer></script>
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
-    <script src="./js/requests.js?v=web-008" defer></script>
-    <script src="./js/request-filter.js?v=web-009" defer></script>
+    <script src="./js/requests.js?v=web-009.2" defer></script>
+    <script src="./js/request-filter.js?v=web-009.2" defer></script>
+    <script src="./js/views/collection.js?v=web-009.2" defer></script>
     <script src="./js/views/project-detail.js?v=web-005" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
@@ -24,7 +25,7 @@
     <script src="./js/views/requests.js?v=web-009" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
-    <script src="./js/app.js?v=web-005" defer></script>
+    <script src="./js/app.js?v=web-009.2" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -76,9 +77,23 @@
                 <h2 id="stage-overview-title">단계별 프로젝트</h2>
                 <p>단계를 누르면 해당 프로젝트만 보여요. 숫자는 현재 그 단계에 있는 프로젝트 수예요.</p>
               </div>
-              <button id="all-stages" class="all-stages" type="button" aria-pressed="true" aria-controls="project-list-section">전체 보기 <span id="all-stages-count">0</span></button>
+              <button id="all-stages" class="all-stages" type="button" aria-pressed="true" aria-controls="project-list-section collection-section">전체 보기 <span id="all-stages-count">0</span></button>
             </div>
             <div id="stage-filters" class="stage-grid" role="group" aria-label="업무 단계로 프로젝트 거르기"></div>
+          </section>
+
+          <section id="collection-section" class="project-section collection-section" aria-labelledby="collection-title" hidden>
+            <div class="section-heading">
+              <div><h2 id="collection-title" tabindex="-1">데이터 수집 · 자료 현황</h2><p class="collection-intro">데이터 수집 단계의 프로젝트들이 요청한 자료를 바로 확인하세요.</p></div>
+              <span class="demo-pill">단계 안의 자료 상태 필터</span>
+            </div>
+            <div id="collection-status-controls" class="collection-controls">
+              <div id="collection-status-filters" class="request-status-filters" role="group" aria-label="데이터 수집 단계의 자료 상태로 거르기"></div>
+              <p id="collection-context" class="request-filter-summary" role="status" aria-live="polite" aria-atomic="true"></p>
+            </div>
+            <p id="collection-error" class="form-error collection-error" role="alert" hidden></p>
+            <ul id="collection-items" class="collection-items" aria-label="데이터 수집 단계의 자료 요청"></ul>
+            <p id="collection-empty" class="empty-state" hidden></p>
           </section>
 
           <section id="project-list-section" class="project-section" aria-labelledby="project-list-title">

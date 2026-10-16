@@ -21,7 +21,7 @@ LCA.views.stageFilter = (() => {
       button.className = `stage-filter${count === 0 ? ' stage-filter--empty' : ''}`;
       button.dataset.stage = stage.no;
       button.setAttribute('aria-label', `${stage.name} ${count}개`);
-      button.setAttribute('aria-controls', 'project-list-section');
+      button.setAttribute('aria-controls', 'project-list-section collection-section');
       button.setAttribute('aria-pressed', 'false');
       button.title = stage.name;
       button.append(
