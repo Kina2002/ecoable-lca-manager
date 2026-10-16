@@ -11,6 +11,10 @@
 
   const projects = LCA.data.createSampleProjects(referenceDate);
   let selectedStage = null; // null은 '전체 보기'라는 뜻이다. 새로고침하면 전체로 돌아온다.
+  const listView = document.querySelector('#project-list-view');
+  const detailView = document.querySelector('#project-detail-view');
+  let listScrollY = 0;
+  let detailOpener = null;
 
   function showStage(stageNo) {
     selectedStage = stageNo;
@@ -30,4 +34,40 @@
     showStage(selectedStage === stageNo ? null : stageNo);
   });
   document.querySelector('#all-stages').addEventListener('click', () => showStage(null));
+
+  function showDetail(projectId, opener) {
+    // 행의 위치가 아니라 고정 ID로 찾는다. 필터 후에도 다른 업무와 혼동하지 않는다.
+    const project = projects.find((item) => item.id === projectId);
+    if (!project) return;
+    listScrollY = window.scrollY;
+    detailOpener = opener;
+    LCA.views.projectDetail.render(project);
+    listView.hidden = true;
+    detailView.hidden = false;
+    document.querySelector('#current-view-label').textContent = '프로젝트 상세';
+    document.title = `${project.companyName} 상세 | 에코에이블 LCA 관리`;
+    document.querySelector('#project-detail-title').focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+
+  function showList() {
+    if (detailView.hidden) return;
+    detailView.hidden = true;
+    listView.hidden = false;
+    document.querySelector('#current-view-label').textContent = '프로젝트';
+    document.title = '프로젝트 목록 | 에코에이블 LCA 관리';
+    // 목록을 다시 만들지 않고 펼쳐, 선택한 단계·키보드 초점·스크롤 위치를 이어 간다.
+    if (detailOpener && detailOpener.isConnected) detailOpener.focus({ preventScroll: true });
+    window.scrollTo(0, listScrollY);
+  }
+
+  document.querySelector('#project-rows').addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-open-project]');
+    if (button) showDetail(button.dataset.openProject, button);
+  });
+  document.querySelector('#back-to-projects').addEventListener('click', showList);
+  document.querySelector('#project-navigation').addEventListener('click', (event) => {
+    event.preventDefault();
+    showList();
+  });
 })();

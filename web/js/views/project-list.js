@@ -41,7 +41,14 @@ LCA.views.projectList = (() => {
       const companyLine = textElement('div', 'company-line', '');
       companyLine.append(textElement('strong', 'company-name', project.companyName));
       if (project.isFictional) companyLine.append(textElement('span', 'fictional-tag', '가상'));
-      company.append(companyLine, textElement('span', 'project-code', project.code));
+      const detailButton = textElement('button', 'project-code', project.code);
+      detailButton.type = 'button';
+      detailButton.dataset.openProject = project.id;
+      detailButton.setAttribute('aria-label', `${project.code} ${project.companyName} 상세 보기`);
+      const arrow = textElement('span', 'project-code-arrow', '↗');
+      arrow.setAttribute('aria-hidden', 'true');
+      detailButton.append(arrow);
+      company.append(companyLine, detailButton);
 
       const product = cell();
       const unit = project.functionalUnit;

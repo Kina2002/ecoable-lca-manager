@@ -7,13 +7,14 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-002">
+    <link rel="stylesheet" href="./css/app.css?v=web-003">
     <script src="./js/constants.js" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
     <script src="./js/views/stage-filter.js" defer></script>
-    <script src="./js/views/project-list.js?v=web-002" defer></script>
-    <script src="./js/app.js?v=web-002" defer></script>
+    <script src="./js/views/project-list.js?v=web-003" defer></script>
+    <script src="./js/views/project-detail.js?v=web-003" defer></script>
+    <script src="./js/app.js?v=web-003" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -27,7 +28,7 @@
         </div>
         <p class="nav-label">워크스페이스</p>
         <nav aria-label="주 메뉴">
-          <a class="nav-item" href="./" aria-current="page">
+          <a id="project-navigation" class="nav-item" href="./" aria-current="page">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>
             프로젝트
           </a>
@@ -41,10 +42,11 @@
 
       <div class="main-shell">
         <header class="topbar">
-          <span class="breadcrumb">워크스페이스 <span aria-hidden="true">/</span> <strong>프로젝트</strong></span>
+          <span class="breadcrumb">워크스페이스 <span aria-hidden="true">/</span> <strong id="current-view-label">프로젝트</strong></span>
           <time id="reference-date" class="reference-date"></time>
         </header>
         <main id="main-content" tabindex="-1">
+          <div id="project-list-view">
           <div class="page-heading">
             <div>
               <p class="eyebrow">PROJECT OVERVIEW</p>
@@ -88,9 +90,16 @@
             </div>
             <div class="list-footnote">
               <span>회사명 옆 ‘가상’은 시연을 위해 만든 회사라는 뜻입니다.</span>
-              <span>진행 단계는 총 10단계입니다.</span>
+              <span>프로젝트 번호를 누르면 상세 내용을 볼 수 있어요.</span>
             </div>
           </section>
+          </div>
+
+          <section id="project-detail-view" aria-labelledby="project-detail-title" hidden>
+            <button id="back-to-projects" class="back-button" type="button"><span aria-hidden="true">←</span> 목록으로</button>
+            <div id="project-detail-content"></div>
+          </section>
+
           <footer class="page-footer">
             <p>에코에이블컨설팅 지원을 위해 만든 포트폴리오이며, 회사의 공식 서비스가 아닙니다.</p>
             <span>LCA MANAGEMENT</span>
