@@ -58,8 +58,9 @@ LCA.requests = (() => {
           if (!Number.isSafeInteger(number) || number < 1 || number >= data.nextNumber || ids.has(item.id)
             || !knownProjects.has(item.projectId) || (!item.deletedAt && projectCategories.has(pair))
             || Object.keys(validate(item)).length
-            || (item.status !== '요청' && item.status !== '제출됨')
-            || (item.status === '제출됨' ? !LCA.receivedData.validRecord(item.receipt) : 'receipt' in item)
+            || !['요청', '제출됨', ...LCA.review.STATUSES].includes(item.status)
+            || (item.status !== '요청' ? !LCA.receivedData.validRecord(item.receipt) : 'receipt' in item)
+            || (LCA.review.STATUSES.includes(item.status) ? !LCA.review.validRecord(item.review, item.status, item.receipt) : 'review' in item)
             || typeof item.createdAt !== 'string' || !Number.isFinite(Date.parse(item.createdAt))
             || ('deletedAt' in item && (typeof item.deletedAt !== 'string' || !Number.isFinite(Date.parse(item.deletedAt))))
             || !guide || typeof guide.source !== 'string' || typeof guide.section !== 'string'
@@ -139,6 +140,8 @@ LCA.requests = (() => {
       const now = new Date().toISOString();
       const receipt = { ...LCA.receivedData.normalize(draft), recordedAt: item.receipt?.recordedAt || now, updatedAt: now };
       const changed = { ...item, status: '제출됨', receipt };
+      // 보완 자료를 다시 기록하면 이전 체크와 결과를 지워 새 자료를 검토한다.
+      delete changed.review;
       const data = { ...current.data, requests: current.data.requests.map((value) => value.id === id ? changed : value) };
       try {
         getStorage().setItem(STORAGE_KEY, JSON.stringify(data));
@@ -148,7 +151,49 @@ LCA.requests = (() => {
       }
     }
 
-    return { list, add, recordReceipt, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
+    function reviewItem(projectId, id) {
+      const current = read();
+      if (!current.ok) return current;
+      const item = current.data.requests.find((value) => value.projectId === projectId && value.id === id && !value.deletedAt);
+      if (!knownProjects.has(projectId) || !item?.receipt) return failure('검토할 받은 자료를 찾지 못했습니다. 프로젝트와 요청을 다시 확인해 주세요.');
+      return { ok: true, data: current.data, item };
+    }
+
+    function writeReview(current, changed) {
+      const data = { ...current.data, requests: current.data.requests.map((item) => item.id === changed.id ? changed : item) };
+      try {
+        getStorage().setItem(STORAGE_KEY, JSON.stringify(data));
+        return { ok: true, item: changed };
+      } catch {
+        return failure('검토 내용을 저장하지 못했습니다. 기존 상태와 기록은 그대로예요. 저장 설정을 확인한 뒤 다시 시도해 주세요.');
+      }
+    }
+
+    function startReview(projectId, id) {
+      const current = reviewItem(projectId, id);
+      if (!current.ok) return current;
+      if (current.item.status === '검토 중') return { ok: true, item: current.item };
+      if (current.item.status !== '제출됨') return failure('이미 검토 결과가 저장된 자료예요. 받은 자료를 다시 기록하면 새로 검토할 수 있어요.');
+      const now = new Date().toISOString();
+      return writeReview(current, { ...current.item, status: '검토 중', review: {
+        checks: LCA.review.emptyChecks(), note: '', startedAt: now, updatedAt: now, receiptUpdatedAt: current.item.receipt.updatedAt
+      } });
+    }
+
+    function saveReview(projectId, id, draft, action, expectedReview) {
+      const errors = LCA.review.validate(draft, action);
+      if (Object.keys(errors).length) return { ok: false, errors };
+      const current = reviewItem(projectId, id);
+      if (!current.ok) return current;
+      if (current.item.status !== '검토 중' || !expectedReview || JSON.stringify(current.item.review) !== JSON.stringify(expectedReview)) {
+        return failure('자료나 검토 기록이 바뀌었어요. 창을 닫고 다시 열어 최신 자료를 확인해 주세요.');
+      }
+      const review = { ...current.item.review, checks: Object.fromEntries(LCA.review.CHECKS.map(({ key }) => [key, draft.checks[key]])), note: draft.note.trim(), updatedAt: new Date().toISOString() };
+      const status = action === 'approve' ? '승인' : action === 'revision' ? '보완 요청' : '검토 중';
+      return writeReview(current, { ...current.item, status, review });
+    }
+
+    return { list, add, recordReceipt, startReview, saveReview, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };

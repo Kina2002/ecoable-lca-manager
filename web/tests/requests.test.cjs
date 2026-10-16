@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const context = vm.createContext({});
 vm.runInContext('window = globalThis;', context);
-for (const file of ['constants.js', 'received-data.js', 'requests.js']) {
+for (const file of ['constants.js', 'received-data.js', 'review.js', 'requests.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', file), 'utf8'), context, { filename: file });
 }
 const { createStore, STORAGE_KEY, validDate, formatDateInput, validate } = context.LCA.requests;

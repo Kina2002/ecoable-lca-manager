@@ -181,6 +181,22 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .request-code { color: #8a967e; font-size: 10px; letter-spacing: .4px; }
 .request-state { padding: 4px 8px; border-radius: 4px; color: #9b6a20; background: #faf2e2; font-size: 10px; }
 .request-state-received { color: #347259; background: #e6f2e9; }
+.request-state-revision { color: #9b5434; background: #fbece0; }
+.review-open-button { margin-left: 8px; }
+.review-summary { margin-top: 14px; padding: 14px 15px; border-left: 3px solid #bacdb2; background: #f7f8f2; overflow-wrap: anywhere; }
+.review-summary h4 { margin: 0; color: #4a6b44; font-size: 12px; }
+.review-summary > p:not(.input-help) { margin: 8px 0 0; color: #6b765f; font-size: 12px; line-height: 1.8; white-space: pre-wrap; }
+.review-status-note { color: #55734d; font-size: 12px; font-weight: 700; }
+.review-checklist { min-width: 0; margin: 24px 0 0; padding: 16px; border: 1px solid #d5e1d0; border-radius: 7px; }
+.review-checklist legend { padding: 0 6px; color: #446b42; font-size: 13px; font-weight: 700; }
+.review-check-row { display: flex; align-items: start; gap: 10px; padding: 10px 0; color: #526b4c; font-size: 13px; line-height: 1.8; cursor: pointer; }
+.review-check-row input { flex: 0 0 auto; width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--green); }
+.review-check-row input:focus-visible { outline: 3px solid #9cce9e; outline-offset: 3px; }
+.review-checklist:disabled .review-check-row { cursor: default; }
+.review-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 24px; }
+.review-actions .primary-button { margin: 0; }
+.review-revision-button { color: #9b5434; border-color: #e1c5b0; }
+@media (max-width: 540px) { .review-open-button { margin-left: 0; margin-right: 8px; } }
 .receipt-open-button { margin-top: 18px; color: #286547; border-color: #b9d1bb; }
 .receipt-summary { margin-top: 18px; padding: 15px; border: 1px solid #dae7d8; border-radius: 7px; background: #f0f6ed; }
 .receipt-summary h4 { margin: 0; color: #456d48; font-size: 12px; }

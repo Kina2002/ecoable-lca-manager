@@ -7,18 +7,20 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-007">
+    <link rel="stylesheet" href="./css/app.css?v=web-008">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js" defer></script>
     <script src="./js/views/stage-filter.js" defer></script>
     <script src="./js/views/project-list.js?v=web-003" defer></script>
     <script src="./js/received-data.js?v=web-007" defer></script>
-    <script src="./js/requests.js?v=web-007" defer></script>
+    <script src="./js/review.js?v=web-008" defer></script>
+    <script src="./js/requests.js?v=web-008" defer></script>
     <script src="./js/views/project-detail.js?v=web-005" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
-    <script src="./js/views/received-data.js?v=web-007" defer></script>
-    <script src="./js/views/requests.js?v=web-007.1" defer></script>
+    <script src="./js/views/received-data.js?v=web-008" defer></script>
+    <script src="./js/views/review.js?v=web-008" defer></script>
+    <script src="./js/views/requests.js?v=web-008" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
     <script src="./js/app.js?v=web-005" defer></script>
@@ -150,7 +152,7 @@
               <section class="request-list-card" aria-labelledby="request-list-title">
                 <div class="request-list-heading">
                   <h2 id="request-list-title" tabindex="-1">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>
-                  <span class="request-status-label">받은 자료를 기록하면 ‘제출됨’으로 바뀌어요.</span>
+                  <span class="request-status-label">요청 → 제출됨 → 검토 중 → 보완 요청 / 승인</span>
                 </div>
                 <p id="request-storage-error" class="form-error" role="alert" hidden></p>
                 <p id="request-action-error" class="form-error" role="alert" hidden></p>
@@ -164,6 +166,40 @@
                 </details>
               </section>
             </div>
+          </template>
+
+          <template id="review-editor-template">
+            <dialog id="review-dialog" class="receipt-dialog" aria-labelledby="review-title" aria-describedby="review-intro">
+              <div class="receipt-dialog-heading">
+                <div><p class="eyebrow">DATA REVIEW</p><h2 id="review-title">받은 자료 검토</h2></div>
+                <button id="review-close" class="request-action-button" type="button" aria-label="자료 검토 창 닫기">닫기</button>
+              </div>
+              <p id="review-intro" class="receipt-intro">회사에서 받은 원본 자료를 보고, 요청한 내용에 맞는지 담당자가 확인해 주세요. 이 앱의 기본 확인 목록이며 회사의 공식 심사 기준은 아니에요.</p>
+              <div id="review-request-context" class="receipt-request-context"></div>
+              <div id="review-receipt-context"></div>
+              <p id="review-current-status" class="review-status-note"></p>
+              <form id="review-form" novalidate>
+                <fieldset id="review-checklist" class="review-checklist" aria-describedby="review-checks-help review-checks-error">
+                  <legend>요청에 맞는 자료인지 확인</legend>
+                  <div id="review-checks"></div>
+                </fieldset>
+                <p id="review-checks-help" class="input-help">승인하려면 세 항목 모두 확인해야 해요. 보완 요청은 확인을 마치지 않아도 사유를 적어 저장할 수 있어요.</p>
+                <p id="review-checks-error" class="field-error" role="alert" hidden></p>
+                <div class="request-input">
+                  <label for="review-note">검토 메모·보완 사유 <span>보완 요청할 때 필수</span></label>
+                  <textarea id="review-note" rows="4" maxlength="1000" placeholder="예: 요청한 1~12월 중 12월 고지서가 빠졌어요. 추가로 보내 주세요." aria-describedby="review-note-help review-note-error"></textarea>
+                  <p id="review-note-help" class="input-help">확인한 내용이나 다시 받아야 하는 자료를 1,000자 이내로 적어 주세요.</p>
+                  <p id="review-note-error" class="field-error" role="alert" hidden></p>
+                </div>
+                <p id="review-form-error" class="form-error" role="alert" hidden></p>
+                <div id="review-actions" class="review-actions">
+                  <button class="request-action-button" type="submit" value="draft">검토 내용 저장</button>
+                  <button class="request-action-button review-revision-button" type="submit" value="revision">보완 요청</button>
+                  <button class="primary-button" type="submit" value="approve">승인</button>
+                </div>
+                <p id="review-save-note" class="request-save-note"></p>
+              </form>
+            </dialog>
           </template>
 
           <template id="receipt-editor-template">

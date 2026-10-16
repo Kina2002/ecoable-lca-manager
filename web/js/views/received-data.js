@@ -8,10 +8,11 @@ LCA.views.receivedData = (() => {
     element.textContent = value;
     return element;
   };
-  function summary(receipt) {
+  function summary(receipt, status = '제출됨') {
     const section = text('section', 'receipt-summary', '');
     section.setAttribute('aria-label', '받은 자료');
-    section.append(text('h4', '', '받은 자료'), text('p', 'receipt-review-note', '제출됨 · 내용 검토 전'));
+    const notes = { '제출됨': '제출됨 · 내용 검토 전', '검토 중': '검토 중 · 담당자가 확인하고 있어요', '보완 요청': '보완 요청 · 추가 자료를 기다리고 있어요', '승인': '승인 · 담당자가 요청에 맞는 자료로 확인했어요' };
+    section.append(text('h4', '', '받은 자료'), text('p', 'receipt-review-note', notes[status] || status));
     if (receipt.kind === 'quantity') {
       section.append(text('p', 'receipt-value', `${LCA.receivedData.displayNumber(receipt.value)} ${receipt.unit}`));
       if (receipt.density) section.append(text('p', 'receipt-meta', `밀도 ${LCA.receivedData.displayNumber(receipt.density)} kg/m³`));
@@ -102,6 +103,9 @@ LCA.views.receivedData = (() => {
       find('#receipt-form-error').hidden = true;
       const category = LCA.constants.CATEGORIES.find((value) => value.key === item.categoryKey);
       const values = item.receipt || { kind: category.unit ? 'quantity' : 'document', unit: category.unit };
+      find('#receipt-intro').textContent = item.review
+        ? '저장하면 이전 체크·검토 메모·승인 또는 보완 결과를 초기화하고 ‘제출됨’으로 돌아가요. 바뀐 자료를 다시 검토해야 해요. 취소하면 기존 기록을 유지해요.'
+        : '고객사에서 받은 자료를 보고 적어 주세요. 저장하면 ‘제출됨’이 되며, 이후 담당자가 요청한 내용에 맞는지 검토해요.';
       for (const key of keys) fields[key].value = values[key] || '';
       find('#receipt-title').textContent = item.receipt ? '받은 자료 확인·수정' : '받은 자료 기록하기';
       find('#receipt-request-context').replaceChildren(text('strong', '', `${item.id} · ${category.name}`), text('p', '', item.detail));
