@@ -4,9 +4,9 @@ LCA.scope = (() => {
   const STORAGE_KEY = 'ecoable-lca-manager.scope.v1';
   const STATUSES = ['미정', '고객 요청안', '협의 중', '확정'];
   const STANDARDS = ['ISO 14040/44', 'ISO 14067', 'GHG Protocol Product', 'PEF', 'EN 15804+A2', '작성지침(PCR)', 'PACT', 'Catena-X'];
-  const FIELDS = ['scopeStatus', 'functionalUnit', 'boundary', 'refStart', 'refEnd', 'periodReason', 'standards', 'stage', 'scopeMemo', 'customerContactName', 'researcherName'];
+  const FIELDS = ['scopeStatus', 'functionalUnit', 'boundary', 'refStart', 'refEnd', 'periodReason', 'standards', 'stage', 'scopeMemo', 'customerContactName', 'researcherName', 'researcherId'];
   function snapshot(project) {
-    return Object.fromEntries(FIELDS.map((key) => [key, ['scopeMemo', 'customerContactName', 'researcherName'].includes(key) && project[key] === undefined ? '' : project[key]]));
+    return Object.fromEntries(FIELDS.map((key) => [key, ['scopeMemo', 'customerContactName', 'researcherName', 'researcherId'].includes(key) && project[key] === undefined ? '' : project[key]]));
   }
   const assigned = (record) => Boolean(record.customerContactName?.trim() && record.researcherName?.trim());
   function twelveMonths(start, end) {
@@ -41,23 +41,34 @@ LCA.scope = (() => {
       && record.periodReason.length <= 1000 && Array.isArray(record.standards)
       && (record.scopeMemo === undefined || (typeof record.scopeMemo === 'string' && record.scopeMemo.length <= 2000))
       && ['customerContactName', 'researcherName'].every((key) => record[key] === undefined || (typeof record[key] === 'string' && record[key].length <= 100))
+      && (record.researcherId === undefined || record.researcherId === '' || (typeof record.researcherId === 'string' && /^researcher-(sample|user)-[1-9]\d*$/.test(record.researcherId)))
+      && (!record.researcherId || (typeof record.researcherName === 'string' && Boolean(record.researcherName.trim())))
       && record.standards.every((value) => STANDARDS.includes(value))
       && (record.scopeStatus !== '확정' || !missing({ ...record, productName: '제품' }).length)
       && (record.stage !== 3 || record.scopeStatus === '확정');
   }
-  function createStore(projects, getStorage = () => window.localStorage) {
+  function createStore(projects, getStorage = () => window.localStorage, getResearchers = null) {
     const originals = new Map(projects.map((project) => [project.id, JSON.parse(JSON.stringify(snapshot(project)))]));
+    function normalize(value, original) {
+      const record = snapshot(value);
+      if (value.customerContactName === undefined) record.customerContactName = original.customerContactName;
+      if (value.researcherName === undefined) {
+        record.researcherName = original.researcherName;
+        record.researcherId = original.researcherId;
+      } else if (value.researcherId === undefined) record.researcherId = '';
+      return record;
+    }
     function read() {
       try {
         const raw = getStorage().getItem(STORAGE_KEY);
         if (raw === null) return { ok: true, records: {} };
         const data = JSON.parse(raw);
-        if (!data || data.version !== 1 || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)
-          || Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2].includes(originals.get(id).stage)
+        if (!data || data.version !== 1 || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)) throw Error();
+        if (Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2].includes(originals.get(id).stage)
             || (originals.get(id).stage === 1 && value.stage > 1 && !assigned(value))
             || (originals.get(id).stage === 2 && value.stage < 2))) throw Error();
         // 기존 기록은 메모가 없다. 읽을 때만 빈 문자열로 보완하고 원본 저장본은 쓰지 않는다.
-        return { ok: true, records: Object.fromEntries(Object.entries(data.records).map(([id, value]) => [id, snapshot(value)])) };
+        return { ok: true, records: Object.fromEntries(Object.entries(data.records).map(([id, value]) => [id, normalize(value, originals.get(id))])) };
       } catch { return { ok: false, error: '범위 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 저장과 단계 이동을 중단했어요.' }; }
     }
     function load() {
@@ -76,8 +87,19 @@ LCA.scope = (() => {
       let record;
       if (action === 'assign') {
         if (current.stage !== 1) return { ok: false, error: '담당자 수정은 계약·착수 단계에서 할 수 있어요.' };
-        if (['customerContactName', 'researcherName'].some((key) => typeof draft[key] !== 'string' || draft[key].trim().length > 100)) return { ok: false, error: '담당자 이름은 각각 100자 이내로 적어 주세요.' };
-        record = { ...current, customerContactName: draft.customerContactName.trim(), researcherName: draft.researcherName.trim(), functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
+        let researcherName = draft.researcherName;
+        let researcherId = '';
+        if (draft.researcherId !== undefined && draft.researcherId !== '') {
+          const roster = getResearchers?.();
+          if (!roster?.ok) return { ok: false, error: roster?.error || '연구원 목록을 다시 열어 확인해 주세요.' };
+          const person = roster.items.find((item) => item.id === draft.researcherId);
+          if (!person) return { ok: false, error: '선택한 연구원을 찾을 수 없어요. 목록을 다시 확인해 주세요.' };
+          researcherName = person.name;
+          researcherId = person.id;
+        } else if (draft.researcherId === '') researcherName = '';
+        else if (researcherName === current.researcherName) researcherId = current.researcherId;
+        if (typeof draft.customerContactName !== 'string' || draft.customerContactName.trim().length > 100 || typeof researcherName !== 'string' || researcherName.trim().length > 100) return { ok: false, error: '담당자 이름은 각각 100자 이내로 적어 주세요.' };
+        record = { ...current, customerContactName: draft.customerContactName.trim(), researcherName: researcherName.trim(), researcherId, functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
       } else if (action === 'startScope') {
         if (current.stage !== 1 || !assigned(current)) return { ok: false, error: '계약·착수 단계에서 고객 담당자와 담당 연구원을 모두 저장한 뒤 시작해 주세요.' };
         record = { ...current, stage: 2, functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
@@ -85,7 +107,7 @@ LCA.scope = (() => {
         if (current.stage !== 2 || current.scopeStatus !== '확정' || missing({ ...project, ...current }).length) return { ok: false, error: '범위 정의 단계에서 필수 정보를 갖추고 확정을 저장한 뒤 시작해 주세요.' };
         record = { ...current, stage: 3 };
       } else {
-        record = snapshot({ ...project, ...draft, stage: current.stage, customerContactName: current.customerContactName, researcherName: current.researcherName });
+        record = snapshot({ ...project, ...draft, stage: current.stage, customerContactName: current.customerContactName, researcherName: current.researcherName, researcherId: current.researcherId });
       }
       if (!valid(record)) return { ok: false, error: '날짜·기준량·적용 기준을 확인해 주세요. 확정하려면 필수 정보를 모두 채워야 해요.' };
       try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: { ...data.records, [id]: record } })); }

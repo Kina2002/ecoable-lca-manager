@@ -1,7 +1,9 @@
 window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.scope = (() => {
-  function init(project, store, loadResult, onChanged) {
+  let refreshActiveResearchers = () => {};
+  function init(project, store, loadResult, onChanged, researcherStore) {
+    refreshActiveResearchers = () => {};
     const kickoffHost = document.querySelector('#kickoff-editor');
     kickoffHost.replaceChildren();
     const host = document.querySelector('#scope-editor');
@@ -33,10 +35,11 @@ LCA.views.scope = (() => {
     let assigneesDirty = false;
     let kickoffStart = null;
     let kickoffReadiness = null;
+    let rosterAvailable = true;
     function updateKickoff() {
       if (!kickoffStart) return;
-      kickoffStart.disabled = scopeDirty || assigneesDirty || !LCA.scope.assigned(project);
-      kickoffReadiness.textContent = scopeDirty || assigneesDirty ? '입력 중인 담당자 또는 범위 변경을 먼저 저장해 주세요.'
+      kickoffStart.disabled = !rosterAvailable || scopeDirty || assigneesDirty || !LCA.scope.assigned(project);
+      kickoffReadiness.textContent = !rosterAvailable ? '연구원 목록을 확인하지 못했어요. 담당 연구원 탭의 안내를 확인해 주세요.' : scopeDirty || assigneesDirty ? '입력 중인 담당자 또는 범위 변경을 먼저 저장해 주세요.'
         : LCA.scope.assigned(project) ? '두 담당자가 저장됐어요. 범위 정의 시작을 누르면 다음 단계로 이동해요.' : '고객 담당자와 담당 연구원을 모두 저장하면 범위 정의를 시작할 수 있어요.';
     }
     if (project.stage === 1) {
@@ -46,24 +49,22 @@ LCA.views.scope = (() => {
       heading.textContent = '담당자와 착수 준비';
       const intro = document.createElement('p');
       intro.className = 'detail-help';
-      intro.textContent = '고객 쪽 협의 대상과 우리 쪽 업무 담당자의 이름을 기록해요. 이름 저장만으로 단계가 바뀌지는 않아요. 가상 이름으로 체험해 주세요.';
+      intro.textContent = '고객 담당자는 이름을 적고, 담당 연구원은 등록된 목록에서 선택해요. 새 연구원은 담당 연구원 탭에서 등록할 수 있어요. 저장만으로 단계가 바뀌지는 않아요.';
       const form = document.createElement('form');
       form.className = 'scope-form';
       form.noValidate = true;
       const controls = {};
       for (const [key, label, help] of [
         ['customerContactName', '고객 담당자', '고객 회사에서 자료 요청이나 범위 협의를 할 사람이에요.'],
-        ['researcherName', '담당 연구원', '우리 쪽에서 이 프로젝트를 맡을 사람이에요.']
+        ['researcherId', '담당 연구원', '우리 쪽에서 이 프로젝트를 맡을 사람이에요. 동명이인은 번호로 구분해요.']
       ]) {
         const box = document.createElement('div');
         const caption = document.createElement('label');
-        caption.textContent = `${label} (최대 100자)`;
+        caption.textContent = key === 'researcherId' ? label : `${label} (최대 100자)`;
         caption.htmlFor = `kickoff-${key}`;
-        const input = document.createElement('input');
+        const input = document.createElement(key === 'researcherId' ? 'select' : 'input');
         input.id = caption.htmlFor;
-        input.type = 'text';
-        input.maxLength = 100;
-        input.value = project[key] || '';
+        if (key !== 'researcherId') { input.type = 'text'; input.maxLength = 100; input.value = project[key] || ''; }
         const description = document.createElement('p');
         description.className = 'detail-help';
         description.id = `kickoff-${key}-help`;
@@ -80,6 +81,28 @@ LCA.views.scope = (() => {
       save.type = 'submit';
       save.className = 'primary-button';
       save.textContent = '담당자 저장';
+      let firstFill = true;
+      refreshActiveResearchers = () => {
+        const select = controls.researcherId;
+        const chosen = firstFill ? (project.researcherId || (project.researcherName ? 'legacy' : '')) : select.value;
+        const roster = researcherStore.list();
+        rosterAvailable = roster.ok;
+        select.disabled = !roster.ok;
+        save.disabled = !roster.ok;
+        if (!roster.ok) { feedback.textContent = roster.error; updateKickoff(); return; }
+        firstFill = false;
+        const options = [['', '연구원을 선택해 주세요'], ...roster.items.map((person) => [person.id, `${person.name} · ${person.code} · 가상`])];
+        if (project.researcherName && !project.researcherId) options.push(['legacy', `${project.researcherName} · 기존 이름 기록 유지`]);
+        if (project.researcherId && !roster.items.some((person) => person.id === project.researcherId)) {
+          options.push([project.researcherId, `${project.researcherName} · 연결 확인 필요`]);
+          if (chosen === project.researcherId) assigneesDirty = true;
+        }
+        select.replaceChildren(...options.map(([value, label]) => {
+          const option = document.createElement('option'); option.value = value; option.textContent = label; return option;
+        }));
+        select.value = chosen;
+        updateKickoff();
+      };
       kickoffStart = document.createElement('button');
       kickoffStart.type = 'button';
       kickoffStart.className = 'request-action-button';
@@ -94,12 +117,14 @@ LCA.views.scope = (() => {
       form.addEventListener('change', () => { assigneesDirty = true; updateKickoff(); });
       form.addEventListener('submit', (event) => {
         event.preventDefault();
-        const draft = Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value]));
+        const draft = { customerContactName: controls.customerContactName.value,
+          ...(controls.researcherId.value === 'legacy' ? { researcherName: project.researcherName } : { researcherId: controls.researcherId.value }) };
         const result = store.saveAssignees(project.id, draft, expected);
         feedback.textContent = result.ok ? '담당자를 저장했어요. 현재 단계는 계약·착수 그대로예요.' : result.error;
         if (result.ok) {
           expected = LCA.scope.snapshot(project);
-          for (const [key, input] of Object.entries(controls)) input.value = project[key];
+          controls.customerContactName.value = project.customerContactName;
+          controls.researcherId.value = project.researcherId || (project.researcherName ? 'legacy' : '');
           assigneesDirty = false;
           updateKickoff();
           onChanged(false);
@@ -112,7 +137,7 @@ LCA.views.scope = (() => {
       });
       section.append(heading, intro, form);
       kickoffHost.append(section);
-      updateKickoff();
+      refreshActiveResearchers();
     }
     const form = document.createElement('form');
     form.className = 'scope-form';
@@ -246,5 +271,5 @@ LCA.views.scope = (() => {
     target.focus({ preventScroll: true });
     document.querySelector('#scope-editor').scrollIntoView({ block: 'start' });
   }
-  return { init, focusEditor };
+  return { init, focusEditor, refreshResearchers: () => refreshActiveResearchers() };
 })();

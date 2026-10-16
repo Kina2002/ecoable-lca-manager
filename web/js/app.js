@@ -16,7 +16,8 @@
   projectNotice.hidden = projectLoadResult.ok;
   projectNotice.textContent = projectLoadResult.ok ? '' : `${projectLoadResult.error} 현재는 기본 가상 샘플만 표시해요.`;
   const projects = projectLoadResult.ok ? projectLoadResult.items : samples;
-  let scopeStore = LCA.scope.createStore(projects);
+  const researcherStore = LCA.researchers.createStore();
+  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list());
   let scopeLoadResult = scopeStore.load();
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
@@ -30,6 +31,7 @@
   const listView = document.querySelector('#project-list-view');
   const detailView = document.querySelector('#project-detail-view');
   const glossaryView = document.querySelector('#glossary-view');
+  const researcherView = document.querySelector('#researcher-view');
   let listScrollY = 0;
   let detailOpener = null;
   let projectView = listView;
@@ -39,7 +41,7 @@
   function setPage(label, title, section) {
     document.querySelector('#current-view-label').textContent = label;
     document.title = title;
-    for (const name of ['project', 'glossary']) {
+    for (const name of ['project', 'glossary', 'researcher']) {
       const link = document.querySelector(`#${name}-navigation`);
       if (name === section) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
@@ -69,11 +71,21 @@
   LCA.views.stageFilter.render(projects);
   showStage(null);
   LCA.views.glossary.init();
+  const researcherPage = LCA.views.researchers.init(researcherStore, () => {
+    if (!projectLoadResult.ok) return projectLoadResult;
+    scopeLoadResult = scopeStore.load();
+    showScopeStorageStatus();
+    return scopeLoadResult.ok ? { ok: true, items: projects } : scopeLoadResult;
+  }, (id, opener) => {
+    showStage(null);
+    showDetail(id, opener);
+    listScrollY = 0;
+  });
   document.querySelector('#new-project').disabled = !projectLoadResult.ok;
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
     projects.splice(0, projects.length, ...result.items);
-    scopeStore = LCA.scope.createStore(projects);
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list());
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     requestStore = LCA.requests.createStore(projects.map((project) => project.id));
@@ -109,6 +121,8 @@
     LCA.views.requests.init(project, requestStore);
     bindScope(project);
     listView.hidden = true;
+    glossaryView.hidden = true;
+    researcherView.hidden = true;
     detailView.hidden = false;
     projectView = detailView;
     projectPageTitle = `${project.companyName} 상세 | 에코에이블 LCA 관리`;
@@ -132,7 +146,7 @@
       } else {
         LCA.views.projectDetail.refreshScope(project);
       }
-    });
+    }, researcherStore);
   }
 
   function showList() {
@@ -189,28 +203,42 @@
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {
     event.preventDefault();
-    if (glossaryView.hidden) {
+    if (glossaryView.hidden && researcherView.hidden) {
       showList();
       return;
     }
-    // 사전을 열기 전의 목록 또는 상세를 그대로 펼친다.
     glossaryView.hidden = true;
+    researcherView.hidden = true;
     projectView.hidden = false;
     setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
     if (projectView === listView) collectionView.refresh();
+    else LCA.views.scope.refreshResearchers();
     projectView.querySelector('h1').focus({ preventScroll: true });
     window.scrollTo(0, projectScrollY);
   });
   document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
     event.preventDefault();
     if (glossaryView.hidden) {
-      projectScrollY = window.scrollY;
+      if (researcherView.hidden) projectScrollY = window.scrollY;
       listView.hidden = true;
       detailView.hidden = true;
+      researcherView.hidden = true;
       glossaryView.hidden = false;
       setPage('용어사전', '용어사전 | 에코에이블 LCA 관리', 'glossary');
     }
     document.querySelector('#glossary-search').focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  });
+  document.querySelector('#researcher-navigation').addEventListener('click', (event) => {
+    event.preventDefault();
+    if (researcherView.hidden && glossaryView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true;
+    detailView.hidden = true;
+    glossaryView.hidden = true;
+    researcherView.hidden = false;
+    researcherPage.refresh();
+    setPage('담당 연구원', '담당 연구원 | 에코에이블 LCA 관리', 'researcher');
+    document.querySelector('#researcher-title').focus({ preventScroll: true });
     window.scrollTo(0, 0);
   });
 })();

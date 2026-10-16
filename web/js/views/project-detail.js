@@ -68,7 +68,7 @@ LCA.views.projectDetail = (() => {
     const scopeFields = [
       status,
       field('고객 담당자', project.customerContactName),
-      field('담당 연구원', project.researcherName),
+      field('담당 연구원', project.researcherName ? `${project.researcherName} · ${project.researcherId ? `RSR-${project.researcherId.split('-').at(-1).padStart(3, '0')}` : '기존 이름 기록'}` : ''),
       field('평가 대상 제품', project.productName),
       field('평가 기준량 · 얼마만큼을 기준으로 하나요?', quantity,
         unit && unit.unit ? `${UNIT_HELP[unit.unit] || ''} 평가 결과를 제품 ${quantity} 기준으로 정리한다는 뜻이에요. 공장의 실제 생산량이 아니에요.`.trim() : '결과를 정리할 기준 수량과 단위를 정해요.'),

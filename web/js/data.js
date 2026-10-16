@@ -55,9 +55,17 @@ LCA.data = (() => {
       'project-001': '확정', 'project-002': '확정', 'project-003': '확정',
       'project-004': '확정', 'project-005': '협의 중', 'project-006': '확정', 'project-007': '고객 요청안'
     };
-    return definitions.map(({ targetOffset, ...project }) => ({
+    // 모두 시연용 인물이다. 실제 고객·회사 직원과 관계없는 가상 배정이다.
+    const assignees = [
+      ['김민서', 'researcher-sample-1', '김하늘'], ['이준호', 'researcher-sample-2', '박서연'],
+      ['박지은', 'researcher-sample-1', '김하늘'], ['최유진', 'researcher-sample-3', '이도윤'],
+      ['정서현', 'researcher-sample-3', '이도윤'], ['한도현', 'researcher-sample-2', '박서연'],
+      ['윤지후', 'researcher-sample-1', '김하늘']
+    ];
+    return definitions.map(({ targetOffset, ...project }, index) => ({
       ...project,
       isFictional: true,
+      customerContactName: assignees[index][0], researcherId: assignees[index][1], researcherName: assignees[index][2],
       scopeStatus: scopeSamples[project.id],
       refStart: project.id === 'project-007' ? '' : '2025-01-01',
       refEnd: project.id === 'project-007' ? '' : '2025-12-31',

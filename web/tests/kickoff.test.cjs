@@ -9,7 +9,12 @@ for (const file of ['constants.js', 'rules.js', 'data.js', 'received-data.js', '
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', file), 'utf8'), context);
 }
 const S = context.LCA.scope;
-const samples = () => context.LCA.data.createSampleProjects('2026-10-16');
+const samples = () => {
+  const items = context.LCA.data.createSampleProjects('2026-10-16');
+  // 담당자가 미정인 계약 프로젝트를 검사하는 고정 입력이다.
+  Object.assign(items[6], { customerContactName: '', researcherName: '', researcherId: '' });
+  return items;
+};
 const names = { customerContactName: ' 김고객 ', researcherName: ' 박연구 ' };
 function setup() {
   const values = new Map();
@@ -105,9 +110,10 @@ test('담당자 필드가 없던 기존 v1의 범위·메모를 쓰기 없이 �
   const data = JSON.parse(s.storage.getItem(S.STORAGE_KEY));
   delete data.records[p.id].customerContactName;
   delete data.records[p.id].researcherName;
+  delete data.records[p.id].researcherId;
   const raw = JSON.stringify(data); s.values.set(S.STORAGE_KEY, raw);
   assert.equal(s.store.load().ok, true);
-  assert.equal(p.customerContactName, '');
+  assert.equal(p.customerContactName, '정서현');
   assert.equal(p.scopeMemo, '기존 메모');
   assert.equal(s.storage.getItem(S.STORAGE_KEY), raw);
 });

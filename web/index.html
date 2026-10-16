@@ -7,21 +7,23 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-013">
+    <link rel="stylesheet" href="./css/app.css?v=web-014">
     <script src="./js/constants.js?v=web-005.1" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
-    <script src="./js/data.js?v=web-010" defer></script>
+    <script src="./js/data.js?v=web-014" defer></script>
     <script src="./js/views/stage-filter.js?v=web-009.2" defer></script>
     <script src="./js/views/project-list.js?v=web-011.1" defer></script>
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
     <script src="./js/requests.js?v=web-009.2" defer></script>
+    <script src="./js/researchers.js?v=web-014" defer></script>
+    <script src="./js/views/researchers.js?v=web-014" defer></script>
     <script src="./js/projects.js?v=web-012" defer></script>
-    <script src="./js/scope.js?v=web-013" defer></script>
-    <script src="./js/views/scope.js?v=web-013" defer></script>
+    <script src="./js/scope.js?v=web-014" defer></script>
+    <script src="./js/views/scope.js?v=web-014" defer></script>
     <script src="./js/request-filter.js?v=web-009.2" defer></script>
     <script src="./js/views/collection.js?v=web-012" defer></script>
-    <script src="./js/views/project-detail.js?v=web-013" defer></script>
+    <script src="./js/views/project-detail.js?v=web-014" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
     <script src="./js/views/project-create.js?v=web-012" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
@@ -29,7 +31,7 @@
     <script src="./js/views/requests.js?v=web-009" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
-    <script src="./js/app.js?v=web-013" defer></script>
+    <script src="./js/app.js?v=web-014" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -50,6 +52,10 @@
           <a id="glossary-navigation" class="nav-item" href="#glossary-view">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v14"/></svg>
             용어사전
+          </a>
+          <a id="researcher-navigation" class="nav-item" href="#researcher-view">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>
+            담당 연구원
           </a>
         </nav>
         <div class="sidebar-note">
@@ -326,6 +332,20 @@
               </form>
             </dialog>
           </template>
+
+          <section id="researcher-view" aria-labelledby="researcher-title" hidden>
+            <div class="page-heading"><div><p class="eyebrow">RESEARCHERS</p><h1 id="researcher-title" tabindex="-1">담당 연구원</h1><p class="page-description">연구원을 등록하고 누가 어떤 프로젝트를 맡았는지 확인해요. 인물과 배정은 모두 가상이에요.</p></div><span id="researcher-count" class="demo-pill"></span></div>
+            <section class="detail-card"><h2>가상 연구원 등록</h2>
+              <form id="researcher-form" class="researcher-register-form" novalidate>
+                <label for="researcher-name">연구원 이름 (필수 · 최대 100자)</label>
+                <div><input id="researcher-name" type="text" maxlength="100" required autocomplete="off" aria-describedby="researcher-register-help researcher-save-status"><button type="submit" class="primary-button">연구원 등록</button></div>
+                <p id="researcher-register-help" class="detail-help">등록 후 계약 단계 프로젝트에서 선택할 수 있어요. 같은 이름도 고유 번호로 구분하며 이 브라우저에 저장돼요.</p>
+                <p id="researcher-save-status" role="status" aria-live="polite"></p>
+              </form>
+            </section>
+            <p id="researcher-list-error" role="alert" hidden></p>
+            <div id="researcher-results" class="researcher-grid"></div>
+          </section>
 
           <section id="glossary-view" aria-labelledby="glossary-title" hidden>
             <div class="page-heading">
