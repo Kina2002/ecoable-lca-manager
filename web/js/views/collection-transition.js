@@ -6,16 +6,18 @@ LCA.views.collectionTransition = (() => {
     refreshCurrent = () => {};
     const host = document.querySelector('#collection-transition');
     host.replaceChildren();
-    if (![3, 4].includes(project.stage)) return;
+    if (![3, 4, 5].includes(project.stage)) return;
     const section = document.createElement('section');
     section.className = 'detail-card collection-transition';
     const heading = document.createElement('h2');
-    heading.textContent = project.stage === 3 ? '자료 수집 완료 확인' : '자료 수집 완료';
+    const title = () => project.stage === 3 ? '자료 수집 완료 확인' : project.stage === 4 ? '자료 검토 완료 확인' : '자료 검토 완료';
+    heading.textContent = title();
     const help = document.createElement('p');
     help.className = 'detail-help';
     help.textContent = project.stage === 3
       ? '요청한 자료가 모두 제출됐는지 확인하고 데이터 검토 단계로 이동해요. 자료의 내용 검토와 승인은 이어서 진행해요.'
-      : '데이터 검토 단계예요. 자료별로 내용을 검토하고 승인하거나 보완을 요청해 주세요.';
+      : project.stage === 4 ? '자료별 검토를 마치고 모두 승인하면 계산(모델링) 단계로 이동할 수 있어요.'
+      : '계산(모델링) 단계예요. 다음 작업은 배경 데이터 연결과 모델링이에요.';
     const status = document.createElement('p');
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
@@ -29,9 +31,9 @@ LCA.views.collectionTransition = (() => {
     const finish = document.createElement('button');
     finish.type = 'button';
     finish.className = 'primary-button';
-    finish.textContent = '자료 수집 완료 · 검토 시작';
+    finish.textContent = project.stage === 4 ? '자료 검토 완료 · 계산 단계로' : '자료 수집 완료 · 검토 시작';
     finish.setAttribute('aria-describedby', status.id);
-    finish.hidden = project.stage !== 3;
+    finish.hidden = project.stage === 5;
     const requests = document.createElement('button');
     requests.type = 'button';
     requests.className = 'request-action-button';
@@ -43,22 +45,33 @@ LCA.views.collectionTransition = (() => {
     const expected = LCA.scope.snapshot(project);
     function refresh(result) {
       missing.replaceChildren();
-      finish.hidden = project.stage !== 3;
-      heading.textContent = project.stage === 3 ? '자료 수집 완료 확인' : '자료 수집 완료';
+      const reviewing = project.stage === 4;
+      finish.hidden = project.stage === 5;
+      finish.textContent = reviewing ? '자료 검토 완료 · 계산 단계로' : '자료 수집 완료 · 검토 시작';
+      heading.textContent = title();
       if (!loadResult.ok) { finish.disabled = true; status.textContent = loadResult.error; return; }
-      if (project.stage === 4) { status.textContent = '수집 완료는 개별 자료의 승인이나 프로젝트 전체 완료를 뜻하지 않아요.'; return; }
-      const readiness = result ? LCA.scope.collectionReadiness(project.id, result) : store.collectionStatus(project.id);
-      const dirty = LCA.views.collectionDeadline.isDirty();
+      if (project.stage === 5) { status.textContent = '실제 환경영향 계산은 아직 이 시연 앱에서 실행하지 않아요.'; return; }
+      const readiness = result
+        ? (reviewing ? LCA.scope.reviewReadiness(project.id, result) : LCA.scope.collectionReadiness(project.id, result))
+        : (reviewing ? store.reviewStatus(project.id) : store.collectionStatus(project.id));
+      const dirty = !reviewing && LCA.views.collectionDeadline.isDirty();
       finish.disabled = !readiness.ok || !readiness.ready || dirty;
-      status.textContent = !readiness.ok ? readiness.error
-        : dirty ? '입력 중인 수집 마감일을 먼저 저장하거나 원래 값으로 되돌려 주세요.'
-        : !readiness.total ? '아직 자료 요청이 없어요. 필요한 요청을 등록하고 받은 자료를 기록해 주세요.'
-        : readiness.ready ? `제출 확인 ${readiness.submitted}/${readiness.total}건. 모든 자료가 제출됐어요. 버튼을 누르면 데이터 검토 단계로 이동해요.`
-        : `제출 확인 ${readiness.submitted}/${readiness.total}건. 아래 자료를 받거나 보완한 뒤 기록해 주세요.`;
+      if (reviewing) {
+        status.textContent = !readiness.ok ? readiness.error
+          : !readiness.total ? '승인 0/0건. 검토할 자료 요청이 없어요. 자료를 등록하고 검토·승인해 주세요.'
+          : readiness.ready ? `승인 ${readiness.approved}/${readiness.total}건. 모든 자료가 승인됐어요. 버튼을 누르면 계산(모델링) 단계로 이동해요.`
+          : `승인 ${readiness.approved}/${readiness.total}건. 아래 자료의 검토와 승인을 마쳐 주세요.`;
+      } else {
+        status.textContent = !readiness.ok ? readiness.error
+          : dirty ? '입력 중인 수집 마감일을 먼저 저장하거나 원래 값으로 되돌려 주세요.'
+          : !readiness.total ? '아직 자료 요청이 없어요. 필요한 요청을 등록하고 받은 자료를 기록해 주세요.'
+          : readiness.ready ? `제출 확인 ${readiness.submitted}/${readiness.total}건. 모든 자료가 제출됐어요. 버튼을 누르면 데이터 검토 단계로 이동해요.`
+          : `제출 확인 ${readiness.submitted}/${readiness.total}건. 아래 자료를 받거나 보완한 뒤 기록해 주세요.`;
+      }
       for (const item of readiness.missing || []) {
         const line = document.createElement('li');
         const category = LCA.constants.CATEGORIES.find((value) => value.key === item.categoryKey);
-        line.textContent = `${item.id} · ${category?.name || item.categoryKey} · ${item.status}${item.status === '보완 요청' ? ' — 보완 자료를 다시 기록해 주세요.' : ' — 받은 자료 기록이 필요해요.'}`;
+        line.textContent = `${item.id} · ${category?.name || item.categoryKey} · ${item.status}${reviewing ? ' — 검토와 승인이 필요해요.' : item.status === '보완 요청' ? ' — 보완 자료를 다시 기록해 주세요.' : ' — 받은 자료 기록이 필요해요.'}`;
         missing.append(line);
       }
     }
@@ -66,8 +79,8 @@ LCA.views.collectionTransition = (() => {
     refresh();
     finish.addEventListener('click', () => {
       feedback.textContent = '';
-      if (LCA.views.collectionDeadline.isDirty()) { refresh(); return; }
-      const result = store.finishCollection(project.id, expected);
+      if (project.stage === 3 && LCA.views.collectionDeadline.isDirty()) { refresh(); return; }
+      const result = project.stage === 4 ? store.finishReview(project.id, expected) : store.finishCollection(project.id, expected);
       if (!result.ok) { refresh(); feedback.textContent = result.error || '단계를 이동하지 못했어요. 다시 열어 확인해 주세요.'; return; }
       onMoved();
     });

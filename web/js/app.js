@@ -186,7 +186,10 @@
       LCA.views.stageFilter.render(projects);
       showStage(selectedStage);
       const status = document.querySelector('#collection-transition-status');
-      status.textContent = '자료 수집을 완료하고 데이터 검토 단계로 이동했어요. 자료별 승인·보완 요청은 자료 요청 탭에서 진행해 주세요.';
+      const movedMessage = project.stage === 5
+        ? '계산(모델링) 단계로 이동했어요. 승인된 자료 기록은 그대로 보관돼요.'
+        : '자료 수집을 마치고 데이터 검토 단계로 이동했어요.';
+      status.textContent = `${movedMessage} ${status.textContent}`;
       status.tabIndex = -1;
       status.focus({ preventScroll: true });
       status.scrollIntoView({ block: 'center' });

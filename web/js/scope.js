@@ -15,6 +15,12 @@ LCA.scope = (() => {
     const missing = items.filter((item) => !LCA.constants.SUBMITTED_STATUSES.includes(item.status) || !item.receipt);
     return { ok: true, ready: items.length > 0 && missing.length === 0, total: items.length, submitted: items.length - missing.length, missing };
   }
+  function reviewReadiness(projectId, result) {
+    if (!result?.ok || !Array.isArray(result.items)) return { ok: false, ready: false, error: result?.message || result?.error || '자료 요청 기록을 확인하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.' };
+    const items = result.items.filter((item) => item.projectId === projectId && !item.deletedAt);
+    const missing = items.filter((item) => item.status !== '승인' || !item.receipt || !item.review);
+    return { ok: true, ready: items.length > 0 && missing.length === 0, total: items.length, approved: items.length - missing.length, missing };
+  }
   function twelveMonths(start, end) {
     if (!LCA.requests.validDate(start) || !LCA.requests.validDate(end)) return false;
     const [y, m, d] = start.split('-').map(Number);
@@ -36,7 +42,7 @@ LCA.scope = (() => {
     return result;
   }
   function valid(record) {
-    return record && STATUSES.includes(record.scopeStatus) && [1, 2, 3, 4].includes(record.stage)
+    return record && STATUSES.includes(record.scopeStatus) && [1, 2, 3, 4, 5].includes(record.stage)
       && record.functionalUnit && typeof record.functionalUnit.qty === 'string' && record.functionalUnit.qty.length <= 30
       && (!record.functionalUnit.qty || (/^\d+(\.\d+)?$/.test(record.functionalUnit.qty) && Number(record.functionalUnit.qty) > 0 && Number.isFinite(Number(record.functionalUnit.qty))))
       && typeof record.functionalUnit.unit === 'string' && record.functionalUnit.unit.length <= 30
@@ -70,7 +76,7 @@ LCA.scope = (() => {
         if (raw === null) return { ok: true, records: {} };
         const data = JSON.parse(raw);
         if (!data || data.version !== 1 || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)) throw Error();
-        if (Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2, 3].includes(originals.get(id).stage)
+        if (Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2, 3, 4].includes(originals.get(id).stage)
             || (originals.get(id).stage === 1 && value.stage > 1 && !assigned(value))
             || value.stage < originals.get(id).stage)) throw Error();
         // 기존 기록은 메모가 없다. 읽을 때만 빈 문자열로 보완하고 원본 저장본은 쓰지 않는다.
@@ -92,14 +98,19 @@ LCA.scope = (() => {
       try { return collectionReadiness(id, getRequests?.(id)); }
       catch { return { ok: false, ready: false, error: '자료 요청 기록을 확인하지 못했어요. 다시 열어 확인해 주세요.' }; }
     }
+    function reviewStatus(id) {
+      try { return reviewReadiness(id, getRequests?.(id)); }
+      catch { return { ok: false, ready: false, error: '자료 요청 기록을 확인하지 못했어요. 다시 열어 확인해 주세요.' }; }
+    }
     function update(id, draft, expected, action = 'save') {
       const data = read();
       if (!data.ok) return data;
       const project = projects.find((item) => item.id === id);
       if (!project) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
       const current = data.records[id] || originals.get(id);
-      if (JSON.stringify(current) !== JSON.stringify(expected)) return { ok: false, error: '다른 화면에서 범위가 바뀌었어요. 프로젝트 목록으로 돌아가 다시 열어 주세요.' };
-      if (action !== 'finishCollection' && ![1, 2].includes(current.stage)) return { ok: false, error: '수집 이후의 범위 변경은 이번 기능에서 지원하지 않아요.' };
+      if (JSON.stringify(current) !== JSON.stringify(expected)) return { ok: false, error: '다른 화면에서 프로젝트 단계나 범위가 바뀌었어요. 프로젝트 목록으로 돌아가 다시 열어 주세요.' };
+      const transition = ['finishCollection', 'finishReview'].includes(action);
+      if (!transition && ![1, 2].includes(current.stage)) return { ok: false, error: '수집 이후의 범위 변경은 이번 기능에서 지원하지 않아요.' };
       let record;
       if (action === 'finishCollection') {
         if (current.stage !== 3) return { ok: false, error: '데이터 수집 단계에서만 검토를 시작할 수 있어요. 목록에서 현재 단계를 확인해 주세요.' };
@@ -107,6 +118,12 @@ LCA.scope = (() => {
         if (!readiness.ok) return readiness;
         if (!readiness.ready) return { ok: false, error: readiness.total ? `아직 제출 확인이 필요한 자료 ${readiness.missing.length}건이 있어요.` : '자료 요청이 없어요. 필요한 요청을 등록하고 받은 자료를 기록해 주세요.', readiness };
         record = { ...current, stage: 4, functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
+      } else if (action === 'finishReview') {
+        if (current.stage !== 4) return { ok: false, error: '데이터 검토 단계에서만 계산 단계로 이동할 수 있어요. 목록에서 현재 단계를 확인해 주세요.' };
+        const readiness = reviewStatus(id);
+        if (!readiness.ok) return readiness;
+        if (!readiness.ready) return { ok: false, error: readiness.total ? `아직 승인되지 않은 자료 ${readiness.missing.length}건이 있어요.` : '검토할 자료 요청이 없어요. 자료를 등록하고 검토·승인한 뒤 이동해 주세요.', readiness };
+        record = { ...current, stage: 5, functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
       } else if (action === 'assign') {
         if (current.stage !== 1) return { ok: false, error: '담당자 수정은 계약·착수 단계에서 할 수 있어요.' };
         let researcherName = draft.researcherName;
@@ -133,19 +150,20 @@ LCA.scope = (() => {
       }
       if (!valid(record)) return { ok: false, error: '날짜·기준량·적용 기준을 확인해 주세요. 확정하려면 필수 정보를 모두 채워야 해요.' };
       try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: { ...data.records, [id]: record } })); }
-      catch { return { ok: false, error: action === 'finishCollection'
+      catch { return { ok: false, error: transition
         ? '단계 이동을 저장하지 못했어요. 현재 단계와 받은 자료 기록은 그대로예요.'
         : '범위를 저장하지 못했어요. 입력 내용은 유지되며 단계도 바뀌지 않았어요.' }; }
       Object.assign(project, record);
       return { ok: true };
     }
     return {
-      load, currentStage, collectionStatus, save: (id, draft, expected) => update(id, draft, expected),
+      load, currentStage, collectionStatus, reviewStatus, save: (id, draft, expected) => update(id, draft, expected),
       saveAssignees: (id, draft, expected) => update(id, draft, expected, 'assign'),
       startScope: (id, expected) => update(id, null, expected, 'startScope'),
       start: (id, expected) => update(id, null, expected, 'startCollection'),
-      finishCollection: (id, expected) => update(id, null, expected, 'finishCollection')
+      finishCollection: (id, expected) => update(id, null, expected, 'finishCollection'),
+      finishReview: (id, expected) => update(id, null, expected, 'finishReview')
     };
   }
-  return { STORAGE_KEY, STATUSES, STANDARDS, snapshot, assigned, missing, twelveMonths, collectionReadiness, createStore };
+  return { STORAGE_KEY, STATUSES, STANDARDS, snapshot, assigned, missing, twelveMonths, collectionReadiness, reviewReadiness, createStore };
 })();
