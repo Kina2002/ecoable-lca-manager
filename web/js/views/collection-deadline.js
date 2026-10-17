@@ -4,6 +4,7 @@ LCA.views.collectionDeadline = (() => {
   let isDirty = () => false;
   function init(project, store, loadResult, onChanged, onDraftChanged = () => {}) {
     isDirty = () => false;
+    const completed = project.stage >= 4;
     const host = document.querySelector('#collection-deadline-editor');
     const section = document.createElement('section');
     section.className = 'detail-card';
@@ -12,11 +13,12 @@ LCA.views.collectionDeadline = (() => {
     const help = document.createElement('p');
     help.className = 'detail-help';
     help.id = 'collection-deadline-help';
-    help.textContent = '자료를 모두 모으기로 한 날짜예요. 프로젝트 목표일·개별 자료 제출 기한과 따로 정해요. 아직 협의하지 않았다면 비워 두면 미정으로 표시해요.';
+    help.textContent = completed ? '자료 수집이 완료된 프로젝트의 일정 기록이에요.'
+      : '자료를 모두 모으기로 한 날짜예요. 프로젝트 목표일·개별 자료 제출 기한과 따로 정해요. 아직 협의하지 않았다면 비워 두면 미정으로 표시해요.';
     const summary = document.createElement('p');
     function refresh() {
-      summary.replaceChildren(LCA.views.deadlines.badge(LCA.deadlines.collection(project)),
-        document.createTextNode(` · 수집 마감 ${project.collectionDueDate || '미정'}`));
+      summary.replaceChildren(LCA.views.deadlines.badge(LCA.deadlines.collection(project)));
+      if (project.collectionDueDate || !completed) summary.append(document.createTextNode(` · 수집 마감 ${project.collectionDueDate || '미정'}`));
     }
     if (loadResult.ok) refresh();
     else summary.textContent = '수집 일정 확인 필요';
