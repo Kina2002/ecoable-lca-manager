@@ -21,7 +21,7 @@
   const projects = projectLoadResult.ok ? projectLoadResult.items : samples;
   const researcherStore = LCA.researchers.createStore();
   let requestStore = LCA.requests.createStore(projects.map((project) => project.id));
-  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id));
+  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id));
   let scopeLoadResult = scopeStore.load();
   const modellingStore = LCA.modelling.createStore(projects, undefined, (id) => requestStore.list(id), (id) => {
     const loaded = scopeStore.load();
@@ -30,6 +30,7 @@
     return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
   });
   const interpretationStore = LCA.interpretation.createStore(projects, (id) => modellingStore.load(id));
+  const reportStore = LCA.report.createStore(projects, (id) => interpretationStore.load(id));
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
     notice.hidden = scopeLoadResult.ok;
@@ -111,7 +112,7 @@
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
     projects.splice(0, projects.length, ...result.items);
-    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id));
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id));
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     requestStore = LCA.requests.createStore(projects.map((project) => project.id));
@@ -188,19 +189,27 @@
   }
 
   function bindCalculation(project) {
-    LCA.views.modelling.init(project, modellingStore, () => LCA.views.interpretation.refresh());
-    LCA.views.interpretation.init(project, interpretationStore, scopeStore, () => {
+    LCA.views.modelling.init(project, modellingStore, () => {
+      LCA.views.interpretation.refresh();
+      LCA.views.report.refresh();
+    });
+    function refreshLaterStage() {
       LCA.views.projectDetail.refreshStage(project);
       bindCollectionTransition(project);
       LCA.views.stageFilter.render(projects);
       showStage(selectedStage);
       LCA.views.modelling.refresh();
-    });
+      LCA.views.interpretation.refresh();
+      LCA.views.report.refresh();
+    }
+    LCA.views.interpretation.init(project, interpretationStore, scopeStore, refreshLaterStage, () => LCA.views.report.refresh());
+    LCA.views.report.init(project, reportStore, scopeStore, refreshLaterStage);
   }
   function refreshRequestViews(result) {
     LCA.views.collectionTransition.refresh(result);
     LCA.views.modelling.refresh();
     LCA.views.interpretation.refresh();
+    LCA.views.report.refresh();
   }
 
   function bindCollectionTransition(project) {
@@ -251,6 +260,7 @@
     LCA.views.collectionTransition.refresh();
     LCA.views.modelling.refresh();
     LCA.views.interpretation.refresh();
+    LCA.views.report.refresh();
     for (const tab of detailView.querySelectorAll('[data-detail-tab]')) {
       const selected = tab.dataset.detailTab === key;
       tab.setAttribute('aria-selected', String(selected));

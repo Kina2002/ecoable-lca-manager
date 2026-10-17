@@ -42,7 +42,7 @@ LCA.scope = (() => {
     return result;
   }
   function valid(record) {
-    return record && STATUSES.includes(record.scopeStatus) && [1, 2, 3, 4, 5, 6].includes(record.stage)
+    return record && STATUSES.includes(record.scopeStatus) && [1, 2, 3, 4, 5, 6, 7].includes(record.stage)
       && record.functionalUnit && typeof record.functionalUnit.qty === 'string' && record.functionalUnit.qty.length <= 30
       && (!record.functionalUnit.qty || (/^\d+(\.\d+)?$/.test(record.functionalUnit.qty) && Number(record.functionalUnit.qty) > 0 && Number.isFinite(Number(record.functionalUnit.qty))))
       && typeof record.functionalUnit.unit === 'string' && record.functionalUnit.unit.length <= 30
@@ -59,7 +59,7 @@ LCA.scope = (() => {
       && (record.scopeStatus !== '확정' || !missing({ ...record, productName: '제품' }).length)
       && (record.stage < 3 || record.scopeStatus === '확정');
   }
-  function createStore(projects, getStorage = () => window.localStorage, getResearchers = null, getRequests = null, getCalculation = null) {
+  function createStore(projects, getStorage = () => window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null) {
     const originals = new Map(projects.map((project) => [project.id, JSON.parse(JSON.stringify(snapshot(project)))]));
     function normalize(value, original) {
       const record = snapshot(value);
@@ -76,7 +76,7 @@ LCA.scope = (() => {
         if (raw === null) return { ok: true, records: {} };
         const data = JSON.parse(raw);
         if (!data || data.version !== 1 || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)) throw Error();
-        if (Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2, 3, 4, 5, 6].includes(originals.get(id).stage)
+        if (Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2, 3, 4, 5, 6, 7].includes(originals.get(id).stage)
             || (originals.get(id).stage === 1 && value.stage > 1 && !assigned(value))
             || value.stage < originals.get(id).stage)) throw Error();
         // 기존 기록은 메모가 없다. 읽을 때만 빈 문자열로 보완하고 원본 저장본은 쓰지 않는다.
@@ -109,7 +109,7 @@ LCA.scope = (() => {
       if (!project) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
       const current = data.records[id] || originals.get(id);
       if (JSON.stringify(current) !== JSON.stringify(expected)) return { ok: false, error: '다른 화면에서 프로젝트 단계나 범위가 바뀌었어요. 프로젝트 목록으로 돌아가 다시 열어 주세요.' };
-      const transition = ['finishCollection', 'finishReview', 'startInterpretation'].includes(action);
+      const transition = ['finishCollection', 'finishReview', 'startInterpretation', 'startReport'].includes(action);
       if (!transition && ![1, 2].includes(current.stage)) return { ok: false, error: '수집 이후의 범위 변경은 이번 기능에서 지원하지 않아요.' };
       let record;
       if (action === 'finishCollection') {
@@ -132,6 +132,14 @@ LCA.scope = (() => {
         if (!calculation?.ok) return { ok: false, error: calculation?.error || '외부 계산 결과를 확인하지 못했어요.' };
         if (!calculation.record || !calculation.source.ready || calculation.stale) return { ok: false, error: '현재 자료를 모두 승인하고 최신 자료·범위와 일치하는 외부 계산 결과를 저장해 주세요.' };
         record = { ...current, stage: 6, functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
+      } else if (action === 'startReport') {
+        if (current.stage !== 6) return { ok: false, error: '결과 해석 단계(6)에서만 보고서 작성을 시작할 수 있어요.' };
+        let interpretation;
+        try { interpretation = getInterpretation?.(id); }
+        catch { return { ok: false, error: '보고서에 연결할 해석을 확인하지 못했어요.' }; }
+        if (!interpretation?.ok) return { ok: false, error: interpretation?.error || '해석 기록을 확인하지 못했어요.' };
+        if (!interpretation.ready || !interpretation.record || interpretation.stale) return { ok: false, error: '모든 자료를 승인하고 최신 계산 결과에 맞는 해석을 저장한 뒤 시작해 주세요.' };
+        record = { ...current, stage: 7, functionalUnit: { ...current.functionalUnit, qty: String(current.functionalUnit.qty ?? '') } };
       } else if (action === 'assign') {
         if (current.stage !== 1) return { ok: false, error: '담당자 수정은 계약·착수 단계에서 할 수 있어요.' };
         let researcherName = draft.researcherName;
@@ -171,7 +179,8 @@ LCA.scope = (() => {
       start: (id, expected) => update(id, null, expected, 'startCollection'),
       finishCollection: (id, expected) => update(id, null, expected, 'finishCollection'),
       finishReview: (id, expected) => update(id, null, expected, 'finishReview'),
-      startInterpretation: (id, expected) => update(id, null, expected, 'startInterpretation')
+      startInterpretation: (id, expected) => update(id, null, expected, 'startInterpretation'),
+      startReport: (id, expected) => update(id, null, expected, 'startReport')
     };
   }
   return { STORAGE_KEY, STATUSES, STANDARDS, snapshot, assigned, missing, twelveMonths, collectionReadiness, reviewReadiness, createStore };

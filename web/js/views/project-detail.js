@@ -146,7 +146,7 @@ LCA.views.projectDetail = (() => {
     const tabs = textElement('div', 'detail-tabs', '');
     tabs.setAttribute('role', 'tablist');
     tabs.setAttribute('aria-label', '프로젝트 상세 내용');
-    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과'], ['interpretation', '결과 해석']]) {
+    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과'], ['interpretation', '결과 해석'], ['report', '보고서']]) {
       const tab = textElement('button', 'detail-tab', label);
       tab.type = 'button';
       tab.id = `detail-${key}-tab`;
@@ -206,7 +206,13 @@ LCA.views.projectDetail = (() => {
     interpretation.setAttribute('aria-labelledby', 'detail-interpretation-tab');
     interpretation.tabIndex = 0;
     interpretation.hidden = true;
-    fragment.append(overview, requests, calculation, interpretation);
+    const report = textElement('div', '', '');
+    report.id = 'project-report-panel';
+    report.setAttribute('role', 'tabpanel');
+    report.setAttribute('aria-labelledby', 'detail-report-tab');
+    report.tabIndex = 0;
+    report.hidden = true;
+    fragment.append(overview, requests, calculation, interpretation, report);
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 
