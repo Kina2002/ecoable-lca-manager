@@ -23,7 +23,7 @@ LCA.views.requests = (() => {
   }
 
   function init(project, store, onChanged = () => {}) {
-    const panel = document.querySelector('#project-requests-panel');
+    const panel = document.querySelector('#project-request-content');
     panel.replaceChildren(document.querySelector('#request-panel-template').content.cloneNode(true));
     const find = (selector) => panel.querySelector(selector);
     find('.request-intro').textContent = `${project.companyName}의 ${project.productName} 평가에 필요한 자료를 적어 두는 목록이에요.`;

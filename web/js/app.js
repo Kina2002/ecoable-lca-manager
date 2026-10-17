@@ -228,7 +228,7 @@
       status.tabIndex = -1;
       status.focus({ preventScroll: true });
       status.scrollIntoView({ block: 'center' });
-    }, () => selectDetailTab('requests', true));
+    });
   }
 
   function showList() {

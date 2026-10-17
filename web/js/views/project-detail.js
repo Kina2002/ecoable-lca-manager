@@ -141,7 +141,6 @@ LCA.views.projectDetail = (() => {
     fragment.append(summary);
     const transition = document.createElement('div');
     transition.id = 'collection-transition';
-    fragment.append(transition);
 
     const tabs = textElement('div', 'detail-tabs', '');
     tabs.setAttribute('role', 'tablist');
@@ -194,6 +193,9 @@ LCA.views.projectDetail = (() => {
     requests.setAttribute('aria-labelledby', 'detail-requests-tab');
     requests.tabIndex = 0;
     requests.hidden = true;
+    const requestContent = document.createElement('div');
+    requestContent.id = 'project-request-content';
+    requests.append(transition, requestContent);
     const calculation = textElement('div', '', '');
     calculation.id = 'project-calculation-panel';
     calculation.setAttribute('role', 'tabpanel');

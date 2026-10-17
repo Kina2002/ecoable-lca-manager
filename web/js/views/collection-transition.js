@@ -2,7 +2,7 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.collectionTransition = (() => {
   let refreshCurrent = () => {};
-  function init(project, store, loadResult, onMoved, onRequests) {
+  function init(project, store, loadResult, onMoved) {
     refreshCurrent = () => {};
     const host = document.querySelector('#collection-transition');
     host.replaceChildren();
@@ -34,12 +34,7 @@ LCA.views.collectionTransition = (() => {
     finish.textContent = project.stage === 4 ? '자료 검토 완료 · 계산 단계로' : '자료 수집 완료 · 검토 시작';
     finish.setAttribute('aria-describedby', status.id);
     finish.hidden = project.stage === 5;
-    const requests = document.createElement('button');
-    requests.type = 'button';
-    requests.className = 'request-action-button';
-    requests.textContent = '자료 요청에서 확인';
-    requests.addEventListener('click', onRequests);
-    actions.append(finish, requests);
+    actions.append(finish);
     section.append(heading, help, status, missing, feedback, actions);
     host.append(section);
     const expected = LCA.scope.snapshot(project);
