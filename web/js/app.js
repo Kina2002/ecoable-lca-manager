@@ -63,10 +63,21 @@
   });
 
   const projectFilters = LCA.views.projectFilter.init(projects, renderProjectList);
+  function refreshCollectionDates() {
+    const result = projectStore.list();
+    if (result.ok) {
+      const dates = new Map(result.items.map((project) => [project.id, project.collectionDueDate]));
+      projects.forEach((project) => { if (dates.has(project.id)) project.collectionDueDate = dates.get(project.id); });
+    }
+    projectNotice.hidden = result.ok;
+    projectNotice.textContent = result.ok ? '' : result.error;
+    return result;
+  }
   function renderProjectList() {
+    const collectionDates = refreshCollectionDates();
     projectFilters.refreshOptions();
     const visible = LCA.projectFilter.select(projects, selectedStage, projectFilters.state);
-    LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state), { requests: requestStore.listAll() });
+    LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state), { requests: requestStore.listAll(), collectionDates });
   }
   function showStage(stageNo) {
     selectedStage = stageNo;
@@ -118,6 +129,7 @@
   document.querySelector('#all-stages').addEventListener('click', () => showStage(null));
 
   function showDetail(projectId, opener) {
+    refreshCollectionDates();
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     openedProjectId = projectId;
@@ -129,6 +141,7 @@
     LCA.views.projectDetail.render(project);
     LCA.views.requests.init(project, requestStore);
     bindScope(project);
+    bindCollectionDeadline(project);
     listView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = true;
@@ -148,6 +161,7 @@
         LCA.views.projectDetail.render(project);
         LCA.views.requests.init(project, requestStore);
         bindScope(project);
+        bindCollectionDeadline(project);
         const message = document.querySelector('#scope-editor [role="status"]');
         message.textContent = project.stage === 2 ? '범위 정의 단계로 이동했어요. 고객과 협의할 평가 범위를 아래에 기록해 주세요.' : '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
         message.tabIndex = -1;
@@ -156,6 +170,10 @@
         LCA.views.projectDetail.refreshScope(project);
       }
     }, researcherStore);
+  }
+
+  function bindCollectionDeadline(project) {
+    LCA.views.collectionDeadline.init(project, projectStore, projectStore.list(), renderProjectList);
   }
 
   function showList() {

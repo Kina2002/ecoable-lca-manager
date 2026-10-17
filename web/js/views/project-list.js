@@ -88,16 +88,17 @@ LCA.views.projectList = (() => {
       }
       const materials = textElement('div', 'project-deadline-materials', '');
       materials.append(textElement('span', 'deadline-label', '자료 현황'));
+      materials.append(LCA.views.deadlines.badge(deadlines.collectionDates?.ok === false
+        ? { staticText: true, text: '수집 일정 확인 필요', tone: 'unknown' } : LCA.deadlines.collection(project)));
+      if (deadlines.collectionDates?.ok !== false && project.collectionDueDate) materials.append(textElement('span', 'deadline-detail', `수집 마감 ${project.collectionDueDate.replaceAll('-', '.')}`));
       if (!deadlines.requests?.ok) {
         const warning = textElement('span', 'deadline-badge deadline-badge--unknown', '자료 확인 필요');
         warning.title = deadlines.requests?.message || '자료 기록을 읽을 수 없어요.';
         materials.append(warning);
       } else {
         const state = LCA.deadlines.summary(project.id, deadlines.requests.items);
-        materials.append(LCA.views.deadlines.badge(state));
-        if (state.status) materials.append(textElement('span', `request-state${state.status === '보완 요청' ? ' request-state-revision' : ['제출됨', '검토 중'].includes(state.status) ? ' request-state-received' : ''}`, state.status));
-        if (state.total) materials.append(textElement('span', 'deadline-detail', `승인 ${state.approved}/${state.total}건${state.sourceId ? ` · ${state.sourceId}` : ''}`));
-        if (state.sourceId) materials.title = `미승인 자료 중 가장 이른 제출 기한 · ${state.sourceId} · ${state.date}`;
+        materials.append(textElement('span', 'deadline-detail', state.total ? `승인 ${state.approved}/${state.total}건` : '요청 기록 없음'));
+        if (state.sourceId) materials.append(textElement('span', 'deadline-detail', `가장 이른 요청: ${state.sourceId} · ${state.status} · ${state.date}`));
       }
       target.append(materials);
 

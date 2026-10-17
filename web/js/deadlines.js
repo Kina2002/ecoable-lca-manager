@@ -28,6 +28,11 @@ LCA.deadlines = (() => {
     if (item.status === '승인') return { staticText: true, text: '승인', tone: 'complete', date: item.dueDate, status: item.status };
     return refresh({ date: item.dueDate, status: item.status }, today);
   }
+  function collection(project, today = LCA.rules.today()) {
+    if (project.stage >= 4 && project.stage <= 10) return { staticText: true, text: '자료 수집 완료', tone: 'complete', date: project.collectionDueDate || '', status: null };
+    if (!project.collectionDueDate) return { staticText: true, text: '미정', tone: 'muted', status: null };
+    return refresh({ date: project.collectionDueDate, status: null }, today);
+  }
   function summary(projectId, items, today = LCA.rules.today()) {
     const own = items.filter((record) => record.projectId === projectId && !record.deletedAt);
     const pending = own.filter((record) => record.status !== '승인');
@@ -39,5 +44,5 @@ LCA.deadlines = (() => {
     const earliest = pending.slice().sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
     return { ...item(earliest, today), ...counts, sourceId: earliest.id, categoryKey: earliest.categoryKey };
   }
-  return { dayNumber, refresh, project, item, summary };
+  return { dayNumber, refresh, project, item, collection, summary };
 })();

@@ -171,7 +171,9 @@ LCA.views.projectDetail = (() => {
     columns.append(scope);
     const kickoff = document.createElement('div');
     kickoff.id = 'kickoff-editor';
-    overview.append(kickoff, columns);
+    const collection = document.createElement('div');
+    collection.id = 'collection-deadline-editor';
+    overview.append(kickoff, collection, columns);
     const editor = document.createElement('div');
     editor.id = 'scope-editor';
     overview.append(editor);

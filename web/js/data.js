@@ -10,7 +10,7 @@ LCA.data = (() => {
         id: 'project-001', code: 'LCA-2026-001', companyName: '라온소재', industry: '배터리·소재',
         productName: '양극재 전구체', functionalUnit: { qty: 1, unit: 'kg' },
         boundary: '요람~문', modules: '', type: 'PCF 산정', purpose: '고객사 요구 대응',
-        drivers: ['Catena-X', 'EU 배터리법'], uses: ['PCF', '환경성적표지'], stage: 3, targetOffset: 45
+        drivers: ['Catena-X', 'EU 배터리법'], uses: ['PCF', '환경성적표지'], stage: 3, targetOffset: 45, collectionOffset: 7
       },
       {
         id: 'project-002', code: 'LCA-2026-002', companyName: '솔뫼철강', industry: '철강·금속',
@@ -62,7 +62,7 @@ LCA.data = (() => {
       ['정서현', 'researcher-sample-3', '이도윤'], ['한도현', 'researcher-sample-2', '박서연'],
       ['윤지후', 'researcher-sample-1', '김하늘']
     ];
-    return definitions.map(({ targetOffset, ...project }, index) => ({
+    return definitions.map(({ targetOffset, collectionOffset, ...project }, index) => ({
       ...project,
       isFictional: true,
       customerContactName: assignees[index][0], researcherId: assignees[index][1], researcherName: assignees[index][2],
@@ -71,7 +71,8 @@ LCA.data = (() => {
       refEnd: project.id === 'project-007' ? '' : '2025-12-31',
       periodReason: '',
       standards: project.id === 'project-007' ? [] : ['ISO 14040/44'],
-      targetDate: LCA.rules.addDays(referenceDate, targetOffset)
+      targetDate: LCA.rules.addDays(referenceDate, targetOffset),
+      collectionDueDate: collectionOffset === undefined ? '' : LCA.rules.addDays(referenceDate, collectionOffset)
     }));
   }
 

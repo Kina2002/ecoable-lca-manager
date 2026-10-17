@@ -1,4 +1,4 @@
-/* 새 업무의 기본 정보만 보관한다. 범위와 자료 기록은 기존 저장소가 맡는다. */
+/* 프로젝트 기본 정보와 별도 자료 수집 마감일을 보관한다. */
 window.LCA = window.LCA || {};
 LCA.projects = (() => {
   const STORAGE_KEY = 'ecoable-lca-manager.projects.v1';
@@ -22,7 +22,7 @@ LCA.projects = (() => {
   }
   function createStore(samples, referenceDate, getStorage = () => window.localStorage) {
     const minimumNumber = Math.max(0, ...samples.map((project) => Number(project.code.split('-').at(-1)) || 0)) + 1;
-    const failure = () => ({ ok: false, error: '프로젝트 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 등록을 중단했어요. 저장된 최신 목록은 확인하지 못했어요.' });
+    const failure = () => ({ ok: false, error: '프로젝트 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 등록과 일정 저장을 중단했어요. 저장된 최신 목록은 확인하지 못했어요.' });
     function read() {
       try {
         const raw = getStorage().getItem(STORAGE_KEY);
@@ -39,11 +39,16 @@ LCA.projects = (() => {
             || typeof item.createdAt !== 'string' || !Number.isFinite(Date.parse(item.createdAt))) return failure();
           ids.add(item.id); codes.add(item.code); numbers.add(item.number);
         }
+        if (data.collectionDueDates !== undefined && (!data.collectionDueDates || typeof data.collectionDueDates !== 'object' || Array.isArray(data.collectionDueDates)
+          || Object.entries(data.collectionDueDates).some(([id, date]) => !ids.has(id) || typeof date !== 'string' || (date !== '' && !LCA.requests.validDate(date))))) return failure();
         return { ok: true, data };
       } catch { return failure(); }
     }
     function combined(data) {
-      return [...JSON.parse(JSON.stringify(samples)), ...data.projects.map(asProject)];
+      return [...JSON.parse(JSON.stringify(samples)), ...data.projects.map(asProject)].map((project) => ({
+        ...project, collectionDueDate: Object.hasOwn(data.collectionDueDates || {}, project.id)
+          ? data.collectionDueDates[project.id] : project.collectionDueDate || ''
+      }));
     }
     function list() {
       const result = read();
@@ -66,7 +71,20 @@ LCA.projects = (() => {
       catch { return { ok: false, error: '프로젝트를 저장하지 못했어요. 입력 내용은 유지했으니 저장 공간과 브라우저 설정을 확인해 주세요.' }; }
       return { ok: true, item: asProject(item), items: combined(data) };
     }
-    return { list, add };
+    function saveCollectionDeadline(id, date, expected) {
+      if (typeof date !== 'string' || (date !== '' && !LCA.requests.validDate(date))) return { ok: false, error: '자료 수집 마감일을 올바른 날짜로 입력하거나 비워 주세요.' };
+      const result = read();
+      if (!result.ok) return result;
+      const project = combined(result.data).find((item) => item.id === id);
+      if (!project) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+      if (project.stage >= 4) return { ok: false, error: '자료 수집이 끝난 단계의 일정은 읽기 전용이에요.' };
+      if (project.collectionDueDate !== expected) return { ok: false, error: '다른 화면에서 마감일이 바뀌었어요. 목록으로 돌아가 다시 열어 주세요.' };
+      const data = { ...result.data, collectionDueDates: { ...result.data.collectionDueDates, [id]: date } };
+      try { getStorage().setItem(STORAGE_KEY, JSON.stringify(data)); }
+      catch { return { ok: false, error: '마감일을 저장하지 못했어요. 입력 내용을 유지했으니 다시 시도해 주세요.' }; }
+      return { ok: true, date };
+    }
+    return { list, add, saveCollectionDeadline };
   }
   return { STORAGE_KEY, PURPOSES, validate, createStore };
 })();
