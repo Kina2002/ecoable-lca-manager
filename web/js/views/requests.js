@@ -22,7 +22,7 @@ LCA.views.requests = (() => {
     return fragment;
   }
 
-  function init(project, store) {
+  function init(project, store, onChanged = () => {}) {
     const panel = document.querySelector('#project-requests-panel');
     panel.replaceChildren(document.querySelector('#request-panel-template').content.cloneNode(true));
     const find = (selector) => panel.querySelector(selector);
@@ -109,6 +109,7 @@ LCA.views.requests = (() => {
 
     function renderItems() {
       const result = store.list(project.id);
+      onChanged(result);
       find('#request-storage-error').hidden = result.ok;
       find('#request-storage-error').textContent = result.message || '';
       find('#register-request').disabled = !result.ok;

@@ -13,14 +13,15 @@
   updateReferenceDate(referenceDate);
 
   const samples = LCA.data.createSampleProjects(referenceDate);
-  const projectStore = LCA.projects.createStore(samples, referenceDate);
+  const projectStore = LCA.projects.createStore(samples, referenceDate, undefined, (id) => scopeStore.currentStage(id));
   const projectLoadResult = projectStore.list();
   const projectNotice = document.querySelector('#project-storage-status');
   projectNotice.hidden = projectLoadResult.ok;
   projectNotice.textContent = projectLoadResult.ok ? '' : `${projectLoadResult.error} 현재는 기본 가상 샘플만 표시해요.`;
   const projects = projectLoadResult.ok ? projectLoadResult.items : samples;
   const researcherStore = LCA.researchers.createStore();
-  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list());
+  let requestStore = LCA.requests.createStore(projects.map((project) => project.id));
+  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id));
   let scopeLoadResult = scopeStore.load();
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
@@ -29,7 +30,6 @@
   }
   showScopeStorageStatus();
   let openedProjectId = null;
-  let requestStore = LCA.requests.createStore(projects.map((project) => project.id));
   let selectedStage = null; // null은 '전체 보기'라는 뜻이다. 새로고침하면 전체로 돌아온다.
   const listView = document.querySelector('#project-list-view');
   const detailView = document.querySelector('#project-detail-view');
@@ -104,7 +104,7 @@
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
     projects.splice(0, projects.length, ...result.items);
-    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list());
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id));
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     requestStore = LCA.requests.createStore(projects.map((project) => project.id));
@@ -139,9 +139,10 @@
     listScrollY = window.scrollY;
     detailOpener = opener;
     LCA.views.projectDetail.render(project);
-    LCA.views.requests.init(project, requestStore);
     bindScope(project);
     bindCollectionDeadline(project);
+    bindCollectionTransition(project);
+    LCA.views.requests.init(project, requestStore, (result) => LCA.views.collectionTransition.refresh(result));
     listView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = true;
@@ -159,9 +160,10 @@
       showStage(selectedStage);
       if (moved) {
         LCA.views.projectDetail.render(project);
-        LCA.views.requests.init(project, requestStore);
         bindScope(project);
         bindCollectionDeadline(project);
+        bindCollectionTransition(project);
+        LCA.views.requests.init(project, requestStore, (result) => LCA.views.collectionTransition.refresh(result));
         const message = document.querySelector('#scope-editor [role="status"]');
         message.textContent = project.stage === 2 ? '범위 정의 단계로 이동했어요. 고객과 협의할 평가 범위를 아래에 기록해 주세요.' : '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
         message.tabIndex = -1;
@@ -173,7 +175,22 @@
   }
 
   function bindCollectionDeadline(project) {
-    LCA.views.collectionDeadline.init(project, projectStore, projectStore.list(), renderProjectList);
+    LCA.views.collectionDeadline.init(project, projectStore, projectStore.list(), renderProjectList, () => LCA.views.collectionTransition.refresh());
+  }
+
+  function bindCollectionTransition(project) {
+    LCA.views.collectionTransition.init(project, scopeStore, scopeLoadResult, () => {
+      LCA.views.projectDetail.refreshStage(project);
+      bindCollectionDeadline(project);
+      bindCollectionTransition(project);
+      LCA.views.stageFilter.render(projects);
+      showStage(selectedStage);
+      const status = document.querySelector('#collection-transition-status');
+      status.textContent = '자료 수집을 완료하고 데이터 검토 단계로 이동했어요. 자료별 승인·보완 요청은 자료 요청 탭에서 진행해 주세요.';
+      status.tabIndex = -1;
+      status.focus({ preventScroll: true });
+      status.scrollIntoView({ block: 'center' });
+    }, () => selectDetailTab('requests', true));
   }
 
   function showList() {
@@ -202,6 +219,7 @@
     if (button) showDetail(button.dataset.openProject, button);
   });
   function selectDetailTab(key, focus = false) {
+    LCA.views.collectionTransition.refresh();
     for (const tab of detailView.querySelectorAll('[data-detail-tab]')) {
       const selected = tab.dataset.detailTab === key;
       tab.setAttribute('aria-selected', String(selected));

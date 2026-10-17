@@ -392,6 +392,10 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .scope-editor { margin-top: 24px; }
 .kickoff-card { margin-bottom: 24px; }
 .scope-editor { scroll-margin-top: 24px; }
+.collection-transition { margin-bottom: 24px; }
+.collection-transition [role="status"] { margin: 14px 0; font-size: 13px; line-height: 1.8; }
+.collection-missing { padding-left: 20px; color: var(--muted); font-size: 12px; line-height: 1.9; }
+.collection-missing:empty { display: none; }
 .scope-status-button { border: 1px solid #cbd8ce; border-radius: 8px; padding: 8px 12px; min-height: 44px; background: #f1f7f2; color: #174c3d; font: inherit; cursor: pointer; text-align: left; }
 .scope-status-button:hover { background: #dfefe3; }
 .scope-status-button:focus-visible { outline: 3px solid #247158; outline-offset: 3px; }

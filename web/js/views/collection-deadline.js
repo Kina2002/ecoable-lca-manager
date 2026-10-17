@@ -1,7 +1,9 @@
 window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.collectionDeadline = (() => {
-  function init(project, store, loadResult, onChanged) {
+  let isDirty = () => false;
+  function init(project, store, loadResult, onChanged, onDraftChanged = () => {}) {
+    isDirty = () => false;
     const host = document.querySelector('#collection-deadline-editor');
     const section = document.createElement('section');
     section.className = 'detail-card';
@@ -51,7 +53,8 @@ LCA.views.collectionDeadline = (() => {
     picker.className = 'request-action-button';
     picker.textContent = '자료 수집 마감일 달력';
     box.append(label, input, calendar, picker);
-    LCA.views.dateInput.bind(input, calendar, picker, () => {}, feedback);
+    isDirty = () => LCA.requests.formatDateInput(input.value.trim()) !== (project.collectionDueDate || '');
+    LCA.views.dateInput.bind(input, calendar, picker, onDraftChanged, feedback);
     const save = document.createElement('button');
     save.type = 'submit';
     save.className = 'primary-button';
@@ -70,7 +73,8 @@ LCA.views.collectionDeadline = (() => {
       input.value = date;
       refresh();
       onChanged();
+      onDraftChanged();
     });
   }
-  return { init };
+  return { init, isDirty: () => isDirty() };
 })();

@@ -20,7 +20,7 @@ LCA.projects = (() => {
       refStart: '', refEnd: '', periodReason: '', scopeMemo: '', standards: []
     };
   }
-  function createStore(samples, referenceDate, getStorage = () => window.localStorage) {
+  function createStore(samples, referenceDate, getStorage = () => window.localStorage, getStage = null) {
     const minimumNumber = Math.max(0, ...samples.map((project) => Number(project.code.split('-').at(-1)) || 0)) + 1;
     const failure = () => ({ ok: false, error: '프로젝트 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 등록과 일정 저장을 중단했어요. 저장된 최신 목록은 확인하지 못했어요.' });
     function read() {
@@ -77,7 +77,9 @@ LCA.projects = (() => {
       if (!result.ok) return result;
       const project = combined(result.data).find((item) => item.id === id);
       if (!project) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
-      if (project.stage >= 4) return { ok: false, error: '자료 수집이 끝난 단계의 일정은 읽기 전용이에요.' };
+      const stage = getStage ? getStage(id) : { ok: true, stage: project.stage };
+      if (!stage.ok) return stage;
+      if (stage.stage >= 4) return { ok: false, error: '자료 수집이 끝난 단계의 일정은 읽기 전용이에요.' };
       if (project.collectionDueDate !== expected) return { ok: false, error: '다른 화면에서 마감일이 바뀌었어요. 목록으로 돌아가 다시 열어 주세요.' };
       const data = { ...result.data, collectionDueDates: { ...result.data.collectionDueDates, [id]: date } };
       try { getStorage().setItem(STORAGE_KEY, JSON.stringify(data)); }

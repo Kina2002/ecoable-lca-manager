@@ -101,6 +101,15 @@ LCA.views.projectDetail = (() => {
   function refreshScope(project) {
     document.querySelector('#scope-summary').replaceWith(scopeCard(project));
   }
+  function stageField(project) {
+    const stage = LCA.constants.stageByNo(project.stage);
+    const element = field('현재 단계', stage ? stage.name : '단계 확인 필요', stage ? `${stage.no} / ${LCA.constants.STAGES.length} 단계 · 번호는 업무 순서이며 완료율이 아니에요.` : '');
+    element.id = 'project-current-stage';
+    return element;
+  }
+  function refreshStage(project) {
+    document.querySelector('#project-current-stage').replaceWith(stageField(project));
+  }
 
   function render(project) {
     const fragment = document.createDocumentFragment();
@@ -115,7 +124,6 @@ LCA.views.projectDetail = (() => {
     heading.append(identity, textElement('span', 'demo-pill', '가상 프로젝트 상세'));
     fragment.append(heading);
 
-    const stage = LCA.constants.stageByNo(project.stage);
     const summary = textElement('dl', 'detail-summary', '');
     const target = field('목표 완료일', project.targetDate ? project.targetDate.replaceAll('-', '.') : '미정', project.origin === 'user' ? '프로젝트 등록 때 직접 입력한 목표일이에요.' : '앱을 연 날짜로 만든 시연용 일정이에요.');
     if (project.targetDate) {
@@ -127,10 +135,13 @@ LCA.views.projectDetail = (() => {
     summary.append(
       field('고객사 업종', project.industry),
       field('프로젝트 유형', project.type),
-      field('현재 단계', stage ? stage.name : '단계 확인 필요', stage ? `${stage.no} / ${LCA.constants.STAGES.length} 단계 · 번호는 업무 순서이며 완료율이 아니에요.` : ''),
+      stageField(project),
       target
     );
     fragment.append(summary);
+    const transition = document.createElement('div');
+    transition.id = 'collection-transition';
+    fragment.append(transition);
 
     const tabs = textElement('div', 'detail-tabs', '');
     tabs.setAttribute('role', 'tablist');
@@ -187,5 +198,5 @@ LCA.views.projectDetail = (() => {
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 
-  return { render, refreshScope };
+  return { render, refreshScope, refreshStage };
 })();
