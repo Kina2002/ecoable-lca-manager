@@ -8,7 +8,7 @@ LCA.views.modelling = (() => {
     node.textContent = value;
     return node;
   }
-  function init(project, store) {
+  function init(project, store, onSaved = () => {}) {
     const host = document.querySelector('#project-calculation-panel');
     const initial = store.load(project.id);
     let editingRecord = initial.record || null;
@@ -254,6 +254,7 @@ LCA.views.modelling = (() => {
       editingRecord = result.record; expectedRevision = result.record.revision; sourceSignature = result.record.source.signature;
       dirty = false; feedback.textContent = '외부 계산 결과를 저장했어요. 프로젝트 단계는 그대로예요.';
       refresh();
+      onSaved();
     });
   }
   return { init, refresh: () => refreshCurrent() };
