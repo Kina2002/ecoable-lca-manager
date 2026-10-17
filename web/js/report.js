@@ -110,7 +110,7 @@ LCA.report = (() => {
       if (!state.ok) return state;
       if (!state.record) return { ok: false, error: '보고서 초안을 먼저 저장해 주세요.' };
       if (state.stale) return { ok: false, error: '보고서 근거가 바뀌었어요. 최신 자료를 반영해 초안을 다시 저장한 뒤 내려받아 주세요.' };
-      return { ok: true, content: markdown(state.record), filename: `가상_${state.project.code.replace(/[^A-Za-z0-9_-]/g, '_')}_보고서초안_v${state.record.revision}.md` };
+      return { ok: true, record: clone(state.record), content: markdown(state.record), filename: `가상_${state.project.code.replace(/[^A-Za-z0-9_-]/g, '_')}_보고서초안_v${state.record.revision}.md` };
     }
     return { load, save, download };
   }

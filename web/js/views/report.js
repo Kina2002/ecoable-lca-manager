@@ -19,7 +19,7 @@ LCA.views.report = (() => {
     const moveError = text('p', 'field-error', ''); moveError.setAttribute('role', 'alert');
     start.append(readiness, move, moveError);
     const editor = text('section', 'detail-card calculation-card', '');
-    editor.append(text('h2', '', '보고서 초안 만들기'), text('p', 'detail-help', '평가 범위, 승인 원자료, 외부 계산 결과, 담당자 해석을 모아 초안으로 보관해요. 저장한 초안은 아래에서 읽고 글 파일(.md)로 내려받을 수 있어요.'));
+    editor.append(text('h2', '', '보고서 초안 만들기'), text('p', 'detail-help', '평가 범위, 승인 원자료, 외부 계산 결과, 담당자 해석을 모아 초안으로 보관해요. 저장한 초안은 아래에서 읽고 PDF·Word·글 파일로 내려받을 수 있어요.'));
     const basis = text('p', 'detail-note', '');
     const warning = text('p', 'calculation-notice', ''); warning.setAttribute('role', 'status');
     const adopt = text('button', 'request-action-button', '초안 기준 다시 확인'); adopt.type = 'button';
@@ -46,10 +46,23 @@ LCA.views.report = (() => {
     const saved = text('section', 'detail-card calculation-card', '');
     saved.append(text('h2', '', '저장된 보고서 초안'));
     const savedStatus = text('p', '', ''); savedStatus.setAttribute('role', 'status');
-    const download = text('button', 'request-action-button', '보고서 초안 내려받기 (.md)'); download.type = 'button';
+    const exportOptions = document.createElement('details'); exportOptions.className = 'report-export';
+    exportOptions.append(text('summary', '', '보고서 내려받기'));
+    const exportHelp = text('p', 'detail-help', '형식을 선택한 다음 내려받기를 눌러 주세요. 저장된 초안의 내용을 문서로 만들어요.');
+    exportHelp.id = 'report-export-help';
+    const exportRow = text('div', 'report-export-row', '');
+    const exportLabel = text('label', '', '파일 형식'); exportLabel.htmlFor = 'report-export-format';
+    const format = document.createElement('select'); format.id = 'report-export-format'; format.setAttribute('aria-describedby', exportHelp.id);
+    for (const item of LCA.reportExport.formats) { const option = document.createElement('option'); option.value = item.value; option.textContent = item.label; format.append(option); }
+    const formatField = text('div', 'report-export-field', ''); formatField.append(exportLabel, format);
+    const download = text('button', 'primary-button', '내려받기'); download.type = 'button';
+    let exporting = false;
+    exportRow.append(formatField, download);
     const downloadStatus = text('p', 'detail-help', ''); downloadStatus.setAttribute('role', 'status');
+    exportOptions.append(exportHelp, exportRow, downloadStatus,
+      text('p', 'detail-help', '문서는 이 브라우저에서 만들어요. 증빙 파일은 이름만 포함되며, 전체 입력 기록의 복원용 백업은 아니에요.'));
     const preview = text('div', 'report-preview', '');
-    saved.append(savedStatus, download, downloadStatus, preview);
+    saved.append(savedStatus, exportOptions, preview);
     host.replaceChildren(start, editor, saved);
     function fill(record) {
       controls.title.value = record?.title || `${project.productName} LCA 보고서 초안`;
@@ -85,7 +98,8 @@ LCA.views.report = (() => {
       fields.disabled = !state.ok || state.project.stage !== 7;
       save.disabled = fields.disabled || !state.ready;
       adopt.disabled = save.disabled;
-      download.disabled = !state.ok || !state.record || state.stale;
+      download.disabled = exporting || !state.ok || !state.record || state.stale;
+      format.disabled = exporting;
       if (!state.ok) {
         readiness.textContent = state.error; warning.textContent = state.error; savedStatus.textContent = state.error;
         return;
@@ -131,15 +145,36 @@ LCA.views.report = (() => {
         return;
       }
       revision = result.record.revision; sourceKey = result.record.sourceKey; dirty = false; confirmed.checked = false;
-      feedback.textContent = '보고서 초안을 저장했어요. 아래 본문을 읽거나 글 파일로 내려받을 수 있어요.'; refresh();
+      feedback.textContent = '보고서 초안을 저장했어요. 아래 본문을 읽거나 PDF·Word·글 파일로 내려받을 수 있어요.'; refresh();
     });
-    download.addEventListener('click', () => {
+    download.addEventListener('click', async () => {
+      if (exporting) return;
+      const chosen = format.value;
       const result = store.download(project.id);
       if (!result.ok) { downloadStatus.textContent = result.error; refresh(); return; }
-      const url = URL.createObjectURL(new Blob([result.content], {type:'text/markdown;charset=utf-8'}));
-      const link = document.createElement('a'); link.href = url; link.download = result.filename;
-      document.body.append(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      downloadStatus.textContent = '저장된 보고서 초안을 글 파일(.md)로 내려받았어요. 브라우저 전체 백업 파일은 아니에요.';
+      exporting = true; exportRow.setAttribute('aria-busy', 'true'); download.textContent = '파일 만드는 중…'; refresh();
+      downloadStatus.textContent = '선택한 형식으로 문서를 만들고 있어요. 잠시 기다려 주세요.';
+      try {
+        const generated = chosen === 'md' ? { blob: new Blob([result.content], { type: 'text/markdown;charset=utf-8' }), extension: 'md' }
+          : await LCA.reportExport.create(result.record, chosen);
+        // 문서를 만드는 동안 다른 화면에서 자료·해석·보고서를 바꾼 경우에도 오래된 파일을 내보내지 않는다.
+        const latest = store.download(project.id);
+        if (!latest.ok) throw new Error(latest.error);
+        if (latest.record.revision !== result.record.revision || latest.record.sourceKey !== result.record.sourceKey) {
+          throw new Error('파일을 만드는 동안 보고서가 바뀌었어요. 최신 초안을 확인한 뒤 다시 내려받아 주세요.');
+        }
+        const url = URL.createObjectURL(generated.blob);
+        try {
+          const link = document.createElement('a'); link.href = url; link.download = result.filename.replace(/\.md$/, `.${generated.extension}`);
+          document.body.append(link); link.click(); link.remove();
+        } finally { window.setTimeout(() => URL.revokeObjectURL(url), 30000); }
+        downloadStatus.textContent = `${LCA.reportExport.formats.find((item) => item.value === chosen).label} 내려받기를 시작했어요.`;
+      } catch (cause) {
+        downloadStatus.textContent = `내려받지 못했어요. ${cause?.message || '문서 생성 중 문제가 생겼어요. 다시 시도해 주세요.'} 저장한 초안은 그대로 있어요.`;
+        downloadStatus.tabIndex = -1; downloadStatus.focus();
+      } finally {
+        exporting = false; exportRow.removeAttribute('aria-busy'); download.textContent = '내려받기'; refresh();
+      }
     });
   }
   return { init, refresh: () => refreshCurrent() };
