@@ -396,6 +396,35 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .collection-transition [role="status"] { margin: 14px 0; font-size: 13px; line-height: 1.8; }
 .collection-missing { padding-left: 20px; color: var(--muted); font-size: 12px; line-height: 1.9; }
 .collection-missing:empty { display: none; }
+.calculation-card { margin-bottom: 24px; min-width: 0; }
+.calculation-card details { margin-top: 20px; }
+.calculation-card summary { cursor: pointer; font-size: 13px; color: var(--green); }
+.calculation-sources { padding-left: 20px; font-size: 13px; overflow-wrap: anywhere; }
+.calculation-sources li { margin-top: 16px; }
+.calculation-sources p { margin: 6px 0; }
+.calculation-fields { border: 0; padding: 0; margin: 24px 0; min-width: 0; }
+.calculation-fields > legend { font-size: 15px; font-weight: 650; }
+.calculation-fields .scope-form { margin-bottom: 24px; }
+.calculation-fields .scope-form > div { min-width: 0; }
+.calculation-indicator-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; align-items: end; gap: 12px; min-width: 0; border: 1px solid #dce6dc; border-radius: 8px; margin: 15px 0; padding: 16px; }
+.calculation-indicator-row legend { padding: 0 6px; font-size: 13px; }
+.calculation-indicator-row > div { min-width: 0; }
+.calculation-indicator-row label { display: block; margin-bottom: 8px; font-size: 12px; }
+.calculation-indicator-row input { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; box-sizing: border-box; }
+.calculation-confirmation { display: flex; align-items: flex-start; gap: 10px; margin: 24px 0 0; font-size: 13px; line-height: 1.8; }
+.calculation-confirmation input { margin-top: 6px; }
+.calculation-notice { color: #805111; font-size: 13px; line-height: 1.8; }
+.calculation-saved { margin: 24px 0; overflow-wrap: anywhere; }
+.calculation-saved dd { white-space: pre-wrap; }
+.calculation-results { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; margin: 20px 0; }
+.calculation-results caption { text-align: left; margin-bottom: 12px; font-size: 12px; color: var(--muted); }
+.calculation-results th, .calculation-results td { text-align: left; padding: 12px 8px; border-bottom: 1px solid #e2e9e1; overflow-wrap: anywhere; }
+.calculation-fields:disabled { opacity: .65; }
+@media (max-width: 640px) {
+  .calculation-fields .scope-form { grid-template-columns: 1fr; }
+  .calculation-indicator-row { grid-template-columns: 1fr; }
+  .calculation-indicator-row button { justify-self: start; }
+}
 .scope-status-button { border: 1px solid #cbd8ce; border-radius: 8px; padding: 8px 12px; min-height: 44px; background: #f1f7f2; color: #174c3d; font: inherit; cursor: pointer; text-align: left; }
 .scope-status-button:hover { background: #dfefe3; }
 .scope-status-button:focus-visible { outline: 3px solid #247158; outline-offset: 3px; }

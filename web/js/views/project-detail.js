@@ -146,7 +146,7 @@ LCA.views.projectDetail = (() => {
     const tabs = textElement('div', 'detail-tabs', '');
     tabs.setAttribute('role', 'tablist');
     tabs.setAttribute('aria-label', '프로젝트 상세 내용');
-    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청']]) {
+    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과']]) {
       const tab = textElement('button', 'detail-tab', label);
       tab.type = 'button';
       tab.id = `detail-${key}-tab`;
@@ -194,7 +194,13 @@ LCA.views.projectDetail = (() => {
     requests.setAttribute('aria-labelledby', 'detail-requests-tab');
     requests.tabIndex = 0;
     requests.hidden = true;
-    fragment.append(overview, requests);
+    const calculation = textElement('div', '', '');
+    calculation.id = 'project-calculation-panel';
+    calculation.setAttribute('role', 'tabpanel');
+    calculation.setAttribute('aria-labelledby', 'detail-calculation-tab');
+    calculation.tabIndex = 0;
+    calculation.hidden = true;
+    fragment.append(overview, requests, calculation);
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 

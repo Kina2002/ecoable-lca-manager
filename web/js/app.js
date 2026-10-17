@@ -23,6 +23,12 @@
   let requestStore = LCA.requests.createStore(projects.map((project) => project.id));
   let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id));
   let scopeLoadResult = scopeStore.load();
+  const modellingStore = LCA.modelling.createStore(projects, undefined, (id) => requestStore.list(id), (id) => {
+    const loaded = scopeStore.load();
+    if (!loaded.ok) return loaded;
+    const project = projects.find((item) => item.id === id);
+    return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+  });
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
     notice.hidden = scopeLoadResult.ok;
@@ -142,7 +148,8 @@
     bindScope(project);
     bindCollectionDeadline(project);
     bindCollectionTransition(project);
-    LCA.views.requests.init(project, requestStore, (result) => LCA.views.collectionTransition.refresh(result));
+    bindCalculation(project);
+    LCA.views.requests.init(project, requestStore, refreshRequestViews);
     listView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = true;
@@ -163,7 +170,8 @@
         bindScope(project);
         bindCollectionDeadline(project);
         bindCollectionTransition(project);
-        LCA.views.requests.init(project, requestStore, (result) => LCA.views.collectionTransition.refresh(result));
+        bindCalculation(project);
+        LCA.views.requests.init(project, requestStore, refreshRequestViews);
         const message = document.querySelector('#scope-editor [role="status"]');
         message.textContent = project.stage === 2 ? '범위 정의 단계로 이동했어요. 고객과 협의할 평가 범위를 아래에 기록해 주세요.' : '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
         message.tabIndex = -1;
@@ -178,6 +186,14 @@
     LCA.views.collectionDeadline.init(project, projectStore, projectStore.list(), renderProjectList, () => LCA.views.collectionTransition.refresh());
   }
 
+  function bindCalculation(project) {
+    LCA.views.modelling.init(project, modellingStore);
+  }
+  function refreshRequestViews(result) {
+    LCA.views.collectionTransition.refresh(result);
+    LCA.views.modelling.refresh();
+  }
+
   function bindCollectionTransition(project) {
     LCA.views.collectionTransition.init(project, scopeStore, scopeLoadResult, () => {
       LCA.views.projectDetail.refreshStage(project);
@@ -185,6 +201,7 @@
       bindCollectionTransition(project);
       LCA.views.stageFilter.render(projects);
       showStage(selectedStage);
+      LCA.views.modelling.refresh();
       const status = document.querySelector('#collection-transition-status');
       const movedMessage = project.stage === 5
         ? '계산(모델링) 단계로 이동했어요. 승인된 자료 기록은 그대로 보관돼요.'
@@ -223,6 +240,7 @@
   });
   function selectDetailTab(key, focus = false) {
     LCA.views.collectionTransition.refresh();
+    LCA.views.modelling.refresh();
     for (const tab of detailView.querySelectorAll('[data-detail-tab]')) {
       const selected = tab.dataset.detailTab === key;
       tab.setAttribute('aria-selected', String(selected));
@@ -246,8 +264,10 @@
     const tab = event.target.closest('[data-detail-tab]');
     if (!tab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    const key = event.key === 'Home' ? 'overview' : event.key === 'End' ? 'requests'
-      : tab.dataset.detailTab === 'overview' ? 'requests' : 'overview';
+    const keys = Array.from(detailView.querySelectorAll('[data-detail-tab]')).map((item) => item.dataset.detailTab);
+    const index = keys.indexOf(tab.dataset.detailTab);
+    const key = event.key === 'Home' ? keys[0] : event.key === 'End' ? keys.at(-1)
+      : keys[(index + (event.key === 'ArrowRight' ? 1 : -1) + keys.length) % keys.length];
     selectDetailTab(key, true);
   });
   document.querySelector('#back-to-projects').addEventListener('click', showList);
