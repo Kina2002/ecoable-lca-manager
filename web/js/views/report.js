@@ -2,10 +2,11 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.report = (() => {
   let refreshCurrent = () => {};
+  let selectCurrent = () => {};
   function text(tag, className, value) {
     const node = document.createElement(tag); node.className = className; node.textContent = value; return node;
   }
-  function init(project, store, scopeStore, onMoved) {
+  function init(project, store, scopeStore, onMoved, comments, onOpenComment, onSaved = () => {}) {
     const host = document.querySelector('#project-report-panel');
     const initial = store.load(project.id);
     let revision = initial.record?.revision || 0;
@@ -65,7 +66,8 @@ LCA.views.report = (() => {
     exportOptions.append(exportHelp, exportRow, downloadStatus,
       text('p', 'detail-help', '문서는 이 브라우저에서 만들어요. 증빙 파일은 이름만 포함되며, 전체 입력 기록의 복원용 백업은 아니에요.'));
     const preview = text('div', 'report-preview', '');
-    const history = LCA.views.reportHistory.create(() => { downloadStatus.textContent = ''; refresh(); });
+    const getComments = () => comments.list(project.id);
+    const history = LCA.views.reportHistory.create(() => { downloadStatus.textContent = ''; refresh(); }, onOpenComment, getComments);
     saved.append(savedStatus, history.element, exportOptions, preview);
     host.replaceChildren(start, editor, saved);
     function fill(record) {
@@ -118,6 +120,7 @@ LCA.views.report = (() => {
         revision = state.record?.revision || 0; sourceKey = state.record?.sourceKey || state.sourceKey; fill(state.record);
       }
       if (!dirty && !state.record) sourceKey = state.sourceKey;
+      changeFields.updateComments(getComments(), (state.record?.revision || 0) + 1, fields.disabled);
       readiness.textContent = state.project.stage < 6 ? '결과 해석 단계(6)에서 보고서 작성을 시작할 수 있어요.'
         : state.project.stage === 6 ? state.ready ? '준비됐어요. 버튼을 누르면 보고서 단계(7)로 이동해요.' : '모든 자료를 승인하고 최신 계산 결과에 맞는 해석을 먼저 저장해 주세요.'
         : state.project.stage === 7 ? '보고서 단계(7)예요. 초안 저장으로 다음 단계에 자동 이동하지 않아요.' : '후속 단계에서는 저장된 초안을 조회할 수 있어요.';
@@ -128,7 +131,13 @@ LCA.views.report = (() => {
       savedStatus.textContent = !selected ? '보관된 버전 없음' : archived ? `과거 보관본 v${selected.revision} · 최신 보고서는 v${state.record.revision}이에요. 당시 자료·계산·해석을 보여줘요.` : state.stale ? '자료 또는 해석 변경 · 최신 보고서의 새 버전 작성 필요' : '현재 자료·계산 결과·해석과 같은 기준의 최신 보고서예요.';
       showRecord(archived ? {...selected, historyNotice:'과거 버전 보관본입니다. 현재의 최신 보고서·자료와 다를 수 있습니다.'} : selected);
     }
-    refreshCurrent = refresh; refresh();
+    refreshCurrent = refresh;
+    selectCurrent = (requestedRevision) => {
+      const state = store.load(project.id);
+      if (!state.ok || !history.selectVersion(requestedRevision, state)) { savedStatus.textContent = state.error || '연결한 보고서 버전을 찾을 수 없어요.'; return; }
+      savedStatus.tabIndex = -1; savedStatus.focus(); savedStatus.scrollIntoView({ block: 'start' });
+    };
+    refresh();
     form.addEventListener('input', () => { dirty = true; error.textContent = ''; });
     form.addEventListener('change', () => { dirty = true; error.textContent = ''; });
     adopt.addEventListener('click', () => {
@@ -157,6 +166,7 @@ LCA.views.report = (() => {
       if (result.ok) {
         revision = result.record.revision; sourceKey = result.record.sourceKey; dirty = false; confirmed.checked = false; changeFields.reset();
         feedback.textContent = `보고서 v${result.record.revision}을 새 버전으로 보관했어요. 이전 버전과 변경 기록은 아래 이력에서 볼 수 있어요.`;
+        onSaved();
       }
       refresh();
       if (!result.ok) {
@@ -198,5 +208,5 @@ LCA.views.report = (() => {
       }
     });
   }
-  return { init, refresh: () => refreshCurrent() };
+  return { init, refresh: () => refreshCurrent(), selectVersion: (revision) => selectCurrent(revision) };
 })();

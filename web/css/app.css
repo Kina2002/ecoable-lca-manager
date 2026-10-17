@@ -541,3 +541,22 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
   .report-version-selectors, .report-difference-columns { grid-template-columns: 1fr; }
   .report-change-fields { grid-template-columns: 1fr; padding: 14px; }
 }
+
+/* WEB-026: 고객 검토 의견과 보고서 연결 */
+.customer-review-counts { color: #174c3d; font-weight: 700; line-height: 1.8; }
+#project-comments-panel input[type="text"], #project-comments-panel select { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #cbd8ce; border-radius: 8px; background: white; color: #233b31; font: inherit; }
+.customer-review-card { padding: 24px; margin-top: 20px; border: 1px solid #dce6dc; border-radius: 12px; background: #fcfdfb; overflow-wrap: anywhere; scroll-margin-top: 20px; }
+.customer-review-card:focus { outline: 3px solid #247158; outline-offset: 3px; }
+.customer-review-card h3 { font-size: 17px; line-height: 1.7; }
+.customer-review-card h4 { margin-bottom: 8px; }
+.customer-review-actions { margin-block: 20px; border-top: 1px solid #dce6dc; padding-top: 12px; }
+.customer-review-events { padding-left: 22px; font-size: 13px; }
+.customer-review-events li { padding-block: 14px; border-bottom: 1px solid #dce6dc; }
+.customer-review-events strong { line-height: 1.8; }
+.report-comment-options { grid-column: 1 / -1; min-width: 0; margin-top: 8px; border: 1px solid #dce6dc; border-radius: 8px; padding: 12px; }
+.report-comment-options legend { font-size: 14px; }
+.report-comment-options input[type="checkbox"] { width: 18px; min-height: 18px; padding: 0; flex-shrink: 0; }
+.report-comment-options label { overflow-wrap: anywhere; }
+.report-comment-relations { padding: 16px; margin-block: 20px; background: #f1f7f2; border-radius: 10px; }
+.report-comment-relations button, .report-change-summary button { margin: 4px 8px 4px 0; white-space: normal; text-align: left; }
+@media (max-width: 640px) { .customer-review-card { padding: 16px; } }

@@ -5,7 +5,7 @@ LCA.views.reportHistory = (() => {
     const node = document.createElement(tag); node.className = className; node.textContent = value; return node;
   }
   const date = (value) => new Intl.DateTimeFormat('ko-KR', {dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Seoul'}).format(new Date(value));
-  function create(onChange) {
+  function create(onChange, onOpenComment = () => {}, getComments = () => ({ ok: true, items: [] })) {
     let selectedValue = 'latest';
     let peerValue = '';
     const element = text('div', 'report-history', '');
@@ -19,6 +19,7 @@ LCA.views.reportHistory = (() => {
     const selected = selector('report-version', '보관 버전');
     const peer = selector('report-compare-version', '비교 기준 버전');
     const metadata = text('div', 'report-change-summary', '');
+    const relations = text('div', 'report-comment-relations', '');
     const comparison = document.createElement('details');
     const comparisonTitle = text('summary', '', '버전 내용 비교');
     const differences = text('div', 'report-differences', ''); comparison.append(comparisonTitle, differences);
@@ -26,7 +27,7 @@ LCA.views.reportHistory = (() => {
     const archive = document.createElement('input'); archive.type = 'checkbox';
     archiveLabel.append(archive, document.createTextNode('선택한 보고서가 최신 보고서가 아닌 과거 보관본임을 확인했어요.'));
     archiveLabel.hidden = true;
-    element.append(list, choices, metadata, comparison, archiveLabel);
+    element.append(list, choices, metadata, relations, comparison, archiveLabel);
     selected.addEventListener('change', () => { selectedValue = selected.value; peerValue = ''; archive.checked = false; onChange(); });
     peer.addEventListener('change', () => { peerValue = peer.value; onChange(); });
     archive.addEventListener('change', onChange);
@@ -60,7 +61,26 @@ LCA.views.reportHistory = (() => {
       if (record?.change) {
         metadata.append(text('h4', '', `v${record.revision} 변경 기록`));
         for (const [field, rule] of Object.entries(LCA.reportHistory.FIELDS)) if (record.change[field]) metadata.append(text('h5', '', rule.label), text('p', 'interpretation-text', record.change[field]));
+        for (const link of record.change.commentLinks || []) {
+          const button = text('button', 'request-action-button', `${link.id} 의견 보기`); button.type = 'button'; button.disabled = busy;
+          button.addEventListener('click', () => onOpenComment(link.id));
+          metadata.append(text('p', 'interpretation-text', `연결한 의견 (v${link.reportRevision} 대상): ${link.content}`), button);
+        }
       } else if (record) metadata.append(text('p', 'detail-help', '이전 앱의 저장본이에요. 당시 변경 설명과 작성자는 기록되어 있지 않아요. 이력 도입 전에 덮어쓴 버전은 복구할 수 없어요.'));
+      relations.replaceChildren();
+      if (record) {
+        relations.append(text('h4', '', `v${record.revision}의 고객 검토 연결`), text('p', 'detail-help', '현재 의견 처리 상태예요. 보관한 보고서 본문은 바꾸지 않아요.'));
+        const comments = getComments();
+        if (!comments.ok) relations.append(text('p', 'calculation-notice', comments.error));
+        else {
+          const related = comments.items.filter((item) => item.reportRevision === record.revision || item.appliedReportRevision === record.revision);
+          if (!related.length) relations.append(text('p', 'detail-help', '이 버전에 접수되거나 반영한 것으로 기록된 의견이 없어요.'));
+          for (const item of related) {
+            const button = text('button', 'request-action-button', `${item.id} · ${item.reportRevision === record.revision ? '이 버전에 받은 의견' : '수정 반영 기록'} · ${item.status}`);
+            button.type = 'button'; button.disabled = busy; button.addEventListener('click', () => onOpenComment(item.id)); relations.append(button);
+          }
+        }
+      }
       comparison.hidden = versions.length < 2;
       if (previous && record) {
         const changes = LCA.reportHistory.compare(previous, record);
@@ -78,7 +98,11 @@ LCA.views.reportHistory = (() => {
       archiveLabel.hidden = !record || record.revision === state.record?.revision;
       archive.disabled = busy;
     }
-    return { element, render, current, archiveConfirmed: () => archive.checked, revision: (state) => current(state)?.revision };
+    return { element, render, current, archiveConfirmed: () => archive.checked, revision: (state) => current(state)?.revision,
+      selectVersion: (revision, state) => {
+        if (!state.versions.some((record) => record.revision === revision)) return false;
+        selectedValue = revision === state.record?.revision ? 'latest' : String(revision); peerValue = ''; archive.checked = false; onChange(); return true;
+      } };
   }
   function changeFields(project) {
     const element = text('div', 'report-change-fields', '');
@@ -101,12 +125,34 @@ LCA.views.reportHistory = (() => {
       input.id = `report-change-${field}`; label.htmlFor = input.id; input.maxLength = rule.limit; input.placeholder = examples[field];
       box.append(label, input); element.append(box); controls[field] = input;
     }
+    const related = document.createElement('fieldset'); related.className = 'report-comment-options';
+    related.append(text('legend', '', '이 버전의 변경과 관련된 고객 의견 (선택 · 최대 50건)'));
+    const choices = text('div', '', ''); const notice = text('p', 'detail-help', ''); related.append(notice, choices); element.append(related);
+    let selectedIds = new Set();
+    related.addEventListener('change', (event) => {
+      if (event.target.type !== 'checkbox') return;
+      if (event.target.checked) selectedIds.add(event.target.value); else selectedIds.delete(event.target.value);
+    });
+    function updateComments(result, nextRevision, disabled) {
+      choices.replaceChildren(); related.disabled = disabled || !result?.ok;
+      if (!result?.ok) { notice.textContent = result?.error || '고객 의견을 확인하지 못했어요.'; return; }
+      const eligible = result.items.filter((item) => item.reportRevision < nextRevision);
+      notice.textContent = eligible.length ? '변경 이유가 된 의견을 연결해 주세요. 수정 반영 버전 지정과 종결은 고객 검토 탭에서 따로 기록해요.' : '연결할 고객 의견이 없어요. 첫 보고서를 보관한 뒤 고객 검토 탭에서 등록할 수 있어요.';
+      for (const item of eligible) {
+        const label = text('label', 'calculation-confirmation', ''); const input = document.createElement('input');
+        input.type = 'checkbox'; input.value = item.id; input.checked = selectedIds.has(item.id);
+        label.append(input, document.createTextNode(`${item.id} · v${item.reportRevision} 의견 · ${item.status}: ${item.content.slice(0, 120)}${item.content.length > 120 ? '…' : ''}`)); choices.append(label);
+      }
+      const missing = [...selectedIds].filter((id) => !eligible.some((item) => item.id === id));
+      if (missing.length) notice.textContent += ` 선택했던 ${missing.join(', ')}을 확인하지 못했어요. 저장 시 다시 확인해요.`;
+    }
     function reset(initial = false) {
       for (const input of Object.values(controls)) input.value = '';
       controls.author.value = project.researcherName || '';
       if (initial) controls.summary.value = '최초 초안 작성';
+      selectedIds = new Set();
     }
-    return { element, controls, reset, draft: () => Object.fromEntries(Object.entries(controls).map(([field, input]) => [field, input.value])) };
+    return { element, controls, reset, updateComments, draft: () => ({ ...Object.fromEntries(Object.entries(controls).map(([field, input]) => [field, input.value])), commentIds: [...selectedIds] }) };
   }
   return { create, changeFields };
 })();

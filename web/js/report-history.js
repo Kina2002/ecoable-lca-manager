@@ -7,9 +7,9 @@ LCA.reportHistory = (() => {
     before: { label: '변경 전', limit: 2000 },
     after: { label: '변경 후', limit: 2000 },
     author: { label: '작성자', limit: 100 },
-    reviewRef: { label: '관련 고객 의견', limit: 200, optional: true }
+    reviewRef: { label: '관련 의견 메모', limit: 200, optional: true }
   };
-  function validate(change, initial = false) {
+  function validate(change, initial = false, stored = false) {
     const errors = {};
     for (const [field, rule] of Object.entries(FIELDS)) {
       const optional = rule.optional || (initial && field === 'before');
@@ -17,6 +17,13 @@ LCA.reportHistory = (() => {
         errors[field] = `${rule.label} 항목은 ${optional ? '0' : '1'}~${rule.limit.toLocaleString('ko-KR')}자로 적어 주세요.`;
       }
     }
+    if (change?.commentIds !== undefined) {
+      const ids = change.commentIds;
+      if (!Array.isArray(ids) || ids.length > 50 || new Set(ids).size !== ids.length || ids.some((id) => typeof id !== 'string' || !/^CMT-[0-9]{4,}$/.test(id))) errors.commentIds = '관련 고객 의견은 중복 없이 50건까지 선택해 주세요.';
+      if (stored && (!Array.isArray(change.commentLinks) || change.commentLinks.length !== ids?.length
+        || change.commentLinks.some((link, i) => !link || link.id !== ids[i] || !Number.isSafeInteger(link.reportRevision) || link.reportRevision < 1
+          || typeof link.content !== 'string' || !link.content.trim() || link.content.length > 3000))) errors.commentIds = '저장된 고객 의견 연결을 확인하지 못했어요.';
+    } else if (change?.commentLinks !== undefined) errors.commentIds = '저장된 고객 의견 연결을 확인하지 못했어요.';
     return errors;
   }
   function normalize(change) {
@@ -36,7 +43,8 @@ LCA.reportHistory = (() => {
       ['평가 범위', (record) => sectionText(record, '평가 범위')],
       ['승인 원자료·검토 기록', (record) => sectionText(record, '계산에 연결한 승인 원자료')],
       ['계산 결과·산정 근거', (record) => sectionText(record, '외부 계산 결과')],
-      ['담당자 해석', (record) => sectionText(record, '담당자의 결과 해석')]
+      ['담당자 해석', (record) => sectionText(record, '담당자의 결과 해석')],
+      ['연결한 고객 의견', (record) => (record.change?.commentLinks || []).map((link) => `${link.id} · v${link.reportRevision} 의견: ${link.content}`).join('\n\n')]
     ];
     return groups.flatMap(([label, read]) => {
       const left = read(before); const right = read(after);
@@ -74,7 +82,8 @@ LCA.reportHistory = (() => {
             if (record.legacy === true) {
               if (index !== 0 || record.change !== undefined) return failure();
             } else {
-              if (record.legacy !== undefined || Object.keys(validate(record.change, index === 0)).length || (index === 0 && record.revision !== 1)) return failure();
+              if (record.legacy !== undefined || Object.keys(validate(record.change, index === 0, true)).length || (index === 0 && record.revision !== 1)
+                || record.change.commentLinks?.some((link) => link.reportRevision >= record.revision)) return failure();
             }
             if (index > 0 && record.revision !== value[index - 1].revision + 1) return failure();
           }
@@ -114,10 +123,21 @@ LCA.reportHistory = (() => {
       if ((state.record?.revision || 0) !== expectedRevision) return { ok: false, error: '다른 화면에서 새 보고서 버전을 저장했어요. 작성 내용은 유지했으니 프로젝트를 다시 열어 최신 버전을 확인해 주세요.' };
       if (state.sourceKey !== expectedSourceKey) return { ok: false, error: '보고서의 근거가 바뀌었어요. 자료와 해석을 읽고 초안 기준을 다시 확인해 주세요.' };
       if (expectedRevision >= Number.MAX_SAFE_INTEGER) return { ok: false, error: '새 버전 번호를 만들지 못했어요.' };
+      const commentIds = draft.change.commentIds || [];
+      const commentLinks = [];
+      if (commentIds.length) {
+        const comments = helpers.getComments?.(id);
+        if (!comments?.ok) return { ok: false, error: comments?.error || '관련 고객 의견을 확인하지 못했어요. 의견을 확인한 뒤 다시 저장해 주세요.' };
+        for (const commentId of commentIds) {
+          const comment = comments.items.find((item) => item.id === commentId && item.projectId === id && item.reportRevision <= expectedRevision);
+          if (!comment) return { ok: false, errors: { change_commentIds: '선택한 고객 의견의 프로젝트와 보고서 버전을 다시 확인해 주세요.' } };
+          commentLinks.push({ id: comment.id, reportRevision: comment.reportRevision, content: comment.content });
+        }
+      }
       const now = new Date().toISOString();
       const record = { title: draft.title.trim(), note: draft.note.trim(), confirmed: true, projectId: id,
         revision: expectedRevision + 1, source: clone(state.source), sourceKey: state.sourceKey,
-        change: normalize(draft.change), createdAt: now, updatedAt: now };
+        change: { ...normalize(draft.change), commentIds: [...commentIds], commentLinks }, createdAt: now, updatedAt: now };
       try { getStorage().setItem(STORAGE_KEY, JSON.stringify({version:2, records:{...data.records, [id]:[...history, record]}})); }
       catch { return { ok: false, error: '새 보고서 버전을 저장하지 못했어요. 작성 내용과 기존 버전은 모두 유지했어요. 저장 공간을 확인해 주세요.' }; }
       return { ok: true, record: clone(record) };

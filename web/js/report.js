@@ -37,7 +37,10 @@ LCA.report = (() => {
       { title: '작성 메모', paragraphs: [record.note || '별도 작성 메모가 없습니다.'] }
     ];
     if (record.historyNotice) output.unshift({ title: '보관본 안내', paragraphs: [record.historyNotice] });
-    if (record.change) output.push({ title: '이 버전의 변경 기록', paragraphs: Object.entries(LCA.reportHistory.FIELDS).filter(([field]) => record.change[field]).map(([field, rule]) => `${rule.label}: ${record.change[field]}`) });
+    if (record.change) output.push({ title: '이 버전의 변경 기록', paragraphs: [
+      ...Object.entries(LCA.reportHistory.FIELDS).filter(([field]) => record.change[field]).map(([field, rule]) => `${rule.label}: ${record.change[field]}`),
+      ...(record.change.commentLinks || []).map((link) => `관련 고객 의견 ${link.id} (의견 대상 보고서 v${link.reportRevision}): ${link.content}`)
+    ] });
     else if (record.legacy) output.push({ title: '이 버전의 변경 기록', paragraphs: ['이력 기능 도입 전 저장본입니다. 당시 변경 설명과 작성자는 기록되어 있지 않습니다.'] });
     return output;
   }
@@ -56,8 +59,8 @@ LCA.report = (() => {
     lines.push('증빙과 결과 파일은 이름만 기록되어 있으며 파일 내용은 이 초안에 첨부되지 않습니다.', '');
     return '\uFEFF' + lines.join('\n');
   }
-  function createStore(projects, getInterpretation, getStorage = () => window.localStorage) {
-    return LCA.reportHistory.createStore(projects, getInterpretation, getStorage, { validate, validSource, projectSnapshot, markdown });
+  function createStore(projects, getInterpretation, getStorage = () => window.localStorage, getComments) {
+    return LCA.reportHistory.createStore(projects, getInterpretation, getStorage, { validate, validSource, projectSnapshot, markdown, getComments });
   }
   return { STORAGE_KEY, validate, sections, createStore };
 })();

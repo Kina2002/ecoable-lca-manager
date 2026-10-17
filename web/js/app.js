@@ -30,7 +30,13 @@
     return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
   });
   const interpretationStore = LCA.interpretation.createStore(projects, (id) => modellingStore.load(id));
-  const reportStore = LCA.report.createStore(projects, (id) => interpretationStore.load(id));
+  const reportStore = LCA.report.createStore(projects, (id) => interpretationStore.load(id), undefined, (id) => customerReviewStore.list(id));
+  const customerReviewStore = LCA.customerReview.createStore(projects, (id) => reportStore.load(id), (id) => {
+    const loaded = scopeStore.load();
+    if (!loaded.ok) return loaded;
+    const project = projects.find((item) => item.id === id);
+    return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+  });
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
     notice.hidden = scopeLoadResult.ok;
@@ -201,15 +207,22 @@
       LCA.views.modelling.refresh();
       LCA.views.interpretation.refresh();
       LCA.views.report.refresh();
+      LCA.views.customerReview.refresh();
     }
     LCA.views.interpretation.init(project, interpretationStore, scopeStore, refreshLaterStage, () => LCA.views.report.refresh());
-    LCA.views.report.init(project, reportStore, scopeStore, refreshLaterStage);
+    LCA.views.report.init(project, reportStore, scopeStore, refreshLaterStage, customerReviewStore, (id) => {
+      selectDetailTab('comments', true); LCA.views.customerReview.focus(id);
+    }, () => LCA.views.customerReview.refresh());
+    LCA.views.customerReview.init(project, customerReviewStore, () => LCA.views.report.refresh(), (revision) => {
+      selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
+    });
   }
   function refreshRequestViews(result) {
     LCA.views.collectionTransition.refresh(result);
     LCA.views.modelling.refresh();
     LCA.views.interpretation.refresh();
     LCA.views.report.refresh();
+    LCA.views.customerReview.refresh();
   }
 
   function bindCollectionTransition(project) {
@@ -261,6 +274,7 @@
     LCA.views.modelling.refresh();
     LCA.views.interpretation.refresh();
     LCA.views.report.refresh();
+    LCA.views.customerReview.refresh();
     for (const tab of detailView.querySelectorAll('[data-detail-tab]')) {
       const selected = tab.dataset.detailTab === key;
       tab.setAttribute('aria-selected', String(selected));
