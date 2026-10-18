@@ -109,6 +109,28 @@ LCA.views.projectDetail = (() => {
   }
   function refreshStage(project) {
     document.querySelector('#project-current-stage').replaceWith(stageField(project));
+    const edit = document.querySelector('[data-edit-project-basic]');
+    if (edit) edit.textContent = project.stage >= 10 ? '기본정보·변경 이력' : '기본정보 수정';
+  }
+
+  function targetField(project) {
+    const target = field('목표 완료일', project.targetDate ? project.targetDate.replaceAll('-', '.') : '미정', '프로젝트 목표일이에요. 자료 수집 마감일·개별 요청 기한과는 별개예요.'); target.id = 'project-target-date';
+    if (project.targetDate) { const time = textElement('time', 'detail-value', project.targetDate.replaceAll('-', '.')); time.dateTime = project.targetDate; target.querySelector('.detail-value').replaceWith(time); }
+    target.querySelector('dd').append(LCA.views.deadlines.badge(LCA.deadlines.project(project))); return target;
+  }
+  function purposeCard(project) {
+    const result = card('업무 목적과 활용', '왜 시작했고, 결과를 어디에 쓸까요?', [
+      field('업무 목적 · 왜 하나요?', project.purpose, PURPOSE_HELP[project.purpose] || '이 업무를 진행하는 이유예요.'),
+      field('세부 동인 · 어떤 요구가 있나요?', project.drivers, '이 업무와 관련해 확인할 구체적인 요구나 기준이에요. 실제 적용 조건은 프로젝트 범위를 정할 때 검토해요.'),
+      field('결과 활용처 · 어디에 쓰나요?', project.uses, '결과를 쓰려는 곳이에요. 여기에 인증 이름이 있어도 이미 인증을 받았다는 뜻은 아니에요.')
+    ]); result.id = 'project-purpose-summary'; return result;
+  }
+  function refreshBasics(project) {
+    const title = document.querySelector('#project-detail-title'); title.replaceChildren(document.createTextNode(project.companyName));
+    if (project.isFictional) title.append(textElement('span', 'fictional-tag', '가상'));
+    document.querySelector('#project-detail-description').textContent = `${project.productName} · ${project.code}`;
+    document.querySelector('#project-target-date').replaceWith(targetField(project));
+    document.querySelector('#project-purpose-summary').replaceWith(purposeCard(project)); refreshScope(project); refreshStage(project);
   }
 
   function render(project) {
@@ -120,8 +142,10 @@ LCA.views.projectDetail = (() => {
     title.id = 'project-detail-title';
     title.tabIndex = -1;
     if (project.isFictional) title.append(textElement('span', 'fictional-tag', '가상'));
-    identity.append(title, textElement('p', 'page-description', `${project.productName} · ${project.code}`));
+    const description = textElement('p', 'page-description', `${project.productName} · ${project.code}`); description.id = 'project-detail-description'; identity.append(title, description);
     heading.append(identity, textElement('span', 'demo-pill', project.origin === 'user' ? '직접 등록한 프로젝트' : '기본 샘플 · 삭제 대상 아님'));
+    const edit = textElement('button', 'request-action-button', project.stage >= 10 ? '기본정보·변경 이력' : '기본정보 수정'); edit.type = 'button'; edit.dataset.editProjectBasic = project.id;
+    edit.setAttribute('aria-haspopup', 'dialog'); edit.setAttribute('aria-controls', 'project-basic-dialog'); heading.append(edit);
     if (project.origin === 'user') {
       const remove = textElement('button', 'request-action-button project-delete-button', '프로젝트 삭제'); remove.type = 'button'; remove.dataset.deleteProject = project.id;
       remove.setAttribute('aria-haspopup', 'dialog'); remove.setAttribute('aria-controls', 'project-delete-dialog'); heading.append(remove);
@@ -129,18 +153,11 @@ LCA.views.projectDetail = (() => {
     fragment.append(heading);
 
     const summary = textElement('dl', 'detail-summary', '');
-    const target = field('목표 완료일', project.targetDate ? project.targetDate.replaceAll('-', '.') : '미정', project.origin === 'user' ? '프로젝트 등록 때 직접 입력한 목표일이에요.' : '앱을 연 날짜로 만든 시연용 일정이에요.');
-    if (project.targetDate) {
-      const time = textElement('time', 'detail-value', project.targetDate.replaceAll('-', '.'));
-      time.dateTime = project.targetDate;
-      target.querySelector('.detail-value').replaceWith(time);
-    }
-    target.querySelector('dd').append(LCA.views.deadlines.badge(LCA.deadlines.project(project)));
     summary.append(
       field('고객사 업종', project.industry),
       field('프로젝트 유형', project.type),
       stageField(project),
-      target
+      targetField(project)
     );
     fragment.append(summary);
     const transition = document.createElement('div');
@@ -173,13 +190,7 @@ LCA.views.projectDetail = (() => {
     overview.setAttribute('aria-labelledby', 'detail-overview-tab');
     overview.tabIndex = 0;
     const columns = textElement('div', 'detail-columns', '');
-    columns.append(card('업무 목적과 활용', '왜 시작했고, 결과를 어디에 쓸까요?', [
-      field('업무 목적 · 왜 하나요?', project.purpose, PURPOSE_HELP[project.purpose] || '이 업무를 진행하는 이유예요.'),
-      field('세부 동인 · 어떤 요구가 있나요?', project.drivers,
-        '이 업무와 관련해 확인할 구체적인 요구나 기준이에요. 실제 적용 조건은 프로젝트 범위를 정할 때 검토해요.'),
-      field('결과 활용처 · 어디에 쓰나요?', project.uses,
-        '결과를 쓰려는 곳이에요. 여기에 인증 이름이 있어도 이미 인증을 받았다는 뜻은 아니에요.')
-    ]));
+    columns.append(purposeCard(project));
 
     const scope = scopeCard(project);
     columns.append(scope);
@@ -231,5 +242,5 @@ LCA.views.projectDetail = (() => {
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 
-  return { render, refreshScope, refreshStage };
+  return { render, refreshScope, refreshStage, refreshBasics };
 })();

@@ -8,10 +8,12 @@ LCA.projectDeletion = (() => {
     const data = before[LCA.projects.STORAGE_KEY] === null ? null : JSON.parse(before[LCA.projects.STORAGE_KEY]);
     const project = data?.projects.find((p) => p.id === id);
     if (!project) throw Error('직접 생성한 프로젝트만 삭제할 수 있어요. 기본 가상 샘플은 삭제하지 않아요.');
+    const current = LCA.projects.createStore(LCA.data.createSampleProjects(sampleDate), sampleDate, () => ({ getItem: (key) => before[key] ?? null })).list().items.find((p) => p.id === id);
     const values = { ...before };
     const counts = { requests: 0, reportVersions: 0, comments: 0, issues: 0 };
     data.projects = data.projects.filter((p) => p.id !== id);
     if (data.collectionDueDates) delete data.collectionDueDates[id];
+    if (data.basicHistory) delete data.basicHistory[id];
     values[LCA.projects.STORAGE_KEY] = JSON.stringify(data);
     for (const [module, field, count] of [[LCA.requests, 'requests', 'requests'], [LCA.customerReview, 'items', 'comments']]) {
       if (values[module.STORAGE_KEY] === null) continue;
@@ -31,7 +33,7 @@ LCA.projectDeletion = (() => {
     LCA.backup.inspect(after, sampleDate);
     const list = LCA.projects.createStore(LCA.data.createSampleProjects(sampleDate), sampleDate, () => ({ getItem: (key) => values[key] ?? null })).list();
     if (!list.ok) throw Error(list.error);
-    return { project: { id, code: project.code, companyName: project.companyName, productName: project.productName }, counts, values, items: list.items, expected: JSON.stringify(before) };
+    return { project: { id, code: current.code, companyName: current.companyName, productName: current.productName }, counts, values, items: list.items, expected: JSON.stringify(before) };
   }
   async function remove(plan) {
     const result = await LCA.storage.replace(plan.values, plan.expected);

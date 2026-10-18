@@ -3,6 +3,7 @@ LCA.views = LCA.views || {};
 LCA.views.report = (() => {
   let refreshCurrent = () => {};
   let selectCurrent = () => {};
+  let refreshBasicCurrent = () => {};
   function text(tag, className, value) {
     const node = document.createElement(tag); node.className = className; node.textContent = value; return node;
   }
@@ -70,12 +71,18 @@ LCA.views.report = (() => {
     const history = LCA.views.reportHistory.create(() => { downloadStatus.textContent = ''; refresh(); }, onOpenComment, getComments);
     saved.append(savedStatus, history.element, exportOptions, preview);
     host.replaceChildren(start, editor, saved);
+    let suggestedTitle = `${project.productName} LCA 보고서 초안`;
     function fill(record) {
-      controls.title.value = record?.title || `${project.productName} LCA 보고서 초안`;
+      controls.title.value = record?.title || suggestedTitle;
       controls.note.value = record?.note || ''; confirmed.checked = false;
       changeFields.reset(!record);
     }
     fill(initial.record);
+    refreshBasicCurrent = () => {
+      const title = `${project.productName} LCA 보고서 초안`; const latest = store.load(project.id);
+      if (latest.ok && !latest.record && !dirty && controls.title.value === suggestedTitle) controls.title.value = title;
+      suggestedTitle = title; refresh();
+    };
     function showRecord(record) {
       preview.replaceChildren();
       if (!record) { preview.append(text('p', 'detail-help', '아직 저장한 초안이 없어요. 보고서 단계에서 제목과 확인 내용을 저장하면 본문을 볼 수 있어요.')); return; }
@@ -210,5 +217,5 @@ LCA.views.report = (() => {
       }
     });
   }
-  return { init, refresh: () => refreshCurrent(), selectVersion: (revision) => selectCurrent(revision) };
+  return { init, refresh: () => refreshCurrent(), selectVersion: (revision) => selectCurrent(revision), refreshBasics: () => refreshBasicCurrent() };
 })();

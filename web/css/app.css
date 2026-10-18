@@ -681,3 +681,14 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .project-delete-details p:first-child { font-size: 17px; font-weight: 650; color: #174c3d; }
 .project-sample-help { margin: 8px 0 0; color: #69786b; font-size: 11px; line-height: 1.7; }
 .project-table .project-delete-button { margin-top: 8px; }
+
+/* WEB-039: 기본정보 수정과 이력 */
+.detail-heading { flex-wrap: wrap; }
+.project-basic-fields { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.project-basic-fields > div:last-child { grid-column: 1 / -1; }
+.project-basic-fields label { display: block; font-size: 13px; margin-bottom: 8px; }
+.project-basic-fields input, .project-basic-fields select, .project-basic-fields textarea { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; box-sizing: border-box; background: white; color: #233b31; font: inherit; }
+.project-basic-fields :disabled { background: #f1f4f0; color: #6b786c; }
+.project-basic-fields textarea { resize: vertical; }
+.project-basic-history { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dce6dc; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .project-basic-fields { grid-template-columns: 1fr; } }

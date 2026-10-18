@@ -64,10 +64,16 @@ LCA.views.collectionDeadline = (() => {
     form.append(box, save);
     section.append(form);
     let expected = project.collectionDueDate || '';
-    form.addEventListener('submit', (event) => {
+    let busy = false;
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      if (busy) return;
       const date = LCA.requests.formatDateInput(input.value.trim());
-      const result = store.saveCollectionDeadline(project.id, date, expected);
+      busy = true; input.disabled = calendar.disabled = picker.disabled = save.disabled = true;
+      let result;
+      try { result = await store.saveCollectionDeadline(project.id, date, expected); }
+      catch { result = { ok: false, error: '수집 마감일을 저장하지 못했어요. 입력은 유지했어요.' }; }
+      busy = false; input.disabled = calendar.disabled = picker.disabled = save.disabled = false;
       feedback.textContent = result.ok ? (date ? '자료 수집 마감일을 저장했어요.' : '자료 수집 마감일을 미정으로 저장했어요.') : result.error;
       if (!result.ok) return;
       project.collectionDueDate = date;

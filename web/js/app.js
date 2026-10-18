@@ -144,8 +144,11 @@
   function refreshCollectionDates() {
     const result = projectStore.list();
     if (result.ok) {
-      const dates = new Map(result.items.map((project) => [project.id, project.collectionDueDate]));
-      projects.forEach((project) => { if (dates.has(project.id)) project.collectionDueDate = dates.get(project.id); });
+      const latest = new Map(result.items.map((project) => [project.id, project]));
+      projects.forEach((project) => {
+        const saved = latest.get(project.id);
+        if (saved) Object.assign(project, LCA.projects.basicSnapshot(saved), { collectionDueDate: saved.collectionDueDate, basicRevision: saved.basicRevision });
+      });
     }
     projectNotice.hidden = result.ok;
     projectNotice.textContent = result.ok ? '' : result.error;
@@ -272,6 +275,25 @@
     if (button) deletionPage.open(button.dataset.deleteProject, button);
   });
 
+  const basicPage = LCA.views.projectBasic.init(projectStore, (id, result) => {
+    const project = projects.find((p) => p.id === id); if (!project) return;
+    Object.assign(project, result.basic, { basicRevision: result.revision });
+    scopeLoadResult = scopeStore.load(); showScopeStorageStatus(); renderProjectList();
+    if (openedProjectId === id) {
+      LCA.views.projectDetail.refreshBasics(project);
+      const intro = detailView.querySelector('.request-intro'); if (intro) intro.textContent = `${project.companyName}의 ${project.productName} 평가에 필요한 자료를 적어 두는 목록이에요.`;
+      LCA.views.report.refreshBasics();
+      projectPageTitle = `${project.companyName} 상세 | LCA 프로젝트 관리`;
+      if (!detailView.hidden) setPage('프로젝트 상세', projectPageTitle, 'project');
+    }
+    dashboardPage.refresh(); tasksPage.refresh(); researcherPage.refresh();
+    const message = document.querySelector('#project-basic-status'); message.textContent = '기본정보를 저장하고 변경 전후 내용과 시각을 이력에 남겼어요.'; message.tabIndex = -1; message.focus({ preventScroll: true });
+  });
+  detailView.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-edit-project-basic]');
+    if (button) basicPage.open(button.dataset.editProjectBasic, button);
+  });
+
   document.querySelector('#stage-filters').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-stage]');
     if (!button) return;
@@ -281,6 +303,7 @@
   document.querySelector('#all-stages').addEventListener('click', () => showStage(null));
 
   function showDetail(projectId, opener) {
+    document.querySelector('#project-basic-status').textContent = '';
     taskReturn = null;
     homeReturn = null;
     document.querySelector('#back-to-projects').textContent = '← 목록으로';
