@@ -7,7 +7,7 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>홈 | LCA 프로젝트 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-040">
+    <link rel="stylesheet" href="./css/app.css?v=web-041">
     <script src="./js/storage.js?v=web-038" defer></script>
     <script src="./js/constants.js?v=web-029" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
@@ -34,7 +34,7 @@
     <script src="./js/deadlines.js?v=web-017" defer></script>
     <script src="./js/views/deadlines.js?v=web-016" defer></script>
     <script src="./js/researchers.js?v=web-040" defer></script>
-    <script src="./js/views/researchers.js?v=web-040" defer></script>
+    <script src="./js/views/researchers.js?v=web-041" defer></script>
     <script src="./js/projects.js?v=web-039" defer></script>
     <script src="./js/scope.js?v=web-037" defer></script>
     <script src="./js/backup.js?v=web-038" defer></script>
@@ -432,7 +432,7 @@
           <section id="researcher-view" aria-labelledby="researcher-title" hidden>
             <div class="page-heading"><div><p class="eyebrow">RESEARCHERS</p><h1 id="researcher-title" tabindex="-1">담당 연구원</h1><p class="page-description">연구원을 등록하고 누가 어떤 프로젝트를 맡았는지 확인해요. 인물과 배정은 모두 가상이에요.</p></div><span id="researcher-count" class="demo-pill"></span></div>
             <p id="researcher-jump-status" role="status" aria-live="polite" hidden></p>
-            <section class="detail-card"><h2>가상 연구원 등록</h2>
+            <details id="researcher-register" class="detail-card researcher-register"><summary>연구원 등록</summary>
               <form id="researcher-form" class="researcher-register-form" novalidate>
                 <label for="researcher-name">연구원 이름 (필수 · 최대 100자)</label>
                 <div><input id="researcher-name" type="text" maxlength="100" required autocomplete="off" aria-describedby="researcher-register-help researcher-save-status"></div>
@@ -440,11 +440,11 @@
                 <label for="researcher-department">부서명 (선택 · 최대 100자)</label><div><input id="researcher-department" type="text" maxlength="100" autocomplete="organization-title"></div>
                 <button type="submit" class="primary-button">연구원 등록</button>
                 <p id="researcher-register-help" class="detail-help">등록 후 계약 단계 프로젝트에서 선택할 수 있어요. 같은 이름도 고유 번호로 구분하며 이 브라우저에 저장돼요.</p>
-                <p id="researcher-save-status" role="status" aria-live="polite"></p>
               </form>
-            </section>
+            </details>
+            <p id="researcher-save-status" role="status" aria-live="polite"></p>
             <p id="researcher-list-error" role="alert" hidden></p>
-            <div id="researcher-results" class="researcher-grid"></div>
+            <div id="researcher-results" class="researcher-results"></div>
             <dialog id="researcher-edit-dialog" class="receipt-dialog" aria-labelledby="researcher-edit-title" aria-describedby="researcher-edit-help">
               <h2 id="researcher-edit-title">연구원 정보 수정</h2><p id="researcher-edit-help" class="detail-help">회사·부서·인물은 모두 가상이에요. 새 요청문의 소개와 서명에 현재 정보를 사용해요. 프로젝트에 과거 기록한 이름과 보관 보고서는 그대로 유지해요.</p>
               <form id="researcher-edit-form" class="researcher-edit-form" novalidate>
