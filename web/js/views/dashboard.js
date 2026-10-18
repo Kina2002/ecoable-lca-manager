@@ -9,11 +9,11 @@ LCA.views.dashboard = (() => {
     const basis = text('p', 'dashboard-basis', '');
     const panels = text('div', 'dashboard-panels', '');
     const attention = text('section', 'dashboard-panel', ''); attention.setAttribute('aria-labelledby', 'dashboard-attention-title');
-    const attentionTitle = text('h2', '', '주의·확인할 프로젝트'); attentionTitle.id = 'dashboard-attention-title';
+    const attentionTitle = text('h2', '', '확인이 필요한 프로젝트'); attentionTitle.id = 'dashboard-attention-title';
     const attentionCount = text('p', 'detail-help', ''); const attentionList = text('ul', 'dashboard-list', '');
     attention.append(attentionTitle, attentionCount, attentionList);
     const tasks = text('section', 'dashboard-panel', ''); tasks.setAttribute('aria-labelledby', 'dashboard-tasks-title');
-    const taskHeading = text('div', 'dashboard-heading', ''); const taskTitle = text('h2', '', '우선 확인할 일'); taskTitle.id = 'dashboard-tasks-title';
+    const taskHeading = text('div', 'dashboard-heading', ''); const taskTitle = text('h2', '', '먼저 처리할 일'); taskTitle.id = 'dashboard-tasks-title';
     const more = text('button', 'request-action-button', '할 일 전체 보기'); more.type = 'button'; more.addEventListener('click', onTasks); taskHeading.append(taskTitle, more);
     const taskCount = text('p', 'detail-help', ''); const taskList = text('ul', 'dashboard-list', '');
     const taskFeedback = text('p', 'field-error', ''); taskFeedback.setAttribute('role', 'alert'); tasks.append(taskHeading, taskCount, taskFeedback, taskList);
@@ -47,7 +47,7 @@ LCA.views.dashboard = (() => {
         button.type = 'button'; button.dataset.dashboardProject = item.id; button.addEventListener('click', () => onProject(item.id, button));
         row.append(button, text('p', 'detail-help', `${item.productName} · 담당 ${item.researcherName || '미정'} · ${LCA.constants.stageByNo(item.stage)?.name || '단계 확인 필요'}`), text('p', 'dashboard-reasons', item.reasons.join(' · '))); attentionList.append(row);
       }
-      if (!state.attention.length) attentionList.append(text('li', 'detail-help', state.warnings.length ? '확인 가능한 기록에는 주의 항목이 없어요. 읽지 못한 기록은 위 안내를 확인해 주세요.' : '현재 기준으로 주의·확인할 프로젝트가 없어요.'));
+      if (!state.attention.length) attentionList.append(text('li', 'detail-help', state.warnings.length ? '확인 가능한 기록에는 확인이 필요한 프로젝트가 없어요. 읽지 못한 기록은 위 안내를 확인해 주세요.' : '현재 기준으로 확인이 필요한 프로젝트가 없어요.'));
       taskCount.textContent = `${state.warnings.length ? '확인 가능한 ' : ''}할 일 ${state.taskCount}건 중 우선 ${state.tasks.length}건 · 할 일 탭과 같은 순서`;
       for (const item of state.tasks) {
         const row = document.createElement('li'); const button = text('button', 'dashboard-project dashboard-task-title', item.title);
