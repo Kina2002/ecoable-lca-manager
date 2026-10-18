@@ -7,7 +7,7 @@
     <meta name="description" content="제품 LCA 컨설팅 프로젝트를 한눈에 살펴보는 포트폴리오 시연 프로그램입니다.">
     <title>프로젝트 목록 | 에코에이블 LCA 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/app.css?v=web-031">
+    <link rel="stylesheet" href="./css/app.css?v=web-032">
     <script src="./js/constants.js?v=web-029" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js?v=web-017" defer></script>
@@ -54,7 +54,7 @@
     <script src="./js/views/project-create.js?v=web-012" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
     <script src="./js/views/review.js?v=web-008" defer></script>
-    <script src="./js/views/request-batch.js?v=web-031" defer></script>
+    <script src="./js/views/request-batch.js?v=web-032" defer></script>
     <script src="./js/views/requests.js?v=web-031" defer></script>
     <script src="./js/glossary.js?v=web-004.1" defer></script>
     <script src="./js/views/glossary.js?v=web-004" defer></script>
@@ -200,9 +200,8 @@
           <template id="request-panel-template">
             <p class="request-intro"></p>
             <div class="request-workspace">
-              <section class="request-form-card" aria-labelledby="request-form-title">
-                <p class="eyebrow">NEW DATA REQUEST</p>
-                <h2 id="request-form-title">자료 하나 등록</h2>
+              <details class="request-form-card">
+                <summary id="request-form-title">자료 하나 등록</summary>
                 <p class="request-form-description">자료 구분과 내용을 확인하고, 자료를 받기로 한 날짜를 적어 주세요.</p>
                 <form id="request-form" novalidate>
                   <div class="request-input">
@@ -232,7 +231,7 @@
                   <button id="register-request" class="primary-button" type="submit">자료 요청 등록</button>
                   <p class="request-save-note">이 브라우저에 저장돼요. 등록은 요청 내용을 기록하는 것이며, 고객사에 메일을 보내지는 않아요.</p>
                 </form>
-              </section>
+              </details>
               <section class="request-list-card" aria-labelledby="request-list-title">
                 <div class="request-list-heading">
                   <h2 id="request-list-title" tabindex="-1">이 프로젝트의 자료 요청 <span id="request-count" class="count-badge">0</span></h2>

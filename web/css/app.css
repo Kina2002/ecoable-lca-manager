@@ -139,9 +139,10 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .detail-tab { display: inline-flex; align-items: center; gap: 9px; min-height: 48px; margin-bottom: -1px; padding: 12px 18px; border: 0; border-bottom: 3px solid transparent; color: #7b8874; background: transparent; font-size: 13px; cursor: pointer; }
 .detail-tab[aria-selected="true"] { border-bottom-color: var(--green); color: var(--green); font-weight: 700; }
 .request-intro { margin: 0 0 20px; color: #6f8067; font-size: 12px; line-height: 1.9; }
-.request-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; gap: 24px; }
+.request-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px; }
 .request-form-card, .request-list-card { min-width: 0; padding: 27px 28px; border: 1px solid #dfe7df; border-radius: 13px; background: #fff; }
-.request-form-card h2 { font-size: 18px; }
+.request-form-card > summary { cursor: pointer; font-size: 18px; font-weight: 650; color: #174c3d; line-height: 1.8; }
+.request-form-card > summary:focus-visible { outline: 3px solid #247158; outline-offset: 4px; }
 .request-form-description { margin: 10px 0 25px; color: #7b8874; font-size: 11px; line-height: 1.9; }
 .request-input { margin-top: 22px; }
 .request-input label { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; color: #405f42; font-size: 12px; font-weight: 700; }

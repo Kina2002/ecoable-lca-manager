@@ -53,7 +53,7 @@ LCA.views.requestBatch = (() => {
     const feedback = text('p', 'request-feedback', ''); feedback.setAttribute('role', 'status'); feedback.setAttribute('aria-live', 'polite');
     form.append(fields, count, save, formError, feedback, text('p', 'detail-help', '이 브라우저에 요청 상태로 저장해요. 메일 발송이나 프로젝트 단계 이동은 하지 않아요.'));
     section.append(form); panel.insertBefore(section, panel.querySelector('.request-workspace'));
-    let state = null; let busy = false; let opened = false;
+    let state = null; let busy = false;
     function selected() { return [...rows.values()].filter((row) => row.check.checked); }
     function update() {
       const disabled = busy || !state?.ok || !state.canWrite; fields.disabled = disabled;
@@ -75,7 +75,6 @@ LCA.views.requestBatch = (() => {
     }
     function render(result) {
       state = result;
-      if (!opened && result.ok) { section.open = !result.items.length && result.canWrite; opened = true; }
       update();
     }
     due.addEventListener('input', () => { dateError.textContent = ''; due.removeAttribute('aria-invalid'); feedback.textContent = ''; });
