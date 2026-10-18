@@ -576,3 +576,16 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .review-route-event { padding: 16px 0; border-bottom: 1px solid #dce6dc; overflow-wrap: anywhere; }
 .review-route-event h3 { font-size: 16px; line-height: 1.7; }
 #project-review-route .request-action-button { white-space: normal; }
+
+/* WEB-030: 반복 입력을 줄이는 담당자·날짜 선택 */
+#project-certification-panel input[type="text"], #project-certification-panel select { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #cbd8ce; border-radius: 8px; background: white; color: #233b31; font: inherit; }
+.input-assist-person { grid-column: 1 / -1; min-width: 0; }
+details.input-assist-person { border: 1px solid #dce6dc; border-radius: 8px; padding: 12px 16px; background: #f8fbf7; }
+.input-assist-person > summary { cursor: pointer; font-size: 14px; line-height: 1.8; color: #174c3d; overflow-wrap: anywhere; }
+.input-assist-person > summary:focus-visible { outline: 3px solid #247158; outline-offset: 4px; }
+details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
+.input-assist-person .input-assist-people { width: 100%; min-height: 44px; margin-top: 8px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; background: white; color: #233b31; box-sizing: border-box; }
+.input-assist-person .detail-help { margin-bottom: 0; }
+.input-assist-date { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.input-assist-date input[type="date"] { flex: 1 1 170px; min-width: 0; width: auto; min-height: 44px; padding: 8px 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; color: #233b31; background: white; box-sizing: border-box; }
+.input-assist-date .request-action-button { margin: 0; }

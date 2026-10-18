@@ -13,6 +13,7 @@ LCA.views.reviewRoute = (() => {
     const method = field(fields, 'review-route-method', '검토 방식', 'select');
     for (const [key, label] of Object.entries(LCA.reviewRoute.METHODS)) option(method, key, label);
     const actor = field(fields, 'review-route-actor', '방식 기록 담당자 (필수)'); actor.value = project.researcherName || '';
+    LCA.views.inputAssist.person(actor, project);
     const reason = field(fields, 'review-route-reason', '선택 근거·변경 사유 (미정이면 선택)', 'textarea', 1000);
     reason.placeholder = '예: 고객과 내부 개선용 보고서로 협의하여 내부 검토로 확정 / 제출 제도에서 제3자 검증을 요구함';
     const save = text('button', 'primary-button', '검토 방식 저장'); save.type = 'submit';
@@ -24,10 +25,13 @@ LCA.views.reviewRoute = (() => {
     const reviewForm = document.createElement('form'); reviewForm.noValidate = true;
     const reviewFields = document.createElement('fieldset'); reviewFields.className = 'calculation-fields'; reviewFields.append(text('legend', '', '담당자의 내부 확인 기록'));
     const reviewer = field(reviewFields, 'internal-review-reviewer', '내부 검토자 (필수)');
+    LCA.views.inputAssist.person(reviewer, project, { compact: false, label: '내부 검토자' });
     const reviewedOn = field(reviewFields, 'internal-review-date', '내부 검토일 (필수 · 연월일 8자리)', 'input', 10); reviewedOn.inputMode = 'numeric'; reviewedOn.placeholder = '예: 20261120';
     reviewedOn.addEventListener('input', () => { reviewedOn.value = LCA.requests.formatDateInput(reviewedOn.value); });
+    LCA.views.inputAssist.date(reviewedOn);
     const note = field(reviewFields, 'internal-review-note', '검토 내용·확인 결과 (필수)', 'textarea', 3000);
     const recorder = field(reviewFields, 'internal-review-recorder', '내부 검토 기록 담당자 (필수)'); recorder.value = project.researcherName || '';
+    LCA.views.inputAssist.person(recorder, project);
     const checks = {};
     for (const [key, label] of Object.entries(LCA.reviewRoute.CHECKS)) checks[key] = checkbox(reviewFields, label);
     const confirmed = checkbox(reviewFields, '선택한 검토 방식과 최신 보고서를 확인했고, 검토자의 역할·독립성은 적용 기준과 고객 요구에 맞게 확인했어요.');
@@ -45,7 +49,7 @@ LCA.views.reviewRoute = (() => {
     }
     function refresh() {
       state = store.load(project.id);
-      if (!state.ok) { status.textContent = state.error; for (const node of host.querySelectorAll('input, select, textarea, button')) node.disabled = true; return; }
+      if (!state.ok) { status.textContent = state.error; for (const node of host.querySelectorAll('input, select, textarea, button')) node.disabled = true; LCA.views.inputAssist.sync(host); return; }
       if (!choiceDirty) {
         choiceRevision = state.record.revision; method.value = state.method; reason.value = state.decision?.reason || '';
         actor.value = state.decision?.actor || project.researcherName || '';
@@ -82,6 +86,7 @@ LCA.views.reviewRoute = (() => {
         historyList.append(row);
       }
       if (!state.record.events.length) historyList.append(text('p', 'detail-help', state.legacyExternal ? '이 기능 도입 전의 외부 검증 기록은 그대로 유지돼요. 내부 검토를 했다는 기록을 임의로 생성하지 않았어요.' : '아직 저장한 검토 방식·내부 검토 기록이 없어요.'));
+      LCA.views.inputAssist.sync(host);
     }
     async function run(action, draft, revision, report, targetError) {
       if (busy) return;

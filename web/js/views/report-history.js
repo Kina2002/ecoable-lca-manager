@@ -106,7 +106,7 @@ LCA.views.reportHistory = (() => {
   }
   function changeFields(project) {
     const element = text('div', 'report-change-fields', '');
-    element.append(text('h3', '', '이번 버전의 변경 기록'), text('p', 'detail-help', '처음 작성할 때도 작성 목적과 내용을 남겨 주세요. 새 버전을 저장하면 이전 버전은 그대로 보관돼요. 작성자 이름은 직접 확인해 적어 주세요.'));
+    element.append(text('h3', '', '이번 버전의 변경 기록'), text('p', 'detail-help', '처음 작성할 때도 작성 목적과 내용을 남겨 주세요. 새 버전을 저장하면 이전 버전은 그대로 보관돼요. 작성자는 프로젝트 담당자를 기본으로 넣으며 필요하면 변경해 주세요.'));
     const controls = {};
     const examples = {
       summary: '예: 운송 거리 수정과 계산 결과 반영',
@@ -124,6 +124,10 @@ LCA.views.reportHistory = (() => {
       if (input.tagName === 'INPUT') input.type = 'text'; else input.rows = 2;
       input.id = `report-change-${field}`; label.htmlFor = input.id; input.maxLength = rule.limit; input.placeholder = examples[field];
       box.append(label, input); element.append(box); controls[field] = input;
+      if (field === 'author') {
+        input.value = project.researcherName || '';
+        LCA.views.inputAssist.person(input, project, { label: '보고서 작성자' });
+      }
     }
     const related = document.createElement('fieldset'); related.className = 'report-comment-options';
     related.append(text('legend', '', '이 버전의 변경과 관련된 고객 의견 (선택 · 최대 50건)'));
@@ -151,6 +155,7 @@ LCA.views.reportHistory = (() => {
       controls.author.value = project.researcherName || '';
       if (initial) controls.summary.value = '최초 초안 작성';
       selectedIds = new Set();
+      LCA.views.inputAssist.sync(element);
     }
     return { element, controls, reset, updateComments, draft: () => ({ ...Object.fromEntries(Object.entries(controls).map(([field, input]) => [field, input.value])), commentIds: [...selectedIds] }) };
   }

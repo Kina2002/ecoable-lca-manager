@@ -30,6 +30,7 @@ LCA.views.customerReview = (() => {
     const content = field(fields, 'comment-content', '고객 의견 (필수)', 'textarea', 3000);
     const reviewer = field(fields, 'comment-reviewer', '의견을 준 고객 이름 (선택)');
     const recorder = field(fields, 'comment-recorder', '기록하는 담당자 (필수)'); recorder.value = project.researcherName || '';
+    LCA.views.inputAssist.person(recorder, project);
     const save = text('button', 'primary-button', '고객 의견 등록'); save.type = 'submit';
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const error = text('p', 'field-error', ''); error.setAttribute('role', 'alert'); form.append(fields, save, error, feedback); register.append(form);
@@ -59,6 +60,7 @@ LCA.views.customerReview = (() => {
       const responseFields = document.createElement('fieldset'); responseFields.className = 'calculation-fields'; responseFields.append(text('legend', '', `${item.id} 담당자 답변`));
       const reply = field(responseFields, `${item.id}-reply`, '담당자 답변 (필수)', 'textarea', 3000);
       const actor = field(responseFields, `${item.id}-actor`, '답변·처리 담당자 (필수)');
+      actor.value = project.researcherName || ''; LCA.views.inputAssist.person(actor, project);
       const resolution = field(responseFields, `${item.id}-resolution`, '처리 방법', 'select');
       for (const [key, label] of Object.entries(LCA.customerReview.RESOLUTIONS)) option(resolution, key, label);
       const applied = field(responseFields, `${item.id}-applied`, '수정 내용을 반영한 보고서', 'select');
@@ -76,6 +78,7 @@ LCA.views.customerReview = (() => {
       const reopenBox = text('div', '', '');
       const reason = field(reopenBox, `${item.id}-reason`, '의견 재개 사유 (필수)', 'textarea', 1000);
       const reopenActor = field(reopenBox, `${item.id}-reopen-actor`, '다시 여는 담당자 (필수)'); reopenActor.value = project.researcherName || '';
+      LCA.views.inputAssist.person(reopenActor, project);
       const reopen = text('button', 'request-action-button', '의견 다시 열기'); reopen.type = 'button'; reopenBox.append(reopen);
       const message = text('p', 'field-error', ''); message.setAttribute('role', 'alert');
       const timeline = document.createElement('details'); timeline.append(text('summary', '', '처리 이력 펼쳐보기'));
@@ -125,6 +128,7 @@ LCA.views.customerReview = (() => {
         reopen.disabled = !writable; reason.disabled = !writable; reopenActor.disabled = !writable;
         adopt.hidden = card.expectedRevision === record.revision; adopt.disabled = busy;
         if (!adopt.hidden) status.textContent = '다른 화면에서 처리 기록이 바뀌었어요. 현재 입력은 유지했고 저장 시 충돌을 확인해요.';
+        LCA.views.inputAssist.sync(element);
         events.replaceChildren();
         const names = { created: '의견 등록', replied: '답변 저장', closed: '종결', reopened: '다시 열기' };
         for (const event of record.events) {
@@ -140,6 +144,7 @@ LCA.views.customerReview = (() => {
     function refresh() {
       const state = store.list(project.id); lastState = state;
       fields.disabled = registering || !!busyId || !state.ok || !state.canWrite || !state.reports.length;
+      LCA.views.inputAssist.sync(host);
       save.disabled = fields.disabled;
       if (!state.ok) { warning.textContent = state.error; counts.textContent = ''; for (const card of cards.values()) card.element.querySelectorAll('button, input, textarea, select').forEach((node) => { node.disabled = true; }); return; }
       const countsByStatus = LCA.customerReview.STATUSES.map((status) => `${status} ${state.items.filter((item) => item.status === status).length}건`);

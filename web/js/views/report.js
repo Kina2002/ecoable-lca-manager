@@ -105,6 +105,7 @@ LCA.views.report = (() => {
       fields.disabled = saving || !state.ok || ![7, 8].includes(state.project.stage);
       save.disabled = fields.disabled || !state.ready;
       adopt.disabled = save.disabled;
+      LCA.views.inputAssist.sync(host);
       download.disabled = true;
       format.disabled = exporting || saving;
       if (!state.ok) {
@@ -125,7 +126,7 @@ LCA.views.report = (() => {
         : state.project.stage === 6 ? state.ready ? '준비됐어요. 버튼을 누르면 보고서 단계(7)로 이동해요.' : '모든 자료를 승인하고 최신 계산 결과에 맞는 해석을 먼저 저장해 주세요.'
         : state.project.stage === 7 ? '보고서 단계(7)예요. 초안 저장으로 다음 단계에 자동 이동하지 않아요.'
         : state.project.stage === 8 ? '검토·검증 단계(8)예요. 보고서를 보완하면 새 버전을 보관하고 내부 검토를 다시 확인해 주세요. 외부 검토의 수정 보고서로도 연결할 수 있어요.' : '후속 단계에서는 저장된 초안을 조회할 수 있어요.';
-      basis.textContent = state.source ? `현재 작성 기준: ${state.project.code} · 계산 결과 버전 ${state.source.interpretation.calculation.revision} · 해석 버전 ${state.source.interpretation.revision}` : '보고서에 연결할 해석이 아직 없어요.';
+      basis.textContent = state.source ? `저장할 보고서 v${(state.record?.revision || 0) + 1} · 현재 작성 기준: ${state.project.code} · 계산 결과 버전 ${state.source.interpretation.calculation.revision} · 해석 버전 ${state.source.interpretation.revision}` : '보고서에 연결할 해석이 아직 없어요.';
       warning.textContent = state.currentError || (!state.ready ? '현재 자료·계산 결과와 일치하는 해석을 먼저 준비해 주세요. 저장된 초안과 작성 중인 제목·메모는 유지돼요.'
         : sourceKey !== state.sourceKey ? '입력 기준이 현재 자료·해석과 달라요. 내용을 확인한 뒤 초안 기준 다시 확인을 눌러 주세요.' : '');
       savedStatus.className = archived || state.stale ? 'calculation-notice' : 'detail-help';

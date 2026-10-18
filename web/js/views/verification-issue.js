@@ -25,6 +25,7 @@ LCA.views.verificationIssue = (() => {
     const fields = document.createElement('fieldset'); fields.className = 'calculation-fields'; fields.append(text('legend', '', `${issue.id} 답변`));
     const reply = field(fields, `${issue.id}-reply`, '보완 내용·담당자 답변 (필수)', 'textarea', 3000);
     const actor = field(fields, `${issue.id}-actor`, '답변 담당자 (필수)');
+    actor.value = project.researcherName || ''; LCA.views.inputAssist.person(actor, project);
     const resolution = field(fields, `${issue.id}-resolution`, '지적 처리 방법', 'select');
     for (const [key, label] of Object.entries(LCA.verification.RESOLUTIONS)) option(resolution, key, label);
     const applied = field(fields, `${issue.id}-applied`, '수정한 보고서 버전', 'select');
@@ -33,13 +34,14 @@ LCA.views.verificationIssue = (() => {
     const openApplied = text('button', 'request-action-button', '수정 보고서 보기'); openApplied.type = 'button';
     const processing = text('div', 'verification-processing', '');
     const processor = field(processing, `${issue.id}-processor`, '종결·재개 기록 담당자 (필수)'); processor.value = project.researcherName || '';
+    LCA.views.inputAssist.person(processor, project);
     const closeFields = text('div', '', ''); const reason = field(closeFields, `${issue.id}-close-reason`, '검증자 확인·종결 근거 (필수)', 'textarea', 1000);
     const confirmedLabel = text('label', 'calculation-confirmation', ''); const confirmed = document.createElement('input'); confirmed.type = 'checkbox';
     confirmedLabel.append(confirmed, document.createTextNode('저장한 답변·처리 내용을 검증자가 확인한 근거를 남겼고 이 지적을 종결할게요.'));
     const close = text('button', 'request-action-button', '지적 종결'); close.type = 'button'; closeFields.append(confirmedLabel, close);
     const reopenFields = text('div', '', ''); const reopenReason = field(reopenFields, `${issue.id}-reopen-reason`, '지적 재개 사유 (필수)', 'textarea', 1000);
     const reopen = text('button', 'request-action-button', '지적 다시 열기'); reopen.type = 'button'; reopenFields.append(reopen);
-    processing.append(processor.parentElement, closeFields, reopenFields);
+    processing.append(closeFields, reopenFields);
     const message = text('p', 'field-error', ''); message.setAttribute('role', 'alert');
     const notice = text('p', 'detail-help', ''); notice.setAttribute('role', 'status');
     const adopt = text('button', 'request-action-button', '최신 답변 불러오기 · 입력 초기화'); adopt.type = 'button';
@@ -97,6 +99,7 @@ LCA.views.verificationIssue = (() => {
       openApplied.textContent = `수정한 보고서 v${item.appliedReportRevision} 보기`;
       adopt.hidden = expected === item.revision; adopt.disabled = state.busy;
       if (!adopt.hidden) notice.textContent = '이 지적의 최신 처리 기록이 달라요. 입력을 유지했으니 최신 답변을 확인해 주세요.';
+      LCA.views.inputAssist.sync(element);
       events.replaceChildren();
       const names = { created: '지적 등록', replied: '답변 저장', closed: '지적 종결', reopened: '지적 재개' };
       for (const event of item.events) {

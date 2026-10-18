@@ -18,6 +18,8 @@ LCA.views.verification = (() => {
     const organization = field(roundFields, 'verification-organization', '검증기관 (필수)', 'input', 200);
     const verifier = field(roundFields, 'verification-verifier', '검증 담당자 (필수)');
     const actor = field(roundFields, 'verification-actor', '검증 시작 기록 담당자 (필수)'); actor.value = project.researcherName || '';
+    LCA.views.inputAssist.person(actor, project);
+    const previousInfo = text('p', 'detail-help', ''); previousInfo.setAttribute('role', 'status'); roundFields.append(previousInfo);
     const note = field(roundFields, 'verification-round-note', '차수 메모 (선택)', 'textarea', 1000);
     const confirmedLabel = text('label', 'calculation-confirmation', ''); const confirmed = document.createElement('input'); confirmed.type = 'checkbox';
     confirmedLabel.append(confirmed, document.createTextNode('최신 보고서와 고객 의견 처리 상태를 확인했고, 이전 차수가 있다면 검토와 지적 처리를 마쳐 이번 차수를 시작할게요.'));
@@ -41,7 +43,9 @@ LCA.views.verification = (() => {
     const content = field(issueFields, 'verification-issue-content', '검증 지적 내용 (필수)', 'textarea', 3000);
     const due = field(issueFields, 'verification-issue-due', '보완 기한 (필수 · 연월일 8자리)', 'input', 10); due.inputMode = 'numeric'; due.placeholder = '예: 20261120';
     due.addEventListener('input', () => { due.value = LCA.requests.formatDateInput(due.value); });
+    LCA.views.inputAssist.date(due);
     const recorder = field(issueFields, 'verification-issue-recorder', '지적 기록 담당자 (필수)'); recorder.value = project.researcherName || '';
+    LCA.views.inputAssist.person(recorder, project);
     const issueSave = text('button', 'primary-button', '검증 지적 등록'); issueSave.type = 'submit';
     const issueReload = text('button', 'request-action-button', '지적 등록 기준 다시 확인'); issueReload.type = 'button';
     const issueError = text('p', 'field-error', ''); issueError.setAttribute('role', 'alert');
@@ -51,6 +55,10 @@ LCA.views.verification = (() => {
     externalHost.append(introduction, roundEditor, issueEditor, archive); host.replaceChildren(routeHost, externalHost);
     let state; let busy = false; let roundDirty = false; let issueDirty = false; let roundRevision = 0; let issueRevision = 0;
     let expectedReport = null; let roundChoice = 'latest'; const cards = new Map();
+    let prefillRound = 0;
+    for (const input of [organization, verifier]) input.addEventListener('input', () => {
+      previousInfo.textContent = '기관·검증 담당자를 수정 중이에요. 새 차수에만 적용되며 이전 기록은 유지돼요.';
+    });
     function adoptRound(loaded) {
       roundRevision = loaded.record.revision; expectedReport = loaded.latest ? { revision: loaded.latest.revision, sourceKey: loaded.sourceKey } : null;
       confirmed.checked = false;
@@ -71,11 +79,16 @@ LCA.views.verification = (() => {
       if (!state.ok) {
         readiness.hidden = false; readiness.textContent = state.error;
         for (const input of host.querySelectorAll('input, textarea, select, button')) input.disabled = true;
+        LCA.views.inputAssist.sync(host);
         return;
       }
       externalHost.hidden = !!state.route?.ok && state.route.method !== 'external' && !state.round;
       state.busy = busy;
       if (!roundDirty) adoptRound(state);
+      if (!roundDirty && state.round && prefillRound !== state.round.number) {
+        organization.value = state.round.organization; verifier.value = state.round.verifier; prefillRound = state.round.number;
+        previousInfo.textContent = `${state.round.number}차 검증 정보에서 기관·담당자를 불러왔어요. 다음 차수의 담당자가 다르면 변경해 주세요.`;
+      }
       if (!issueDirty) issueRevision = state.record.revision;
       const first = !state.round;
       roundTitle.textContent = first ? '제3자 검증 시작' : `${state.round.number + 1}차 검증 시작`;
@@ -116,6 +129,7 @@ LCA.views.verification = (() => {
       issueEditor.hidden = !!state.round && selected?.number !== state.round.number;
       issueTitle.textContent = state.round ? `${state.round.number}차 검증 지적 등록 · 검토 보고서 v${state.round.reportRevision}` : '검증 지적 등록';
       issueFields.disabled = busy || !state.canWrite; issueSave.disabled = issueFields.disabled; issueReload.disabled = busy || !state.round;
+      LCA.views.inputAssist.sync(host);
     }
     roundForm.addEventListener('input', () => { roundDirty = true; roundError.textContent = ''; });
     roundForm.addEventListener('change', () => { roundDirty = true; });

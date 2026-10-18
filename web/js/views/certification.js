@@ -17,6 +17,7 @@ LCA.views.certification = (() => {
     const completedOn = dateField(completionFields, 'certification-completed-on', '검증 완료일 (필수 · 연월일 8자리)');
     const documentName = field(completionFields, 'certification-document-name', '검증 결과 문서 이름 (필수 · 파일 이름만 기록)', 'input', 200);
     const completionActor = field(completionFields, 'certification-completion-actor', '완료 기록 담당자 (필수)'); completionActor.value = project.researcherName || '';
+    LCA.views.inputAssist.person(completionActor, project);
     const completionReason = field(completionFields, 'certification-completion-reason', '검증 완료 확인 근거 (필수)', 'textarea', 1000);
     const completionCheck = checkbox(completionFields, '최종 보고서와 모든 지적의 종결, 검증기관의 완료 근거를 확인했어요.');
     const completionSave = text('button', 'primary-button', '검증 완료 기록 보관'); completionSave.type = 'submit';
@@ -36,6 +37,7 @@ LCA.views.certification = (() => {
     const issuedOn = dateField(processFields, 'certification-issued-on', '발급·확인일 (승인·등록 시 필수)');
     const note = field(processFields, 'certification-note', '제출·보완·결과 메모 (선택)', 'textarea', 2000);
     const actor = field(processFields, 'certification-actor', '기록 담당자 (필수)'); actor.value = project.researcherName || '';
+    LCA.views.inputAssist.person(actor, project);
     const reason = field(processFields, 'certification-reason', '확인 근거·변경 사유 (필수)', 'textarea', 1000);
     const startLabel = text('div', '', ''); const startCheck = checkbox(startLabel, '완료 근거를 확인했고 9단계로 이동할게요. 이동 후 이전 단계의 자료·계산·해석·보고서·검증은 읽기 전용이에요.'); processFields.append(startLabel);
     const processSave = text('button', 'primary-button', '인증·등록 준비 시작 · 9단계로'); processSave.type = 'submit';
@@ -55,7 +57,7 @@ LCA.views.certification = (() => {
     }
     function refresh() {
       state = store.load(project.id);
-      if (!state.ok) { notice.textContent = state.error; completionFields.disabled = true; completionSave.disabled = true; processFields.disabled = true; processSave.disabled = true; return; }
+      if (!state.ok) { notice.textContent = state.error; completionFields.disabled = true; completionSave.disabled = true; processFields.disabled = true; processSave.disabled = true; LCA.views.inputAssist.sync(host); return; }
       if (!dirty) adopt(state);
       if (!dirty && state.record.revision !== formRevision) {
         if (state.process) {
@@ -104,6 +106,7 @@ LCA.views.certification = (() => {
         item.append(text('p', 'interpretation-text', event.reason)); historyList.append(item);
       }
       if (!state.record.events.length) historyList.append(text('p', 'detail-help', '아직 보관한 완료·제출 이력이 없어요.'));
+      LCA.views.inputAssist.sync(host);
     }
     for (const form of [completionForm, processForm]) {
       form.addEventListener('input', () => { dirty = true; }); form.addEventListener('change', () => { dirty = true; });
@@ -134,7 +137,8 @@ LCA.views.certification = (() => {
   }
   function dateField(parent, id, label) {
     const input = field(parent, id, label, 'input', 10); input.inputMode = 'numeric'; input.placeholder = '예: 20261018';
-    input.addEventListener('input', () => { input.value = LCA.requests.formatDateInput(input.value); }); return input;
+    input.addEventListener('input', () => { input.value = LCA.requests.formatDateInput(input.value); });
+    LCA.views.inputAssist.date(input); return input;
   }
   function checkbox(parent, label) {
     const wrapper = text('label', 'calculation-confirmation', ''); const input = document.createElement('input'); input.type = 'checkbox'; wrapper.append(input, document.createTextNode(label)); parent.append(wrapper); return input;
