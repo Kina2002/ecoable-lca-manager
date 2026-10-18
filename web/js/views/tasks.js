@@ -1,6 +1,16 @@
 window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.tasks = (() => {
+  const HELP = {
+    '': '전체: 기한·보완·검토·의견·정보 확인 등 지금 확인할 업무를 모두 보여줘요.',
+    overdue: '기한 초과: 받기로 한 날이 지났는데 아직 제출되지 않은 자료예요.',
+    soon: '마감 임박: 오늘부터 3일 안에 자료를 받기로 해서 제출 일정을 확인해야 해요.',
+    revision: '보완 요청: 받은 자료에 부족한 부분이 있어 보충해서 다시 받아야 해요.',
+    review: '자료 검토: 받은 자료의 내용·기간·증빙을 우리가 확인해야 해요.',
+    comment: '고객 의견: 보고서에 남긴 고객 의견에 답변하거나 반영 여부를 확인해야 해요.',
+    verification: '검증 지적: 외부 검증자가 남긴 지적에 답변하거나 보완 결과를 확인해야 해요.',
+    info: '정보 확인: 담당자·평가 범위·자료 요청 등 진행에 필요한 정보를 확인해야 해요.'
+  };
   function text(tag, className, value) { const node = document.createElement(tag); node.className = className; node.textContent = value; return node; }
   function init(getState, onOpen) {
     const root = document.querySelector('#tasks-view');
@@ -15,6 +25,8 @@ LCA.views.tasks = (() => {
     }
     const personKey = (project) => project.researcherId ? `id:${project.researcherId}` : project.researcherName ? `name:${project.researcherName}` : 'unassigned';
     function render() {
+      const help = root.querySelector('#task-kind-help');
+      if (help.textContent !== HELP[kind]) help.textContent = HELP[kind];
       const focused = list.contains(document.activeElement) ? document.activeElement.dataset.openTask : null;
       list.replaceChildren(); error.hidden = state.ok && !state.warnings.length;
       error.textContent = !state.ok ? state.error : state.warnings.join(' ');

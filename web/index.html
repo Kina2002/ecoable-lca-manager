@@ -35,7 +35,7 @@
     <script src="./js/projects.js?v=web-018" defer></script>
     <script src="./js/scope.js?v=web-027" defer></script>
     <script src="./js/tasks.js?v=web-033" defer></script>
-    <script src="./js/views/tasks.js?v=web-033" defer></script>
+    <script src="./js/views/tasks.js?v=web-034" defer></script>
     <script src="./js/views/scope.js?v=web-014" defer></script>
     <script src="./js/request-filter.js?v=web-009.2" defer></script>
     <script src="./js/views/collection.js?v=web-016" defer></script>
@@ -373,8 +373,8 @@
 
           <section id="tasks-view" aria-labelledby="tasks-title" hidden>
             <div class="page-heading"><div><p class="eyebrow">TODAY’S TASKS</p><h1 id="tasks-title" tabindex="-1">할 일</h1><p class="page-description">저장된 기록에서 지금 확인할 업무를 모았어요. 제목을 누르면 관련 프로젝트 기록으로 이동해요.</p></div><button id="task-refresh" class="request-action-button" type="button">최신 기록 확인</button></div>
-            <p class="detail-help">자료 기한 임박은 오늘부터 3일 이내예요. 검토 중인 자료는 미제출과 구분하며, 처리한 업무는 원래 기록의 상태에 따라 목록에서 빠져요.</p>
-            <div id="task-kind-filters" class="task-kind-filters" role="group" aria-label="할 일 유형"></div>
+            <div id="task-kind-filters" class="task-kind-filters" role="group" aria-label="할 일 유형" aria-describedby="task-kind-help"></div>
+            <p id="task-kind-help" class="detail-help" role="status" aria-live="polite">전체: 기한·보완·검토·의견·정보 확인 등 지금 확인할 업무를 모두 보여줘요.</p>
             <div class="task-controls" role="search" aria-label="할 일 검색과 담당자 필터">
               <div><label for="task-search">할 일 검색</label><input id="task-search" type="search" maxlength="200" placeholder="회사·제품·요청 번호·업무 내용" aria-controls="task-items"></div>
               <div><label for="task-researcher">담당 연구원</label><select id="task-researcher" aria-controls="task-items"><option value="">담당 연구원 전체</option></select></div>
