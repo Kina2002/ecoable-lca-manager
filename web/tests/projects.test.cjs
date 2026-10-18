@@ -22,7 +22,7 @@ function setup() {
   return { storage, samples, store: P.createStore(samples, '2026-10-16', () => storage) };
 }
 
-test('기존 7개 샘플을 쓰기 없이 읽고 원본을 수정하지 않는다', () => {
+test('기존 7개 샘플을 쓰기 없이 읽고 원본을 수정하지 않는다', async () => {
   const { samples, storage, store } = setup();
   const before = JSON.stringify(samples);
   const result = store.list();
@@ -33,9 +33,9 @@ test('기존 7개 샘플을 쓰기 없이 읽고 원본을 수정하지 않는�
   assert.equal(storage.writes, 0);
 });
 
-test('기본 정보를 정리하고 계약·범위 미정과 샘플 다음 번호로 등록한다', () => {
+test('기본 정보를 정리하고 계약·범위 미정과 샘플 다음 번호로 등록한다', async () => {
   const { store } = setup();
-  const result = store.add(draft());
+  const result = (await store.add(draft()));
   assert.equal(result.ok, true);
   assert.equal(result.items.length, 8);
   assert.equal(result.item.code, 'LCA-2026-008');
@@ -50,9 +50,9 @@ test('기본 정보를 정리하고 계약·범위 미정과 샘플 다음 번�
   assert.equal(result.item.origin, 'user');
 });
 
-test('다시 연 저장소에서 ID·번호·직접 입력한 목표일을 복원한다', () => {
+test('다시 연 저장소에서 ID·번호·직접 입력한 목표일을 복원한다', async () => {
   const { store, storage } = setup();
-  const first = store.add(draft()).item;
+  const first = (await store.add(draft())).item;
   const next = P.createStore(sample(), '2026-10-17', () => storage).list();
   assert.equal(next.ok, true);
   assert.equal(next.items[7].id, first.id);
@@ -60,57 +60,57 @@ test('다시 연 저장소에서 ID·번호·직접 입력한 목표일을 복�
   assert.equal(next.items[7].targetDate, '2026-12-15');
 });
 
-test('같은 회사·제품도 별도 업무로 등록하며 최신 번호를 이어 쓴다', () => {
+test('같은 회사·제품도 별도 업무로 등록하며 최신 번호를 이어 쓴다', async () => {
   const { storage, store } = setup();
   const other = P.createStore(sample(), '2026-10-16', () => storage);
-  const one = store.add(draft()), two = other.add(draft()), three = store.add(draft());
+  const one = (await store.add(draft())), two = (await other.add(draft())), three = (await store.add(draft()));
   assert.equal(two.item.code, 'LCA-2026-009');
   assert.equal(three.item.code, 'LCA-2026-010');
   assert.equal(new Set([one.item.id, two.item.id, three.item.id]).size, 3);
   assert.equal(store.list().items.length, 10);
 });
 
-test('필수·길이·알 수 없는 목적·잘못된 날짜는 쓰지 않는다', () => {
+test('필수·길이·알 수 없는 목적·잘못된 날짜는 쓰지 않는다', async () => {
   for (const change of [{ companyName: ' ' }, { productName: '' }, { companyName: '가'.repeat(101) }, { productName: '나'.repeat(101) }, { purpose: '' }, { purpose: '없는 목적' }, { targetDate: '2026-02-29' }, { targetDate: '02026-10-16' }]) {
     const { storage, store } = setup();
-    const result = store.add(draft(change));
+    const result = (await store.add(draft(change)));
     assert.equal(result.ok, false);
     assert.equal(Object.keys(result.errors).length > 0, true);
     assert.equal(storage.writes, 0);
   }
 });
 
-test('100자 경계·모든 목적·윤년·과거 목표일을 허용한다', () => {
+test('100자 경계·모든 목적·윤년·과거 목표일을 허용한다', async () => {
   const { store } = setup();
   for (const purpose of P.PURPOSES) {
-    assert.equal(store.add(draft({ companyName: '가'.repeat(100), productName: '나'.repeat(100), purpose, targetDate: '2024-02-29' })).ok, true);
+    assert.equal((await store.add(draft({ companyName: '가'.repeat(100), productName: '나'.repeat(100), purpose, targetDate: '2024-02-29' }))).ok, true);
   }
 });
 
-test('저장 실패는 등록·일련번호를 바꾸지 않고 재시도는 같은 다음 번호를 쓴다', () => {
+test('저장 실패는 등록·일련번호를 바꾸지 않고 재시도는 같은 다음 번호를 쓴다', async () => {
   const { store, storage } = setup();
-  store.add(draft());
+  (await store.add(draft()));
   const before = storage.getItem(P.STORAGE_KEY);
   const setItem = storage.setItem.bind(storage);
   storage.setItem = () => { throw Error('quota'); };
-  assert.equal(store.add(draft()).ok, false);
+  assert.equal((await store.add(draft())).ok, false);
   assert.equal(storage.getItem(P.STORAGE_KEY), before);
   storage.setItem = setItem;
-  assert.equal(store.add(draft()).item.code, 'LCA-2026-009');
+  assert.equal((await store.add(draft())).item.code, 'LCA-2026-009');
 });
 
-test('손상·미지원 저장본은 샘플 성공으로 감추거나 덮어쓰지 않는다', () => {
+test('손상·미지원 저장본은 샘플 성공으로 감추거나 덮어쓰지 않는다', async () => {
   for (const raw of ['{', 'null', '{"version":2,"nextNumber":8,"projects":[]}', '{"version":1,"nextNumber":1,"projects":[]}']) {
     const { store, storage } = setup();
     storage.values.set(P.STORAGE_KEY, raw);
     assert.equal(store.list().ok, false);
-    assert.equal(store.add(draft()).ok, false);
+    assert.equal((await store.add(draft())).ok, false);
     assert.equal(storage.getItem(P.STORAGE_KEY), raw);
     assert.equal(storage.writes, 0);
   }
 });
 
-test('저장된 번호·ID·중복·필수 정보 손상을 거절한다', () => {
+test('저장된 번호·ID·중복·필수 정보 손상을 거절한다', async () => {
   for (const mutate of [
     (data) => data.projects[0].id = 'project-001',
     (data) => data.projects[0].code = 'LCA-2026-001',
@@ -118,27 +118,27 @@ test('저장된 번호·ID·중복·필수 정보 손상을 거절한다', () =>
     (data) => data.projects[0].purpose = '없는 목적',
     (data) => data.nextNumber = data.projects[0].number
   ]) {
-    const { store, storage } = setup(); store.add(draft());
+    const { store, storage } = setup(); (await store.add(draft()));
     const data = JSON.parse(storage.getItem(P.STORAGE_KEY));
     mutate(data); storage.values.set(P.STORAGE_KEY, JSON.stringify(data));
     const before = storage.getItem(P.STORAGE_KEY);
-    assert.equal(store.add(draft()).ok, false);
+    assert.equal((await store.add(draft())).ok, false);
     assert.equal(storage.getItem(P.STORAGE_KEY), before);
   }
 });
 
-test('저장소 접근 거절과 잘못된 기준일은 등록 실패로 알린다', () => {
+test('저장소 접근 거절과 잘못된 기준일은 등록 실패로 알린다', async () => {
   const blocked = P.createStore(sample(), '2026-10-16', () => { throw Error('blocked'); });
   assert.equal(blocked.list().ok, false);
-  assert.equal(blocked.add(draft()).ok, false);
+  assert.equal((await blocked.add(draft())).ok, false);
   const storage = memory();
-  assert.equal(P.createStore(sample(), '틀린 날짜', () => storage).add(draft()).ok, false);
+  assert.equal((await P.createStore(sample(), '틀린 날짜', () => storage).add(draft())).ok, false);
   assert.equal(storage.writes, 0);
 });
 
-test('등록한 프로젝트의 범위·자료 요청을 별도 저장소에 연결하고 복원한다', () => {
+test('등록한 프로젝트의 범위·자료 요청을 별도 저장소에 연결하고 복원한다', async () => {
   const { store, storage } = setup();
-  const registered = store.add(draft());
+  const registered = (await store.add(draft()));
   const projects = registered.items, p = projects[7];
   const scope = context.LCA.scope.createStore(projects, () => storage);
   const scopeDraft = { ...context.LCA.scope.snapshot(p), scopeStatus: '협의 중', scopeMemo: '범위 확인 중' };
@@ -152,7 +152,7 @@ test('등록한 프로젝트의 범위·자료 요청을 별도 저장소에 연
   assert.equal(context.LCA.requests.createStore(restored.map((project) => project.id), () => storage).list(p.id).items.length, 1);
 });
 
-test('등록으로 명단을 다시 연결해도 기존 범위·받은 자료·검토·필터가 보존된다', () => {
+test('등록으로 명단을 다시 연결해도 기존 범위·받은 자료·검토·필터가 보존된다', async () => {
   const { store, storage } = setup();
   const before = store.list().items;
   const scope = context.LCA.scope.createStore(before, () => storage);
@@ -165,7 +165,7 @@ test('등록으로 명단을 다시 연결해도 기존 범위·받은 자료·�
   requests.saveReview(before[0].id, id, { checks: { period: true, scope: true, complete: true }, note: '기존 검토' }, 'approve', started.item.review);
   const requestRaw = storage.getItem(context.LCA.requests.STORAGE_KEY);
   const scopeRaw = storage.getItem(context.LCA.scope.STORAGE_KEY);
-  const after = store.add(draft()).items;
+  const after = (await store.add(draft())).items;
   assert.equal(context.LCA.scope.createStore(after, () => storage).load().ok, true);
   assert.equal(after[4].scopeMemo, '기존 협의');
   const all = context.LCA.requests.createStore(after.map((p) => p.id), () => storage).listAll();

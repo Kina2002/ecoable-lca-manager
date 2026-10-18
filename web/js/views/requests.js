@@ -24,11 +24,15 @@ LCA.views.requests = (() => {
     return fragment;
   }
 
-  function init(project, store, onChanged = () => {}) {
+  function init(project, store, onChanged = () => {}, getMessageState = null) {
     const panel = document.querySelector('#project-request-content');
     panel.replaceChildren(document.querySelector('#request-panel-template').content.cloneNode(true));
     const find = (selector) => panel.querySelector(selector);
     find('.request-intro').textContent = `${project.companyName}의 ${project.productName} 평가에 필요한 자료를 적어 두는 목록이에요.`;
+    const messageEditor = LCA.views.requestMessage.init(panel, getMessageState || (() => {
+      const result = store.list(project.id);
+      return result.ok ? { ok: true, project, items: result.items, canGenerate: result.canWrite, reason: result.readOnlyReason } : { ok: false, error: result.message };
+    }));
     const fields = {
       categoryKey: find('#request-category'), detail: find('#request-detail'), dueDate: find('#request-due-date')
     };
@@ -115,6 +119,7 @@ LCA.views.requests = (() => {
 
     function renderItems() {
       const result = store.list(project.id);
+      messageEditor.refresh();
       batchEditor.render(result);
       onChanged(result);
       find('#request-storage-error').hidden = result.ok;

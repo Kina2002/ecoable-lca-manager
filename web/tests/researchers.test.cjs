@@ -167,3 +167,47 @@ test('이름이 같아도 다른 화면에서 담당 ID가 바뀌면 이전 저�
   assert.equal(s.scope.saveAssignees(p.id, { customerContactName: '고객', researcherId: expected.researcherId }, expected).ok, false);
   assert.equal(p.researcherId, person.id);
 });
+
+test('기본 연구원은 가상 회사와 서로 다른 부서가 있고 읽기로 저장하지 않는다', () => {
+  const s = setup(); const people = s.roster.list().items;
+  assert.equal(people.every((p) => p.company === '새움환경컨설팅'), true);
+  assert.equal(new Set(people.map((p) => p.department)).size, 3); assert.equal(s.writes, 0);
+});
+test('회사·부서를 함께 등록하고 예전 이름만 있는 기록은 빈 소속으로 읽는다', () => {
+  const s = setup(); const added = s.roster.add(' 최연구 ', ' 가상회사 ', ' 평가팀 ').item;
+  assert.equal(added.company, '가상회사'); assert.equal(added.department, '평가팀');
+  const data = JSON.parse(s.storage.getItem(R.STORAGE_KEY)); delete data.researchers[0].company; delete data.researchers[0].department;
+  const raw = JSON.stringify(data); s.values.set(R.STORAGE_KEY, raw);
+  assert.equal(s.roster.list().items[3].company, ''); assert.equal(s.roster.list().items[3].department, ''); assert.equal(s.storage.getItem(R.STORAGE_KEY), raw);
+});
+test('기본·생성 연구원을 수정하고 번호·프로젝트 배정·과거 기록 이름은 유지한다', () => {
+  const s = setup(); const before = JSON.stringify(s.projects); const original = s.roster.list().items[0];
+  assert.equal(s.roster.update(original.id, { name: '김새이름', company: '가상연구소', department: '환경팀' }, original).ok, true);
+  const updated = R.createStore(() => s.storage).list().items[0];
+  assert.equal(updated.name, '김새이름'); assert.equal(updated.code, original.code); assert.equal(updated.revision, 1);
+  assert.equal(JSON.stringify(s.projects), before); assert.equal(R.overview(s.roster.list().items, s.projects).rows[0].projects.length, 3);
+  const created = s.roster.add('신규').item; const current = s.roster.list().items.find((p) => p.id === created.id);
+  assert.equal(s.roster.update(current.id, { name: '신규', company: '생성회사', department: '평가팀' }, current).ok, true);
+  assert.equal(s.roster.list().items.find((p) => p.id === current.id).company, '생성회사');
+});
+test('연구원 수정의 이전 리비전·없는 ID·빈 이름·긴 소속·변경 없음은 거절한다', () => {
+  const s = setup(); const original = s.roster.list().items[0];
+  for (const change of [{ name: '' }, { company: '가'.repeat(101) }, { department: null }]) assert.equal(s.roster.update(original.id, { ...original, ...change }, original).ok, false);
+  assert.equal(s.roster.update('missing', original, original).ok, false); assert.equal(s.roster.update(original.id, original, original).ok, false);
+  assert.equal(s.roster.update(original.id, { ...original, department: '새부서' }, original).ok, true);
+  const saved = s.storage.getItem(R.STORAGE_KEY);
+  assert.equal(s.roster.update(original.id, { ...original, company: '다른회사' }, original).ok, false); assert.equal(s.storage.getItem(R.STORAGE_KEY), saved);
+});
+test('연구원 수정 저장 실패는 현재 정보·다음 번호를 바꾸지 않는다', () => {
+  const s = setup(); const person = s.roster.list().items[0]; const original = s.storage.setItem;
+  s.storage.setItem = () => { throw Error('quota'); };
+  assert.equal(s.roster.update(person.id, { ...person, department: '새부서' }, person).ok, false); assert.equal(s.roster.list().items[0].department, person.department);
+  s.storage.setItem = original; assert.equal(s.roster.add('다음연구').item.code, 'RSR-004');
+});
+test('손상된 프로필·알 수 없는 ID는 읽기 실패로 보존한다', () => {
+  const s = setup(); const person = s.roster.list().items[0];
+  for (const profiles of [{ missing: { ...person, revision: 1 } }, { [person.id]: { ...person, revision: 0 } }, { [person.id]: { ...person, company: null, revision: 1 } }]) {
+    const raw = JSON.stringify({ version: 1, nextNumber: 4, researchers: [], profiles }); s.values.set(R.STORAGE_KEY, raw);
+    assert.equal(s.roster.list().ok, false); assert.equal(s.storage.getItem(R.STORAGE_KEY), raw);
+  }
+});

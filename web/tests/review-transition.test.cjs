@@ -30,7 +30,7 @@ function approve(s, item, projectId = s.project.id) {
 }
 const finish = (s, expected = S.snapshot(s.project)) => s.store.finishReview(s.project.id, expected);
 
-test('검토 준비는 승인과 받은 자료·검토 기록을 모두 요구하고 0건을 완료로 보지 않는다', () => {
+test('검토 준비는 승인과 받은 자료·검토 기록을 모두 요구하고 0건을 완료로 보지 않는다', async () => {
   for (const status of ['요청', '제출됨', '검토 중', '보완 요청', '승인']) {
     const result = S.reviewReadiness('p', { ok: true, items: [{ projectId: 'p', status, receipt: {}, review: {} }] });
     assert.equal(result.ready, status === '승인');
@@ -40,7 +40,7 @@ test('검토 준비는 승인과 받은 자료·검토 기록을 모두 요구�
   assert.equal(S.reviewReadiness('p', { ok: true, items: [{ projectId: 'p', status: '승인' }] }).ready, false);
 });
 
-test('검토 샘플의 승인 후 별도 버튼으로만 4→5를 저장하며 자료와 목표일을 보존한다', () => {
+test('검토 샘플의 승인 후 별도 버튼으로만 4→5를 저장하며 자료와 목표일을 보존한다', async () => {
   const s = setup(), item = add(s);
   approve(s, item);
   assert.equal(s.store.reviewStatus(s.project.id).ready, true);
@@ -59,11 +59,11 @@ test('검토 샘플의 승인 후 별도 버튼으로만 4→5를 저장하며 �
   assert.equal(context.LCA.rules.stageCounts(fresh)[5], 1);
 });
 
-test('수집→검토→승인→계산을 복원하고 범위·메모와 수집 마감일을 유지한다', () => {
+test('수집→검토→승인→계산을 복원하고 범위·메모와 수집 마감일을 유지한다', async () => {
   const s = setup();
   s.project = s.projects[0];
   const dates = P.createStore(samples(), today, () => s.storage, (id) => s.store.currentStage(id));
-  dates.saveCollectionDeadline(s.project.id, '2026-10-23', '2026-10-24');
+  (await dates.saveCollectionDeadline(s.project.id, '2026-10-23', '2026-10-24'));
   const item = add(s);
   s.requests.recordReceipt(s.project.id, item.id, receipt);
   assert.equal(s.store.finishCollection(s.project.id, S.snapshot(s.project)).ok, true);
@@ -78,10 +78,10 @@ test('수집→검토→승인→계산을 복원하고 범위·메모와 수집
   assert.equal(fresh[0].customerContactName, before.customerContactName);
   assert.equal(fresh[0].scopeMemo, before.scopeMemo);
   assert.equal(fresh[0].collectionDueDate, '2026-10-23');
-  assert.equal(dates.saveCollectionDeadline(s.project.id, '', '2026-10-23').ok, false);
+  assert.equal((await dates.saveCollectionDeadline(s.project.id, '', '2026-10-23')).ok, false);
 });
 
-test('미승인 상태와 다른 프로젝트의 승인은 이동 조건을 대신하지 않는다', () => {
+test('미승인 상태와 다른 프로젝트의 승인은 이동 조건을 대신하지 않는다', async () => {
   const s = setup(), other = add(s, 'energy', s.projects[0].id);
   approve(s, other, s.projects[0].id);
   assert.equal(finish(s).ok, false);
@@ -96,7 +96,7 @@ test('미승인 상태와 다른 프로젝트의 승인은 이동 조건을 대�
   assert.equal(s.values.has(S.STORAGE_KEY), false);
 });
 
-test('승인 후 재기록·새 요청·삭제를 클릭 시 재검사하고 복원도 반영한다', () => {
+test('승인 후 재기록·새 요청·삭제를 클릭 시 재검사하고 복원도 반영한다', async () => {
   const s = setup(), item = add(s);
   approve(s, item);
   const expected = S.snapshot(s.project);
@@ -114,7 +114,7 @@ test('승인 후 재기록·새 요청·삭제를 클릭 시 재검사하고 복
   assert.equal(finish(s, expected).ok, true);
 });
 
-test('저장 실패와 손상된 요청·범위는 단계나 원본을 바꾸지 않는다', () => {
+test('저장 실패와 손상된 요청·범위는 단계나 원본을 바꾸지 않는다', async () => {
   const s = setup(), item = add(s);
   approve(s, item);
   const requestsBefore = s.values.get(R.STORAGE_KEY), projectBefore = JSON.stringify(s.project);
@@ -132,7 +132,7 @@ test('저장 실패와 손상된 요청·범위는 단계나 원본을 바꾸지
   assert.equal(s.values.get(S.STORAGE_KEY), '{');
 });
 
-test('다른 탭의 단계 변경과 중복 실행·건너뛰기·계산 이후 범위 수정을 막는다', () => {
+test('다른 탭의 단계 변경과 중복 실행·건너뛰기·계산 이후 범위 수정을 막는다', async () => {
   const s = setup(), item = add(s), staleProjects = samples();
   approve(s, item);
   const stale = S.createStore(staleProjects, () => s.storage, null, (id) => s.requests.list(id));
@@ -146,7 +146,7 @@ test('다른 탭의 단계 변경과 중복 실행·건너뛰기·계산 이후 
   assert.equal(s.values.get(S.STORAGE_KEY), raw);
 });
 
-test('기존 단계 기록은 읽기만으로 쓰지 않고 미확정·되돌린 계산 기록은 거절한다', () => {
+test('기존 단계 기록은 읽기만으로 쓰지 않고 미확정·되돌린 계산 기록은 거절한다', async () => {
   const s = setup(), item = add(s);
   approve(s, item);
   finish(s);

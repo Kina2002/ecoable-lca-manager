@@ -160,6 +160,16 @@
     const visible = LCA.projectFilter.select(projects, selectedStage, projectFilters.state);
     LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state), { requests: requestStore.listAll(), collectionDates });
   }
+  function getRequestMessageState(id) {
+    const loaded = refreshCollectionDates(); if (!loaded.ok) return loaded;
+    if (loaded.items.length !== projects.length || loaded.items.some((p) => !projects.some((known) => known.id === p.id))) return { ok: false, error: '프로젝트 명단이 바뀌었어요. 작성 중인 내용을 보관하고 새로고침해 주세요.' };
+    scopeLoadResult = scopeStore.load(); if (!scopeLoadResult.ok) return scopeLoadResult;
+    const project = projects.find((p) => p.id === id); if (!project) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+    const requests = requestStore.list(id);
+    const roster = researcherStore.list(); if (!roster.ok) return roster;
+    const sender = roster.items.find((person) => person.id === project.researcherId) || null;
+    return requests.ok ? { ok: true, project, sender, items: requests.items, canGenerate: requests.canWrite, reason: requests.readOnlyReason } : { ok: false, error: requests.message };
+  }
   function showStage(stageNo) {
     selectedStage = stageNo;
     renderProjectList();
@@ -321,7 +331,7 @@
     bindCollectionDeadline(project);
     bindCollectionTransition(project);
     bindCalculation(project);
-    LCA.views.requests.init(project, requestStore, refreshRequestViews);
+    LCA.views.requests.init(project, requestStore, refreshRequestViews, () => getRequestMessageState(project.id));
     listView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = true;
@@ -346,7 +356,7 @@
         bindCollectionDeadline(project);
         bindCollectionTransition(project);
         bindCalculation(project);
-        LCA.views.requests.init(project, requestStore, refreshRequestViews);
+        LCA.views.requests.init(project, requestStore, refreshRequestViews, () => getRequestMessageState(project.id));
         const message = document.querySelector('#scope-editor [role="status"]');
         message.textContent = project.stage === 2 ? '범위 정의 단계로 이동했어요. 고객과 협의할 평가 범위를 아래에 기록해 주세요.' : '데이터 수집 단계로 이동했어요. 자료 요청 탭에서 필요한 자료를 등록할 수 있어요.';
         message.tabIndex = -1;

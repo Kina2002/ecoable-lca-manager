@@ -130,10 +130,10 @@ test('담당자 없는 계약 프로젝트의 부정한 단계 기록·손상 �
   }
 });
 
-test('새 프로젝트 등록→담당자→범위 정의→확정→수집을 이어서 복원한다', () => {
+test('새 프로젝트 등록→담당자→범위 정의→확정→수집을 이어서 복원한다', async () => {
   const s = setup();
   const registry = context.LCA.projects.createStore(samples(), '2026-10-16', () => s.storage);
-  const added = registry.add({ companyName: '푸른소재', productName: '재생 칩', purpose: '고객사 요구 대응', targetDate: '2026-12-31' });
+  const added = await registry.add({ companyName: '푸른소재', productName: '재생 칩', purpose: '고객사 요구 대응', targetDate: '2026-12-31' });
   const p = added.items[7], store = S.createStore(added.items, () => s.storage);
   assert.equal(store.load().ok, true);
   assert.equal(store.saveAssignees(p.id, names, S.snapshot(p)).ok, true);

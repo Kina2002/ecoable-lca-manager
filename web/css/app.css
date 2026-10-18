@@ -692,3 +692,24 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .project-basic-fields textarea { resize: vertical; }
 .project-basic-history { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dce6dc; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .project-basic-fields { grid-template-columns: 1fr; } }
+
+/* WEB-040: 자료 요청문 초안·수정·복사 */
+.request-message { margin: 0 0 22px; padding: 20px 24px; border: 1px solid #cbdccc; border-radius: 12px; background: #fff; }
+.request-message > summary { font-size: 18px; font-weight: 650; line-height: 1.8; color: #174c3d; cursor: pointer; }
+.request-message > label, .request-message-preview > label, .request-message-manual > label { display: block; margin: 16px 0 8px; font-size: 14px; }
+.request-message input[type="text"], .request-message select, .request-message textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; color: #233b31; background: #fff; border: 1px solid #cbd8ce; border-radius: 8px; }
+.request-message textarea { resize: vertical; line-height: 1.8; }
+.request-message-choices { border: 1px solid #dce6dc; border-radius: 8px; padding: 14px; margin: 16px 0; min-width: 0; }
+.request-message-options { display: grid; gap: 10px; }
+.request-message-check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.request-message-check input { flex-shrink: 0; width: 18px; height: 18px; margin-top: 4px; }
+.request-message-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.request-message-preview { border-top: 1px solid #dce6dc; margin-top: 18px; padding-top: 4px; }
+.request-message-warnings { color: #805111; font-size: 13px; line-height: 1.8; }
+.request-message > .primary-button { margin-top: 12px; }
+@media (max-width: 640px) { .request-message { padding: 18px; } }
+.researcher-register-form > label { margin-top: 14px; }
+.researcher-register-form > .primary-button { margin-top: 16px; }
+.researcher-edit-form > label { display: block; font-size: 14px; margin: 16px 0 8px; }
+.researcher-edit-form > .form-error:empty { display: none; }
+.researcher-edit-form > input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; }
