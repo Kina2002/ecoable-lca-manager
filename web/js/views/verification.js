@@ -46,7 +46,9 @@ LCA.views.verification = (() => {
     const issueReload = text('button', 'request-action-button', '지적 등록 기준 다시 확인'); issueReload.type = 'button';
     const issueError = text('p', 'field-error', ''); issueError.setAttribute('role', 'alert');
     issueForm.append(issueFields, issueSave, issueReload, issueError); issueEditor.append(issueForm);
-    host.replaceChildren(introduction, roundEditor, issueEditor, archive);
+    const routeHost = text('div', '', ''); routeHost.id = 'project-review-route';
+    const externalHost = text('div', '', ''); externalHost.id = 'project-external-verification';
+    externalHost.append(introduction, roundEditor, issueEditor, archive); host.replaceChildren(routeHost, externalHost);
     let state; let busy = false; let roundDirty = false; let issueDirty = false; let roundRevision = 0; let issueRevision = 0;
     let expectedReport = null; let roundChoice = 'latest'; const cards = new Map();
     function adoptRound(loaded) {
@@ -64,19 +66,21 @@ LCA.views.verification = (() => {
       refresh(); return result;
     }
     function refresh() {
+      LCA.views.reviewRoute.refresh();
       state = store.load(project.id);
       if (!state.ok) {
         readiness.hidden = false; readiness.textContent = state.error;
         for (const input of host.querySelectorAll('input, textarea, select, button')) input.disabled = true;
         return;
       }
+      externalHost.hidden = !!state.route?.ok && state.route.method !== 'external' && !state.round;
       state.busy = busy;
       if (!roundDirty) adoptRound(state);
       if (!issueDirty) issueRevision = state.record.revision;
       const first = !state.round;
       roundTitle.textContent = first ? '제3자 검증 시작' : `${state.round.number + 1}차 검증 시작`;
       roundSave.textContent = busy ? '검증 기록 저장 중…' : first && state.project.stage === 7 ? '제3자 검증 시작 · 8단계로' : first ? '1차 검증 정보 저장' : `${state.round.number + 1}차 검증 시작`;
-      roundFields.disabled = busy || ![7, 8].includes(state.project.stage) || !!state.warning;
+      roundFields.disabled = busy || ![7, 8].includes(state.project.stage) || !!state.warning || (!!state.route?.ok && state.route.method !== 'external');
       roundSave.disabled = roundFields.disabled || !state.canStart;
       rebase.disabled = busy;
       const stale = roundRevision !== state.record.revision || expectedReport?.revision !== state.latest?.revision || expectedReport?.sourceKey !== state.sourceKey;

@@ -23,11 +23,14 @@
   let requestStore = LCA.requests.createStore(projects.map((project) => project.id), undefined, (id) => scopeStore.currentStage(id));
   let verificationStore = null;
   let certificationStore = null;
+  let reviewRouteStore = null;
   const verificationStage = (id) => {
     const verification = verificationStore ? verificationStore.currentStage(id) : { ok: true, stage: null };
     if (!verification.ok) return verification;
     const certification = certificationStore ? certificationStore.currentStage(id) : { ok: true, stage: null };
-    return certification.ok ? { ok: true, stage: Math.max(verification.stage || 0, certification.stage || 0) || null } : certification;
+    if (!certification.ok) return certification;
+    const route = reviewRouteStore ? reviewRouteStore.currentStage(id) : { ok: true, stage: null };
+    return route.ok ? { ok: true, stage: Math.max(verification.stage || 0, certification.stage || 0, route.stage || 0) || null } : route;
   };
   let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
   let scopeLoadResult = scopeStore.load();
@@ -50,12 +53,17 @@
     if (!loaded.ok) return loaded;
     const project = projects.find((item) => item.id === id);
     return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
-  }, (id) => reportStore.load(id), (id) => customerReviewStore.list(id));
+  }, (id) => reportStore.load(id), (id) => customerReviewStore.list(id), undefined, (id) => reviewRouteStore.load(id));
+  reviewRouteStore = LCA.reviewRoute.createStore(projects, (id) => {
+    const loaded = scopeStore.load(); if (!loaded.ok) return loaded;
+    const project = projects.find((item) => item.id === id);
+    return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+  }, (id) => reportStore.load(id), (id) => customerReviewStore.list(id), (id) => verificationStore.snapshot(id));
   certificationStore = LCA.certification.createStore(projects, (id) => {
     const loaded = scopeStore.load(); if (!loaded.ok) return loaded;
     const project = projects.find((item) => item.id === id);
     return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
-  }, (id) => reportStore.load(id), (id) => verificationStore.load(id));
+  }, (id) => reportStore.load(id), (id) => verificationStore.load(id), undefined, (id) => reviewRouteStore.load(id));
   scopeLoadResult = scopeStore.load();
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
@@ -242,6 +250,9 @@
     LCA.views.verification.init(project, verificationStore, refreshLaterStage, (revision) => {
       selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
     }, () => selectDetailTab('comments', true));
+    LCA.views.reviewRoute.init(project, reviewRouteStore, refreshLaterStage, (revision) => {
+      selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
+    });
     LCA.views.certification.init(project, certificationStore, refreshLaterStage, (revision) => {
       selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
     }, () => selectDetailTab('verification', true));

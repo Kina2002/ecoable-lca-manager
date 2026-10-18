@@ -64,7 +64,7 @@ LCA.interpretation = (() => {
       if (!data.ok) return { ok: false, error: '기존 결과 해석 기록을 읽지 못해 저장을 중단했어요.' };
       const state = load(id);
       if (!state.ok) return state;
-      if (![6, 7, 8].includes(state.project.stage)) return { ok: false, error: '결과 해석(6)·보고서(7)·제3자 검증(8) 단계에서 기록할 수 있어요.' };
+      if (![6, 7, 8].includes(state.project.stage)) return { ok: false, error: '결과 해석(6)·보고서(7)·검토·검증(8) 단계에서 기록할 수 있어요.' };
       if (!state.ready) return { ok: false, error: '현재 승인 자료·평가 범위와 일치하는 외부 계산 결과를 먼저 저장해 주세요.' };
       if ((state.record?.revision || 0) !== expectedRevision) return { ok: false, error: '다른 화면에서 해석 기록이 바뀌었어요. 입력은 유지했으니 프로젝트를 다시 열어 최신 기록을 확인해 주세요.' };
       if (state.calculationKey !== expectedCalculationKey) return { ok: false, error: '외부 계산 결과가 바뀌었어요. 최신 결과를 읽고 해석 기준을 다시 확인해 주세요.' };

@@ -76,7 +76,7 @@ LCA.views.interpretation = (() => {
       readiness.textContent = state.project.stage < 5 ? '계산 단계(5)에서 결과 해석을 시작할 수 있어요.'
         : state.project.stage === 5 ? state.ready ? '준비됐어요. 버튼을 누르면 결과 해석 단계(6)로 이동해요.' : '현재 자료가 최소 한 건이고 모두 승인돼야 하며, 최신 자료·범위와 일치하는 외부 계산 결과가 필요해요.'
         : state.project.stage === 6 ? '결과 해석 단계(6)예요. 해석을 저장해도 보고서 단계로 자동 이동하지 않아요.'
-        : [7, 8].includes(state.project.stage) ? '보고서(7)·제3자 검증(8) 단계에서도 해석을 수정할 수 있어요. 수정하면 새 보고서 버전도 보관해 주세요.' : '후속 단계의 기록은 조회만 할 수 있어요.';
+        : [7, 8].includes(state.project.stage) ? '보고서(7)·검토·검증(8) 단계에서도 해석을 수정할 수 있어요. 수정하면 새 보고서 버전도 보관해 주세요.' : '후속 단계의 기록은 조회만 할 수 있어요.';
       showCalculation(state.calculation, result, '현재 저장된 외부 계산 결과');
       saved.replaceChildren(text('h3', '', '저장된 해석'));
       if (!state.record) saved.append(text('p', 'detail-help', '아직 저장한 해석이 없어요.'));

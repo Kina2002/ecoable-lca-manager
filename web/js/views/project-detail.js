@@ -145,7 +145,7 @@ LCA.views.projectDetail = (() => {
     const tabs = textElement('div', 'detail-tabs', '');
     tabs.setAttribute('role', 'tablist');
     tabs.setAttribute('aria-label', '프로젝트 상세 내용');
-    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과'], ['interpretation', '결과 해석'], ['report', '보고서'], ['comments', '고객 검토'], ['verification', '제3자 검증'], ['certification', '인증·등록']]) {
+    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과'], ['interpretation', '결과 해석'], ['report', '보고서'], ['comments', '고객 검토'], ['verification', '검토·검증'], ['certification', '인증·등록']]) {
       const tab = textElement('button', 'detail-tab', label);
       tab.type = 'button';
       tab.id = `detail-${key}-tab`;

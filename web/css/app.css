@@ -569,3 +569,10 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .verification-processing { border-top: 1px solid #dce6dc; margin-top: 20px; padding-top: 10px; }
 .verification-issue .detail-note { font-weight: 600; }
 #project-verification-panel fieldset { min-width: 0; }
+
+/* WEB-029: 미정·내부 검토·외부 검토 경로 */
+.review-route-history { margin-bottom: 24px; }
+.review-route-history > summary { cursor: pointer; font-weight: 600; line-height: 1.8; }
+.review-route-event { padding: 16px 0; border-bottom: 1px solid #dce6dc; overflow-wrap: anywhere; }
+.review-route-event h3 { font-size: 16px; line-height: 1.7; }
+#project-review-route .request-action-button { white-space: normal; }

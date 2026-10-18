@@ -29,7 +29,7 @@ LCA.verification = (() => {
     }
     return record.revision === record.rounds.length + record.issues.reduce((total, item) => total + item.events.length, 0);
   }
-  function createStore(projects, getProject, getReports, getComments, getStorage = () => window.localStorage) {
+  function createStore(projects, getProject, getReports, getComments, getStorage = () => window.localStorage, getReviewRoute = null) {
     const failure = () => ({ ok: false, error: '제3자 검증 기록을 읽지 못했어요. 기존 차수와 단계를 보호하기 위해 저장과 단계 이동을 중단했어요.' });
     function read() {
       try {
@@ -45,28 +45,33 @@ LCA.verification = (() => {
     function currentStage(id) {
       const data = read(); return data.ok ? { ok: true, stage: data.records[id] ? 8 : null } : data;
     }
+    function snapshot(id) {
+      const data = read(); return data.ok ? { ok: true, record: data.records[id] ? clone(data.records[id]) : null } : data;
+    }
     function load(id) {
       const data = read(); if (!data.ok) return data;
       const fallback = projects.find((p) => p.id === id); if (!fallback) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
-      let scope; let reports; let comments;
-      try { scope = getProject(id); reports = getReports(id); comments = getComments(id); } catch { /* 조회 가능한 보관 기록은 유지한다. */ }
+      let scope; let reports; let comments; let route;
+      try { scope = getProject(id); reports = getReports(id); comments = getComments(id); route = getReviewRoute?.(id); } catch { /* 조회 가능한 보관 기록은 유지한다. */ }
       const project = scope?.ok ? scope.project : fallback;
       const record = data.records[id] ? clone(data.records[id]) : { revision: 0, rounds: [], issues: [] };
       const versions = reports?.ok ? reports.versions : [];
       const missing = reports?.ok && (record.rounds.some((round) => !versions.some((v) => v.revision === round.reportRevision))
         || record.issues.some((item) => item.events.some((event) => event.type === 'replied' && event.appliedReportRevision !== null && !versions.some((v) => v.revision === event.appliedReportRevision))));
       const warning = !scope?.ok ? scope?.error || '프로젝트 단계를 확인하지 못했어요.' : !reports?.ok ? reports?.error || '보관 보고서를 확인하지 못했어요.'
-        : missing ? '검증에 연결한 보고서 버전을 찾을 수 없어요. 기존 기록을 보호하기 위해 저장을 중단했어요.' : '';
+        : missing ? '검증에 연결한 보고서 버전을 찾을 수 없어요. 기존 기록을 보호하기 위해 저장을 중단했어요.'
+        : getReviewRoute && !route?.ok ? route?.error || '검토 방식을 확인하지 못했어요.' : route?.warning || '';
       const unresolvedCustomers = comments?.ok ? comments.items.filter((item) => item.status !== '종결') : [];
       const issues = record.issues.map(current); const round = record.rounds.at(-1) || null;
       const unresolved = issues.filter((item) => item.round === round?.number && item.status !== '종결');
-      const startBlock = warning || (!comments?.ok ? comments?.error || '고객 검토 기록을 확인하지 못했어요.' : comments.warning || '')
+      const routeBlock = getReviewRoute && route?.ok ? route.method !== 'external' ? '검토 방식을 외부 검토(제3자 검증)로 정한 뒤 시작해 주세요.' : route.completionBlock : '';
+      const startBlock = warning || routeBlock || (!comments?.ok ? comments?.error || '고객 검토 기록을 확인하지 못했어요.' : comments.warning || '')
         || (unresolvedCustomers.length ? `미종결 고객 의견 ${unresolvedCustomers.length}건을 먼저 처리해 주세요.` : '')
         || (!reports?.record || !reports.ready || reports.stale || reports.currentError ? '현재 자료·계산·해석과 일치하는 최신 보고서를 먼저 저장해 주세요.' : '')
         || (unresolved.length ? `현재 ${round.number}차의 미종결 지적 ${unresolved.length}건을 먼저 처리해 주세요.` : '');
       return { ok: true, project, record, issues, round, reports: versions, latest: reports?.record || null, sourceKey: reports?.sourceKey || '',
         warning, startBlock, canStart: !startBlock && [7, 8].includes(project.stage), canWrite: !warning && project.stage === 8 && !!round,
-        unresolvedCustomers, unresolved };
+        unresolvedCustomers, unresolved, route };
     }
     function mutate(id, action, draft, expectedRevision, expectedReport) {
       const data = read(); if (!data.ok) return data;
@@ -126,7 +131,7 @@ LCA.verification = (() => {
         return mutate(...args);
       } catch { return { ok: false, error: '검증 기록 저장을 시작하지 못했어요. 입력과 기존 기록은 유지했으니 다시 시도해 주세요.' }; }
     }
-    return { load, currentStage, save };
+    return { load, currentStage, snapshot, save };
   }
   return { STORAGE_KEY, STATUSES, RESOLUTIONS, validRecord, createStore };
 })();
