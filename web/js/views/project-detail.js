@@ -121,7 +121,7 @@ LCA.views.projectDetail = (() => {
     title.tabIndex = -1;
     if (project.isFictional) title.append(textElement('span', 'fictional-tag', '가상'));
     identity.append(title, textElement('p', 'page-description', `${project.productName} · ${project.code}`));
-    heading.append(identity, textElement('span', 'demo-pill', '가상 프로젝트 상세'));
+    heading.append(identity, textElement('span', 'demo-pill', project.origin === 'user' ? '직접 등록한 프로젝트' : '기본 샘플 · 삭제 대상 아님'));
     if (project.origin === 'user') {
       const remove = textElement('button', 'request-action-button project-delete-button', '프로젝트 삭제'); remove.type = 'button'; remove.dataset.deleteProject = project.id;
       remove.setAttribute('aria-haspopup', 'dialog'); remove.setAttribute('aria-controls', 'project-delete-dialog'); heading.append(remove);

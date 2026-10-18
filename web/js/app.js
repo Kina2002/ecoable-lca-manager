@@ -257,7 +257,11 @@
     LCA.storage.resumeReplacement(result.epoch);
     taskReturn = null; homeReturn = null; detailOpener = null; openedProjectId = null;
     document.querySelector('#back-to-projects').textContent = '← 목록으로';
-    showList();
+    if (!detailView.hidden) showList();
+    else {
+      scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
+      LCA.views.stageFilter.render(projects); showStage(selectedStage);
+    }
     dashboardPage.refresh(); tasksPage.refresh(); researcherPage.refresh();
     const message = document.querySelector('#project-create-status');
     message.textContent = `${result.project.companyName} · ${result.project.code} 프로젝트와 관련 기록을 삭제했어요.`;
@@ -422,6 +426,8 @@
   }
 
   document.querySelector('#project-rows').addEventListener('click', (event) => {
+    const remove = event.target.closest('button[data-delete-project]');
+    if (remove) { deletionPage.open(remove.dataset.deleteProject, remove); return; }
     const button = event.target.closest('button[data-open-project]');
     if (button) showDetail(button.dataset.openProject, button);
   });

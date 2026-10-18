@@ -679,3 +679,5 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .project-delete-button:hover:not(:disabled) { color: #7c281d; background: #ffe9e1; }
 .project-delete-details { font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
 .project-delete-details p:first-child { font-size: 17px; font-weight: 650; color: #174c3d; }
+.project-sample-help { margin: 8px 0 0; color: #69786b; font-size: 11px; line-height: 1.7; }
+.project-table .project-delete-button { margin-top: 8px; }

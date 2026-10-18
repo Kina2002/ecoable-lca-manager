@@ -50,6 +50,10 @@ LCA.views.projectList = (() => {
       detailButton.append(arrow);
       company.append(companyLine, detailButton);
       company.append(textElement('p', 'project-researcher', `담당 연구원: ${project.researcherName || '미정'}${project.researcherId ? ` · ${LCA.projectFilter.researcherCode(project.researcherId)}` : project.researcherName ? ' · 기존 이름 기록' : ''}`));
+      if (project.origin === 'user') {
+        const remove = textElement('button', 'request-action-button project-delete-button', '프로젝트 삭제'); remove.type = 'button'; remove.dataset.deleteProject = project.id;
+        remove.setAttribute('aria-label', `${project.code} ${project.companyName} 프로젝트 삭제 확인`); remove.setAttribute('aria-haspopup', 'dialog'); remove.setAttribute('aria-controls', 'project-delete-dialog'); company.append(remove);
+      } else company.append(textElement('p', 'project-sample-help', '기본 샘플 · 삭제 대상 아님'));
 
       const product = cell();
       const unit = project.functionalUnit;
