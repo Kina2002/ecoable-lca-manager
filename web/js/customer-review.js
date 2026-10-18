@@ -25,6 +25,9 @@ LCA.customerReview = (() => {
         return { ok: true, nextNumber: data.nextNumber, items: data.items };
       } catch { return failure(); }
     }
+    function snapshot() {
+      const data = read(); return data.ok ? { ok: true, items: data.items.map(current) } : data;
+    }
     function list(id) {
       const data = read(); if (!data.ok) return data;
       const fallback = projects.find((p) => p.id === id);
@@ -93,7 +96,7 @@ LCA.customerReview = (() => {
         return mutate(...args);
       } catch { return { ok: false, error: '고객 검토 기록 저장을 시작하지 못했어요. 입력 내용은 유지했으니 다시 시도해 주세요.' }; }
     }
-    return { list, create: (id, draft) => locked(id, 'create', draft),
+    return { list, snapshot, create: (id, draft) => locked(id, 'create', draft),
       respond: (id, commentId, draft, revision) => locked(id, 'replied', draft, revision, commentId),
       close: (id, commentId, draft, revision) => locked(id, 'closed', draft, revision, commentId),
       reopen: (id, commentId, draft, revision) => locked(id, 'reopened', draft, revision, commentId) };

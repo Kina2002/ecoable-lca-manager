@@ -613,3 +613,23 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
   .request-batch { padding: 20px; }
   .request-batch-grid { grid-template-columns: 1fr; }
 }
+
+/* WEB-033: 원래 기록에서 계산하는 할 일 */
+.task-kind-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 18px; }
+.task-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; margin-bottom: 22px; }
+.task-controls > div { flex: 1 1 220px; min-width: 0; }
+.task-controls label { display: block; font-size: 13px; margin-bottom: 8px; }
+.task-controls input, .task-controls select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #cbd8ce; border-radius: 8px; color: #233b31; background: white; font: inherit; box-sizing: border-box; }
+.task-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding: 0; list-style: none; }
+.task-card { min-width: 0; padding: 22px; border: 1px solid #dce6dc; border-radius: 12px; background: white; overflow-wrap: anywhere; }
+.task-card-top { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.task-kind { display: inline-block; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 650; color: #174c3d; background: #edf3ea; }
+.task-kind-overdue, .task-kind-revision { color: #893d28; background: #fff0e9; }
+.task-kind-soon { color: #805111; background: #fff6dc; }
+.task-open { display: block; padding: 0; margin: 16px 0 10px; border: 0; background: transparent; color: #174c3d; font: inherit; font-size: 17px; font-weight: 650; text-align: left; line-height: 1.7; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.task-open:focus-visible { outline: 3px solid #247158; outline-offset: 5px; }
+.task-project { font-size: 13px; font-weight: 600; line-height: 1.8; }
+.task-description { font-size: 13px; line-height: 1.9; white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.task-list > .empty-state { grid-column: 1 / -1; }
+@media (max-width: 760px) { .task-list { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .sidebar nav { flex-wrap: wrap; } }

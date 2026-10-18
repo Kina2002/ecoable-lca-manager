@@ -4,6 +4,7 @@ LCA.views = LCA.views || {};
 
 LCA.views.requests = (() => {
   let refreshCurrent = () => {};
+  let focusCurrent = () => {};
   function textElement(tag, className, value) {
     const element = document.createElement(tag);
     element.className = className;
@@ -271,8 +272,17 @@ LCA.views.requests = (() => {
     });
     showGuide();
     refreshCurrent = renderItems;
+    focusCurrent = (id) => {
+      const loaded = store.list(project.id);
+      const item = loaded.ok && loaded.items.find((entry) => entry.id === id);
+      if (item && selectedStatus && item.status !== selectedStatus) selectedStatus = null;
+      renderItems();
+      const card = [...find('#request-items').children].find((node) => node.dataset.requestId === id);
+      const target = card || find('#request-list-title'); target.tabIndex = -1;
+      target.focus({ preventScroll: true }); target.scrollIntoView({ block: 'center' });
+    };
     renderItems();
   }
 
-  return { init, refresh: () => refreshCurrent() };
+  return { init, refresh: () => refreshCurrent(), focus: (id) => focusCurrent(id) };
 })();

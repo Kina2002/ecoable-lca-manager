@@ -77,6 +77,8 @@
   const detailView = document.querySelector('#project-detail-view');
   const glossaryView = document.querySelector('#glossary-view');
   const researcherView = document.querySelector('#researcher-view');
+  const tasksView = document.querySelector('#tasks-view');
+  let taskReturn = null;
   let listScrollY = 0;
   let detailOpener = null;
   let projectView = listView;
@@ -86,7 +88,7 @@
   function setPage(label, title, section) {
     document.querySelector('#current-view-label').textContent = label;
     document.title = title;
-    for (const name of ['project', 'glossary', 'researcher']) {
+    for (const name of ['project', 'glossary', 'researcher', 'tasks']) {
       const link = document.querySelector(`#${name}-navigation`);
       if (name === section) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
@@ -142,6 +144,34 @@
     showDetail(id, opener);
     listScrollY = 0;
   });
+  function getTaskState() {
+    const loadedProjects = refreshCollectionDates();
+    if (!loadedProjects.ok) return { ok: false, error: loadedProjects.error };
+    if (loadedProjects.items.length !== projects.length || loadedProjects.items.some((p) => !projects.some((known) => known.id === p.id))) {
+      return { ok: false, error: '다른 화면에서 프로젝트 명단이 바뀌었어요. 작성 중인 내용을 저장한 뒤 페이지를 새로고침해 주세요.' };
+    }
+    scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
+    if (!scopeLoadResult.ok) return { ok: false, error: scopeLoadResult.error };
+    return LCA.tasks.build({ projects, requests: requestStore.listAll(), comments: customerReviewStore.snapshot(),
+      verifications: Object.fromEntries(projects.filter((p) => p.stage < 10).map((p) => [p.id, verificationStore.snapshot(p.id)])) });
+  }
+  const tasksPage = LCA.views.tasks.init(getTaskState, (id, opener) => {
+    const current = getTaskState(); const task = current.ok && current.items.find((item) => item.id === id);
+    if (!task) return { ok: false, error: current.error || '이 할 일은 처리됐거나 기록이 바뀌었어요. 최신 목록을 확인해 주세요.' };
+    const back = { id, scrollY: window.scrollY }; const savedListScroll = listScrollY;
+    if (projectView === detailView && openedProjectId === task.projectId) {
+      tasksView.hidden = true; detailView.hidden = false; setPage('프로젝트 상세', projectPageTitle, 'project');
+      LCA.views.projectDetail.refreshScope(projects.find((item) => item.id === task.projectId));
+      LCA.views.projectDetail.refreshStage(projects.find((item) => item.id === task.projectId));
+    } else { showDetail(task.projectId, opener); listScrollY = savedListScroll; }
+    taskReturn = back; document.querySelector('#back-to-projects').textContent = '← 할 일로';
+    selectDetailTab(task.tab, true);
+    if (task.requestId) LCA.views.requests.focus(task.requestId);
+    else if (task.commentId) LCA.views.customerReview.focus(task.commentId);
+    else if (task.issueId) LCA.views.verification.focus(task.issueId);
+    else { document.querySelector('#project-detail-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
+    return { ok: true };
+  });
   document.querySelector('#new-project').disabled = !projectLoadResult.ok;
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
@@ -171,6 +201,8 @@
   document.querySelector('#all-stages').addEventListener('click', () => showStage(null));
 
   function showDetail(projectId, opener) {
+    taskReturn = null;
+    document.querySelector('#back-to-projects').textContent = '← 목록으로';
     refreshCollectionDates();
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
@@ -189,6 +221,7 @@
     listView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = true;
+    tasksView.hidden = true;
     detailView.hidden = false;
     projectView = detailView;
     projectPageTitle = `${project.companyName} 상세 | 에코에이블 LCA 관리`;
@@ -287,6 +320,7 @@
 
   function showList() {
     if (detailView.hidden) return;
+    if (taskReturn) { const back = taskReturn; taskReturn = null; document.querySelector('#back-to-projects').textContent = '← 목록으로'; openTasks(back); return; }
     detailView.hidden = true;
     listView.hidden = false;
     projectView = listView;
@@ -349,12 +383,14 @@
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {
     event.preventDefault();
-    if (glossaryView.hidden && researcherView.hidden) {
+    if (glossaryView.hidden && researcherView.hidden && tasksView.hidden) {
+      taskReturn = null;
       showList();
       return;
     }
     glossaryView.hidden = true;
     researcherView.hidden = true;
+    tasksView.hidden = true;
     projectView.hidden = false;
     setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
     if (projectView === listView) {
@@ -368,10 +404,11 @@
   document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
     event.preventDefault();
     if (glossaryView.hidden) {
-      if (researcherView.hidden) projectScrollY = window.scrollY;
+      if (researcherView.hidden && tasksView.hidden) projectScrollY = window.scrollY;
       listView.hidden = true;
       detailView.hidden = true;
       researcherView.hidden = true;
+      tasksView.hidden = true;
       glossaryView.hidden = false;
       setPage('용어사전', '용어사전 | 에코에이블 LCA 관리', 'glossary');
     }
@@ -379,10 +416,11 @@
     window.scrollTo(0, 0);
   });
   function openResearchers(id = null) {
-    if (researcherView.hidden && glossaryView.hidden) projectScrollY = window.scrollY;
+    if (researcherView.hidden && glossaryView.hidden && tasksView.hidden) projectScrollY = window.scrollY;
     listView.hidden = true;
     detailView.hidden = true;
     glossaryView.hidden = true;
+    tasksView.hidden = true;
     researcherView.hidden = false;
     setPage('담당 연구원', '담당 연구원 | 에코에이블 LCA 관리', 'researcher');
     if (id) researcherPage.focusResearcher(id);
@@ -396,10 +434,20 @@
     event.preventDefault();
     openResearchers();
   });
+  function openTasks(back = null) {
+    if (tasksView.hidden && glossaryView.hidden && researcherView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; tasksView.hidden = false;
+    setPage('할 일', '할 일 | 에코에이블 LCA 관리', 'tasks'); tasksPage.refresh();
+    if (back) { tasksPage.focus(back.id); window.scrollTo(0, back.scrollY); }
+    else { document.querySelector('#tasks-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
+  }
+  document.querySelector('#tasks-navigation').addEventListener('click', (event) => { event.preventDefault(); openTasks(); });
+  window.addEventListener('storage', () => { if (!tasksView.hidden) tasksPage.refresh(); });
   // 날짜만 갱신한다. 입력 중인 폼이나 선택한 필터를 다시 만들지 않는다.
   function refreshDates() {
     updateReferenceDate(LCA.rules.today());
     LCA.views.deadlines.refresh();
+    if (!tasksView.hidden) tasksPage.refresh();
   }
   window.setInterval(refreshDates, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDates(); });

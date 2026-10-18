@@ -2,6 +2,7 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.verification = (() => {
   let refreshCurrent = () => {};
+  let focusCurrent = () => {};
   const { text, field, option, date } = LCA.views.verificationIssue;
   function init(project, store, onChanged, onOpenReport, onOpenCustomers) {
     const host = document.querySelector('#project-verification-panel');
@@ -163,7 +164,13 @@ LCA.views.verification = (() => {
     });
     selectedRound.addEventListener('change', () => { roundChoice = selectedRound.value; refresh(); }); statusFilter.addEventListener('change', refresh);
     toReport.addEventListener('click', () => { if (state.latest) onOpenReport(state.latest.revision); });
+    focusCurrent = (id) => {
+      const item = state?.issues?.find((entry) => entry.id === id);
+      roundChoice = item && item.round !== state.round?.number ? String(item.round) : 'latest'; statusFilter.value = ''; refresh();
+      const card = cards.get(id); const target = card?.element || roundTitle; target.tabIndex = -1;
+      target.focus({ preventScroll: true }); target.scrollIntoView({ block: 'center' });
+    };
     refreshCurrent = refresh; refresh();
   }
-  return { init, refresh: () => refreshCurrent() };
+  return { init, refresh: () => refreshCurrent(), focus: (id) => focusCurrent(id) };
 })();
