@@ -1,7 +1,7 @@
 /* 저장된 정보로 요청문을 만든다. 저장·발송·자료 상태 변경은 하지 않는다. */
 window.LCA = window.LCA || {};
 LCA.requestMessage = (() => {
-  const TYPES = { initial: '처음 요청', reminder: '미제출 재요청', revision: '보완 요청' };
+  const TYPES = { initial: '처음 요청', reminder: '미제출 재요청', upcoming: '마감 임박 안내', revision: '보완 요청' };
   const clean = (value) => typeof value === 'string' ? value.trim() : '';
   const line = (value) => clean(value).replace(/[\r\n]+/g, ' ');
   const category = (item) => LCA.constants.CATEGORIES.find((c) => c.key === item.categoryKey)?.name;
@@ -10,8 +10,15 @@ LCA.requestMessage = (() => {
     if (!state?.ok || !state.project || !Array.isArray(state.items)) return { ok: false, error: state?.error || '최신 프로젝트·자료 기록을 읽지 못했어요.' };
     if (state.items.some((item) => !item || typeof item.id !== 'string' || typeof item.projectId !== 'string')) return { ok: false, error: '자료 기록의 형식을 확인하지 못했어요.' };
     if (!Number.isInteger(state.project.stage) || state.project.stage < 1 || state.project.stage >= 9 || state.canGenerate === false) return { ok: false, error: state.reason || '요청문은 인증·등록 준비 전(1~8단계)에 만들 수 있어요.' };
-    const items = state.items.filter((item) => item.projectId === state.project.id && !item.deletedAt
-      && (type === 'revision' ? item.status === '보완 요청' : item.status === '요청' && !item.receipt));
+    const today = type === 'upcoming' ? LCA.rules.today() : null;
+    const items = state.items.filter((item) => {
+      if (item.projectId !== state.project.id || item.deletedAt) return false;
+      if (type === 'revision') return item.status === '보완 요청';
+      if (item.status !== '요청' || item.receipt) return false;
+      if (type !== 'upcoming') return true;
+      const days = LCA.deadlines.refresh({ date: item.dueDate, status: item.status }, today).days;
+      return days !== null && days >= 0 && days <= 3;
+    });
     if (new Set(items.map((item) => item.id)).size !== items.length) return { ok: false, error: '자료 번호가 중복되어 요청문을 만들 수 없어요.' };
     return { ok: true, items: items.slice().sort((a, b) => a.id.localeCompare(b.id)) };
   }
@@ -19,7 +26,7 @@ LCA.requestMessage = (() => {
     const available = candidates(state, type); if (!available.ok) return available;
     if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length) return { ok: false, error: '요청문에 넣을 자료를 한 건 이상 선택해 주세요.' };
     const chosen = new Set(ids); const items = available.items.filter((item) => chosen.has(item.id));
-    if (items.length !== ids.length) return { ok: false, error: '선택한 자료가 제출·삭제되었거나 상태가 바뀌었어요. 최신 자료를 확인해 주세요.' };
+    if (items.length !== ids.length) return { ok: false, error: '선택한 자료의 제출 여부·상태·기한이 바뀌었거나 삭제되었어요. 최신 자료를 확인해 주세요.' };
     const missing = new Set();
     function value(raw, label, singleLine = true) {
       const result = singleLine ? line(raw) : clean(raw);
@@ -37,11 +44,12 @@ LCA.requestMessage = (() => {
     const rows = items.map((item) => ({ id: item.id, name: value(category(item), '자료 구분'), detail: value(item.detail, `${item.id} 요청 내용`, false),
       due: date(item.dueDate, `${item.id} 제출 기한`), revision: type === 'revision' ? value(item.review?.note, `${item.id} 보완 사유`, false) : '' }));
     const commonDue = new Set(rows.map((item) => item.due)).size === 1;
-    const prefix = { initial: 'LCA 자료 요청', reminder: '자료 제출 확인 요청', revision: '자료 보완 요청' }[type];
+    const prefix = { initial: 'LCA 자료 요청', reminder: '자료 제출 확인 요청', upcoming: '자료 제출 기한 안내', revision: '자료 보완 요청' }[type];
     const title = `[${prefix}] ${company} ${product} 평가`;
     const body = [`안녕하세요, ${contact} 담당자님.`, `${senderCompany} ${senderDepartment} ${researcher}입니다.`, '',
       type === 'initial' ? `${product} LCA 평가를 위해 아래 자료를 요청드립니다.` : type === 'reminder'
-        ? '앞서 요청드린 자료 중 아직 제출 확인이 되지 않은 항목을 안내드립니다.' : '보내주신 자료를 검토한 결과, 아래 사항의 보완을 부탁드립니다.',
+        ? '앞서 요청드린 자료 중 아직 제출 확인이 되지 않은 항목을 안내드립니다.' : type === 'upcoming'
+          ? '제출 기한이 가까워진 아래 자료의 준비 일정을 확인 부탁드립니다.' : '보내주신 자료를 검토한 결과, 아래 사항의 보완을 부탁드립니다.',
       '', `대상 회사: ${company}`, `평가 대상 제품: ${product}`, `자료 기준기간: ${period}`, '', type === 'revision' ? '보완 대상 자료' : '요청 자료'];
     for (const [index, item] of rows.entries()) {
       body.push(`${index + 1}. ${item.name} (${item.id})`, `   요청 내용: ${item.detail}`);
@@ -51,7 +59,8 @@ LCA.requestMessage = (() => {
     }
     if (type !== 'revision' && commonDue) body.push(`제출 기한: ${rows[0].due}`, '');
     body.push(type === 'initial' ? '자료 준비가 어렵거나 기한 조정이 필요하면 말씀 부탁드립니다.' : type === 'reminder'
-      ? '제출 여부와 준비 일정을 확인 부탁드립니다. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : '확인 후 보완 자료를 전달 부탁드립니다. 보완 자료 제출 일정은 별도 협의 부탁드립니다.',
+      ? '제출 여부와 준비 일정을 확인 부탁드립니다. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : type === 'upcoming'
+        ? '안내드린 기한까지 전달 부탁드립니다. 준비가 어렵거나 기한 조정이 필요하면 말씀해 주세요. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : '확인 후 보완 자료를 전달 부탁드립니다. 보완 자료 제출 일정은 별도 협의 부탁드립니다.',
       '', '감사합니다.', `담당 연구원 ${researcher}`);
     const fingerprint = JSON.stringify({ type, project: [p.id, p.stage, p.companyName, p.productName, p.customerContactName, p.researcherId, p.researcherName, p.refStart, p.refEnd].map((v) => v ?? null),
       sender: [sender?.id, sender?.name, sender?.company, sender?.department].map((v) => v ?? null),
@@ -70,5 +79,9 @@ LCA.requestMessage = (() => {
     }
     catch { return { ok: false, error: '브라우저가 자동 복사를 허용하지 않았어요.' }; }
   }
-  return { TYPES, candidates, build, check, copy };
+  function typeForTask(task) {
+    if (!task?.requestId || task.readOnly || !Number.isInteger(task.stage) || task.stage < 1 || task.stage >= 9) return null;
+    return { overdue: 'reminder', soon: 'upcoming', revision: 'revision' }[task.kind] || null;
+  }
+  return { TYPES, candidates, build, check, copy, typeForTask };
 })();

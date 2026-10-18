@@ -12,7 +12,7 @@ LCA.views.tasks = (() => {
     info: '정보 확인: 담당자·평가 범위·자료 요청 등 진행에 필요한 정보를 확인해야 해요.'
   };
   function text(tag, className, value) { const node = document.createElement(tag); node.className = className; node.textContent = value; return node; }
-  function init(getState, onOpen) {
+  function init(getState, onOpen, onMessage) {
     const root = document.querySelector('#tasks-view');
     const filters = root.querySelector('#task-kind-filters'); const people = root.querySelector('#task-researcher');
     const search = root.querySelector('#task-search'); const list = root.querySelector('#task-items');
@@ -28,6 +28,7 @@ LCA.views.tasks = (() => {
       const help = root.querySelector('#task-kind-help');
       if (help.textContent !== HELP[kind]) help.textContent = HELP[kind];
       const focused = list.contains(document.activeElement) ? document.activeElement.dataset.openTask : null;
+      const focusedMessage = list.contains(document.activeElement) ? document.activeElement.dataset.messageTask : null;
       list.replaceChildren(); error.hidden = state.ok && !state.warnings.length;
       error.textContent = !state.ok ? state.error : state.warnings.join(' ');
       for (const [key, entry] of buttons) {
@@ -44,6 +45,13 @@ LCA.views.tasks = (() => {
         const badge = text('span', `task-kind task-kind-${item.kind}`, LCA.tasks.KINDS[item.kind]);
         const button = text('button', 'task-open', item.title); button.type = 'button'; button.dataset.openTask = item.id;
         button.setAttribute('aria-label', `${item.companyName} ${item.code} · ${item.title} 보기`);
+        const titleActions = text('div', 'task-title-actions', ''); titleActions.append(button);
+        const messageType = LCA.requestMessage.typeForTask(item);
+        if (messageType && onMessage) {
+          const compose = text('button', 'task-message-button', '요청문 만들기'); compose.type = 'button'; compose.dataset.messageTask = item.id;
+          compose.setAttribute('aria-label', `${item.companyName} ${item.requestId} · ${LCA.requestMessage.TYPES[messageType]} 요청문 만들기`);
+          titleActions.append(compose);
+        }
         const project = text('div', 'task-project', '');
         project.append(text('span', '', `${item.companyName} (가상)`), text('small', '', `${item.code} · ${item.productName}`));
         const due = LCA.tasks.deadline(item); const deadline = text('div', `task-deadline task-deadline-${due.tone}`, '');
@@ -58,13 +66,13 @@ LCA.views.tasks = (() => {
         if (item.readOnly) details.append(text('p', 'calculation-notice', '현재 단계에서는 이 기록을 읽기만 할 수 있어요. 처리 이력을 확인해 주세요.'));
         details.open = expanded.has(item.id);
         details.addEventListener('toggle', () => { if (details.open) expanded.add(item.id); else expanded.delete(item.id); });
-        card.append(badge, button, project, text('span', 'task-person', item.researcherName || '담당 미정'), deadline, details);
+        card.append(badge, titleActions, project, text('span', 'task-person', item.researcherName || '담당 미정'), deadline, details);
         list.append(card);
       }
       if (!visible.length) list.append(text('li', 'empty-state', state.items.length ? '선택한 조건의 할 일이 없어요. 유형·연구원·검색 조건을 바꿔 보세요.'
         : state.warnings.length ? '확인 가능한 기록에서는 할 일이 없어요. 읽지 못한 기록은 위 안내를 확인해 주세요.' : '현재 규칙에 해당하는 할 일이 없어요. 프로젝트 전체가 완료됐다는 뜻은 아니에요.'));
-      if (focused) {
-        const target = [...list.querySelectorAll('[data-open-task]')].find((node) => node.dataset.openTask === focused) || summary;
+      if (focused || focusedMessage) {
+        const target = [...list.querySelectorAll('[data-open-task], [data-message-task]')].find((node) => focusedMessage ? node.dataset.messageTask === focusedMessage : node.dataset.openTask === focused) || summary;
         target.tabIndex = target === summary ? -1 : 0; target.focus({ preventScroll: true });
       }
     }
@@ -88,12 +96,15 @@ LCA.views.tasks = (() => {
     root.querySelector('#task-filter-clear').addEventListener('click', () => { kind = ''; people.value = ''; search.value = ''; render(); });
     root.querySelector('#task-refresh').addEventListener('click', () => { feedback.textContent = ''; refresh(); });
     list.addEventListener('click', (event) => {
-      const button = event.target.closest('[data-open-task]'); if (!button) return;
-      const result = onOpen(button.dataset.openTask, button);
+      const button = event.target.closest('[data-open-task], [data-message-task]'); if (!button) return;
+      feedback.textContent = '';
+      const result = button.dataset.messageTask ? onMessage(button.dataset.messageTask, button) : onOpen(button.dataset.openTask, button);
       if (!result.ok) { refresh(); feedback.textContent = result.error; feedback.tabIndex = -1; feedback.focus(); }
     });
-    return { refresh, focus(id) {
-      const button = [...list.querySelectorAll('[data-open-task]')].find((node) => node.dataset.openTask === id);
+    return { refresh, focus(id, action) {
+      const button = [...list.querySelectorAll(action === 'message' ? '[data-message-task]' : '[data-open-task]')]
+        .find((node) => action === 'message' ? node.dataset.messageTask === id : node.dataset.openTask === id)
+        || [...list.querySelectorAll('[data-open-task]')].find((node) => node.dataset.openTask === id);
       (button || root.querySelector('h1')).focus({ preventScroll: true });
     } };
   }

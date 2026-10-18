@@ -2,6 +2,7 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.requestMessage = (() => {
   let refreshCurrent = () => {};
+  let prepareCurrent = () => ({ ok: false, error: '자료 요청 화면을 먼저 열어 주세요.' });
   const text = (tag, cls, value) => { const node = document.createElement(tag); node.className = cls; node.textContent = value; return node; };
   function init(host, getState) {
     const section = text('details', 'request-message', ''); section.id = 'request-message';
@@ -57,9 +58,11 @@ LCA.views.requestMessage = (() => {
         checkbox.addEventListener('change', () => { if (checkbox.checked) selected.add(item.id); else selected.delete(item.id); manual.hidden = true; sync(); }); choices.append(label);
       }
       if (!list.ok) feedback.textContent = list.error;
-      else if (!available.length) choices.append(text('p', 'detail-help', kind.value === 'revision' ? '보완 요청 상태의 자료가 없어요.' : '아직 제출되지 않은 요청 자료가 없어요.'));
+      else if (!available.length) choices.append(text('p', 'detail-help', kind.value === 'revision' ? '보완 요청 상태의 자료가 없어요.'
+        : kind.value === 'upcoming' ? '오늘부터 3일 안에 제출할 미제출 요청 자료가 없어요.' : '아직 제출되지 않은 요청 자료가 없어요.'));
       typeHelp.textContent = kind.value === 'revision' ? '보완 요청 상태만 골라 저장된 보완 사유를 넣어요. 보완 기한은 새로 확정하지 않고 별도 협의로 안내해요.'
-        : '요청 상태이며 아직 받은 자료가 없는 항목만 보여줘요. 제출됨·검토 중·보완 요청·승인·삭제 자료는 제외해요.';
+        : kind.value === 'upcoming' ? '오늘부터 3일 안에 제출할 요청 상태의 미제출 자료만 보여줘요. 오늘 마감도 포함하며, 이미 기한이 지난 자료는 미제출 재요청에서 확인해요.'
+          : '요청 상태이며 아직 받은 자료가 없는 항목만 보여줘요. 제출됨·검토 중·보완 요청·승인·삭제 자료는 제외해요.';
       sync();
       if (focused) [...choices.querySelectorAll('input')].find((node) => node.dataset.messageRequest === focused)?.focus({ preventScroll: true });
     }
@@ -70,14 +73,39 @@ LCA.views.requestMessage = (() => {
     latest.addEventListener('click', () => { refresh(); if (state?.ok && state.canGenerate !== false) feedback.textContent = '최신 자료를 확인했어요. 작성 중인 제목과 본문은 유지했어요.'; });
     overwrite.addEventListener('change', sync);
     for (const node of [title, body]) node.addEventListener('input', () => { touched = true; overwrite.checked = false; manual.hidden = true; feedback.textContent = '직접 수정한 내용은 복사할 수 있어요. 새로 만들려면 위 교체 확인에 체크해 주세요.'; sync(); });
+    function fill(current, result) {
+      state = current; generated = { ...result, type: kind.value }; title.value = result.title; body.value = result.body;
+      touched = false; overwrite.checked = false; manual.hidden = true; editor.hidden = false;
+      warnings.textContent = result.warnings.join(' '); feedback.textContent = '제목과 본문을 만들었어요. 받는 사람·기간·자료·기한을 확인하고 필요한 부분을 수정한 뒤 복사해 주세요.'; sync(); title.focus();
+    }
     generate.addEventListener('click', () => {
       if (copying || (touched && !overwrite.checked)) return;
       const current = read(); const result = LCA.requestMessage.build(current, kind.value, ids());
       if (!result.ok) { feedback.textContent = result.error; refresh(); return; }
-      state = current; generated = { ...result, type: kind.value }; title.value = result.title; body.value = result.body;
-      touched = false; overwrite.checked = false; manual.hidden = true; editor.hidden = false;
-      warnings.textContent = result.warnings.join(' '); feedback.textContent = '제목과 본문을 만들었어요. 받는 사람·기간·자료·기한을 확인하고 필요한 부분을 수정한 뒤 복사해 주세요.'; sync(); title.focus();
+      fill(current, result);
     });
+    function prepare(type, requestId) {
+      if (!section.isConnected) return { ok: false, error: '자료 요청 화면을 다시 열어 주세요.' };
+      section.open = true;
+      function fail(error) {
+        feedback.textContent = error; feedback.tabIndex = -1; feedback.focus({ preventScroll: true }); section.scrollIntoView({ block: 'start' });
+        return { ok: false, error };
+      }
+      if (copying) return fail('복사가 끝난 뒤 다시 요청문을 만들어 주세요. 작성 중인 글은 유지했어요.');
+      const before = LCA.requestMessage.build(read(), type, [requestId]);
+      if (!before.ok) return fail(before.error);
+      kind.value = type; overwrite.checked = false; manual.hidden = true;
+      render(false); selected = new Set([requestId]);
+      for (const checkbox of choices.querySelectorAll('input')) checkbox.checked = selected.has(checkbox.dataset.messageRequest);
+      sync();
+      const current = read(); const result = LCA.requestMessage.build(current, type, [requestId]);
+      if (!result.ok) return fail(result.error);
+      if (touched) {
+        feedback.textContent = `${requestId} 한 건과 ‘${LCA.requestMessage.TYPES[type]}’를 선택했어요. 직접 수정한 글은 유지했어요. 새 글로 바꾸려면 교체 확인에 체크한 뒤 요청문 만들기를 눌러 주세요.`;
+        overwrite.focus({ preventScroll: true });
+      } else fill(current, result);
+      section.scrollIntoView({ block: 'start' }); return { ok: true };
+    }
     async function copy(part) {
       if (copying || !generated || !sameSelection()) return;
       const current = LCA.requestMessage.check(read(), generated.type, generated.ids, generated.fingerprint);
@@ -93,8 +121,9 @@ LCA.views.requestMessage = (() => {
     }
     copyTitle.addEventListener('click', () => copy('title')); copyBody.addEventListener('click', () => copy('body')); copyBoth.addEventListener('click', () => copy('both'));
     refreshCurrent = refresh;
+    prepareCurrent = prepare;
     return { refresh };
   }
   window.addEventListener('storage', () => refreshCurrent());
-  return { init };
+  return { init, prepare: (type, requestId) => prepareCurrent(type, requestId) };
 })();

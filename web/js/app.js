@@ -207,10 +207,17 @@
   function getTaskState() {
     const state = getWorkflowState(); return state.ok ? state.tasks : state;
   }
-  function openTask(id, opener, origin = 'tasks') {
+  function openTask(id, opener, origin = 'tasks', compose = false) {
     const current = getTaskState(); const task = current.ok && current.items.find((item) => item.id === id);
     if (!task) return { ok: false, error: current.error || '이 할 일은 처리됐거나 기록이 바뀌었어요. 최신 목록을 확인해 주세요.' };
-    const back = { id, scrollY: window.scrollY }; const savedListScroll = listScrollY;
+    let messageType = null;
+    if (compose) {
+      messageType = LCA.requestMessage.typeForTask(task);
+      if (!messageType) return { ok: false, error: '이 할 일의 상태가 바뀌어 자료 요청문 대상이 아니에요. 최신 목록을 확인해 주세요.' };
+      const ready = LCA.requestMessage.build(getRequestMessageState(task.projectId), messageType, [task.requestId]);
+      if (!ready.ok) return ready;
+    }
+    const back = { id, scrollY: window.scrollY, action: compose ? 'message' : 'open' }; const savedListScroll = listScrollY;
     if (projectView === detailView && openedProjectId === task.projectId) {
       tasksView.hidden = true; homeView.hidden = true; detailView.hidden = false; setPage('프로젝트 상세', projectPageTitle, 'project');
       LCA.views.projectDetail.refreshScope(projects.find((item) => item.id === task.projectId));
@@ -222,13 +229,17 @@
       homeReturn = null; taskReturn = back; document.querySelector('#back-to-projects').textContent = '← 할 일로';
     }
     selectDetailTab(task.tab, true);
+    if (compose) {
+      LCA.views.requestMessage.prepare(messageType, task.requestId);
+      return { ok: true };
+    }
     if (task.requestId) LCA.views.requests.focus(task.requestId);
     else if (task.commentId) LCA.views.customerReview.focus(task.commentId);
     else if (task.issueId) LCA.views.verification.focus(task.issueId);
     else { document.querySelector('#project-detail-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
     return { ok: true };
   }
-  const tasksPage = LCA.views.tasks.init(getTaskState, openTask);
+  const tasksPage = LCA.views.tasks.init(getTaskState, openTask, (id, opener) => openTask(id, opener, 'tasks', true));
   dashboardPage = LCA.views.dashboard.init((researcher) => {
     const state = getWorkflowState(); return state.ok ? LCA.dashboard.build({ ...state, researchers: researcherStore.list() }, undefined, researcher) : state;
   }, () => openTasks(), (id, opener) => {
@@ -567,7 +578,7 @@
     if (tasksView.hidden && glossaryView.hidden && researcherView.hidden && homeView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
     listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; homeView.hidden = true; settingsView.hidden = true; tasksView.hidden = false;
     setPage('할 일', '할 일 | LCA 프로젝트 관리', 'tasks'); tasksPage.refresh();
-    if (back) { tasksPage.focus(back.id); window.scrollTo(0, back.scrollY); }
+    if (back) { tasksPage.focus(back.id, back.action); window.scrollTo(0, back.scrollY); }
     else { document.querySelector('#tasks-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
   document.querySelector('#tasks-navigation').addEventListener('click', (event) => { event.preventDefault(); openTasks(); });

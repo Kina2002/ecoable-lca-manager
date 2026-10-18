@@ -213,6 +213,10 @@ h1 { font-size: 25px; }
 .task-card:last-child { border-bottom: 0; }
 .task-card .task-kind { justify-self: start; font-size: 11px; padding: 4px 7px; }
 .task-card .task-open { min-width: 0; margin: 0; font-size: 13px; line-height: 1.5; }
+.task-title-actions { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.task-message-button { min-height: 26px; padding: 3px 7px; border: 1px solid #b8cec1; border-radius: 5px; background: #eef6ef; color: #174c3d; font: inherit; font-size: 11px; line-height: 1.4; cursor: pointer; }
+.task-message-button:focus-visible { outline: 3px solid #247158; outline-offset: 3px; }
+#request-message { scroll-margin-top: 54px; }
 .task-project { min-width: 0; margin: 0; font-size: 12px; line-height: 1.5; }
 .task-project > span, .task-project > small, .task-deadline > small { display: block; }
 .task-project > small { font-weight: 400; color: #52675e; font-size: 11px; }
@@ -259,7 +263,9 @@ h1 { font-size: 25px; }
 @media (max-width: 760px) {
   .task-card { grid-template-columns: 1fr auto; padding: 12px; gap: 8px 12px; }
   .task-card .task-kind { grid-column: 1; grid-row: 1; }
-  .task-card .task-open { grid-column: 1; grid-row: 2; min-height: 32px; }
+  .task-title-actions { grid-column: 1; grid-row: 2; }
+  .task-card .task-open { min-height: 32px; }
+  .task-message-button { min-height: 44px; }
   .task-project { grid-column: 1; grid-row: 3; }
   .task-person { grid-column: 1; grid-row: 4; }
   .task-card > .task-deadline { grid-column: 2; grid-row: 1 / 4; align-self: start; text-align: right; }
