@@ -1,5 +1,7 @@
 # 웹앱 기능별 SPEC
 
+최신: [WEB-043 할 일 한 행·홈 연구원 필터·용어사전 페이지](WEB-043-task-rows-home-filter-glossary-pages.md) — D-day·프로젝트 메뉴 전체 목록·업무 용어 15개 보충·6개씩 페이지.
+
 최신: [WEB-042 화면 밀도와 주요 정보 배치 개선](WEB-042-compact-workspace-ui.md) — 공통 버튼/여백 축소·상세 요약·짧은 자료 행·긴 입력/설명 접기. 별도 노트북 미리보기의 초기 배치 확인 범위를 명세에 기록했다.
 
 **UI 작업 기준: [UI 사용성 개선 인수인계](UI-IMPROVEMENT-HANDOFF.md)** — WEB-042로 1차 반영했으며 후속 화면 조정의 기준으로 유지한다.

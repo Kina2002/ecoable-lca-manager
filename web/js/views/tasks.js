@@ -41,14 +41,24 @@ LCA.views.tasks = (() => {
       summary.textContent = `${state.today} 기준 · ${state.warnings.length ? '확인 가능한 기록의 ' : ''}전체 ${state.items.length}건 중 ${visible.length}건 표시 · 기한 초과·보완·마감 임박 순`;
       for (const item of visible) {
         const card = text('li', 'task-card', ''); card.dataset.taskId = item.id;
-        const top = text('div', 'task-card-top', ''); top.append(text('span', `task-kind task-kind-${item.kind}`, LCA.tasks.KINDS[item.kind]));
-        if (item.date) top.append(text('span', 'detail-help', `${item.date} · ${item.days === null ? '기한 확인 필요' : item.days < 0 ? `D+${-item.days}` : item.days === 0 ? '오늘 마감' : `D-${item.days}`}`));
+        const badge = text('span', `task-kind task-kind-${item.kind}`, LCA.tasks.KINDS[item.kind]);
         const button = text('button', 'task-open', item.title); button.type = 'button'; button.dataset.openTask = item.id;
         button.setAttribute('aria-label', `${item.companyName} ${item.code} · ${item.title} 보기`);
-        card.append(top, button, text('p', 'task-project', `${item.companyName} (가상) · ${item.code} · ${item.productName}`),
-          text('p', 'detail-help', `담당: ${item.researcherName || '미정'} · ${LCA.constants.stageByNo(item.stage)?.name || '단계 확인 필요'}${item.status ? ` · ${item.status}` : ''}`),
-          text('p', 'task-description', item.description));
-        if (item.readOnly) card.append(text('p', 'calculation-notice', '현재 단계에서는 이 기록을 읽기만 할 수 있어요. 처리 이력을 확인해 주세요.'));
+        const project = text('div', 'task-project', '');
+        project.append(text('span', '', `${item.companyName} (가상)`), text('small', '', `${item.code} · ${item.productName}`));
+        const due = LCA.tasks.deadline(item); const deadline = text('div', `task-deadline task-deadline-${due.tone}`, '');
+        deadline.title = `${due.label}${due.detail ? ` · ${due.detail}` : ''}`;
+        deadline.setAttribute('aria-label', `${due.label} · ${due.text}${due.detail ? ` · ${due.detail}` : ''}`);
+        deadline.append(text('strong', '', due.text), text('small', '', due.detail || due.label));
+        if (item.kind === 'review') deadline.append(text('small', '', '제출 완료'));
+        const details = text('details', 'task-details', ''); details.dataset.taskDetails = item.id;
+        const toggle = text('summary', '', '내용'); toggle.setAttribute('aria-label', `${item.title} 내용`);
+        details.append(toggle, text('p', 'task-description', item.description),
+          text('p', 'detail-help', `${LCA.constants.stageByNo(item.stage)?.name || '단계 확인 필요'}${item.status ? ` · ${item.status}` : ''} · ${due.label}`));
+        if (item.readOnly) details.append(text('p', 'calculation-notice', '현재 단계에서는 이 기록을 읽기만 할 수 있어요. 처리 이력을 확인해 주세요.'));
+        details.open = expanded.has(item.id);
+        details.addEventListener('toggle', () => { if (details.open) expanded.add(item.id); else expanded.delete(item.id); });
+        card.append(badge, button, project, text('span', 'task-person', item.researcherName || '담당 미정'), deadline, details);
         list.append(card);
       }
       if (!visible.length) list.append(text('li', 'empty-state', state.items.length ? '선택한 조건의 할 일이 없어요. 유형·연구원·검색 조건을 바꿔 보세요.'
@@ -58,6 +68,7 @@ LCA.views.tasks = (() => {
         target.tabIndex = target === summary ? -1 : 0; target.focus({ preventScroll: true });
       }
     }
+    const expanded = new Set();
     function refresh() {
       try { state = getState(); } catch { state = { ok: false, error: '할 일에 필요한 기록을 읽지 못했어요. 기존 데이터는 변경하지 않았어요.' }; }
       const key = JSON.stringify(state); if (key === stateKey) return state; stateKey = key;

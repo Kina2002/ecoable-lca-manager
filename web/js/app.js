@@ -229,8 +229,8 @@
     return { ok: true };
   }
   const tasksPage = LCA.views.tasks.init(getTaskState, openTask);
-  dashboardPage = LCA.views.dashboard.init(() => {
-    const state = getWorkflowState(); return state.ok ? LCA.dashboard.build(state) : state;
+  dashboardPage = LCA.views.dashboard.init((researcher) => {
+    const state = getWorkflowState(); return state.ok ? LCA.dashboard.build({ ...state, researchers: researcherStore.list() }, undefined, researcher) : state;
   }, () => openTasks(), (id, opener) => {
     const back = { id, scrollY: window.scrollY }; const savedListScroll = listScrollY;
     if (projectView === detailView && openedProjectId === id) {
@@ -313,6 +313,7 @@
   document.querySelector('#all-stages').addEventListener('click', () => showStage(null));
 
   function showDetail(projectId, opener) {
+    const reuseDetail = openedProjectId === projectId;
     document.querySelector('#project-basic-status').textContent = '';
     taskReturn = null;
     homeReturn = null;
@@ -326,12 +327,18 @@
     if (!project) return;
     listScrollY = window.scrollY;
     detailOpener = opener;
-    LCA.views.projectDetail.render(project);
-    bindScope(project);
-    bindCollectionDeadline(project);
-    bindCollectionTransition(project);
-    bindCalculation(project);
-    LCA.views.requests.init(project, requestStore, refreshRequestViews, () => getRequestMessageState(project.id));
+    if (!reuseDetail) {
+      LCA.views.projectDetail.render(project);
+      bindScope(project);
+      bindCollectionDeadline(project);
+      bindCollectionTransition(project);
+      bindCalculation(project);
+      LCA.views.requests.init(project, requestStore, refreshRequestViews, () => getRequestMessageState(project.id));
+    } else {
+      // 메뉴에서 전체 목록으로 갔다 돌아와도 같은 프로젝트의 작성 중 폼을 다시 만들지 않는다.
+      LCA.views.projectDetail.refreshScope(project); LCA.views.projectDetail.refreshStage(project);
+      LCA.views.scope.refreshResearchers();
+    }
     listView.hidden = true;
     glossaryView.hidden = true;
     researcherView.hidden = true;
@@ -503,26 +510,21 @@
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {
     event.preventDefault();
-    if (glossaryView.hidden && researcherView.hidden && tasksView.hidden && homeView.hidden && settingsView.hidden) {
-      taskReturn = null;
-      homeReturn = null;
-      showList();
-      return;
-    }
+    taskReturn = null; homeReturn = null;
+    document.querySelector('#back-to-projects').textContent = '← 목록으로';
     glossaryView.hidden = true;
     researcherView.hidden = true;
     tasksView.hidden = true;
     homeView.hidden = true;
     settingsView.hidden = true;
-    projectView.hidden = false;
-    setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
-    if (projectView === listView) {
-      LCA.views.stageFilter.render(projects);
-      showStage(selectedStage);
-    }
-    else LCA.views.scope.refreshResearchers();
-    projectView.querySelector('h1').focus({ preventScroll: true });
-    window.scrollTo(0, projectScrollY);
+    detailView.hidden = true; listView.hidden = false; projectView = listView;
+    projectPageTitle = '프로젝트 목록 | LCA 프로젝트 관리';
+    setPage('프로젝트', projectPageTitle, 'project');
+    scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
+    selectedStage = null; projectFilters.reset();
+    LCA.views.stageFilter.render(projects); showStage(null);
+    listView.querySelector('h1').focus({ preventScroll: true });
+    listScrollY = 0; projectScrollY = 0; window.scrollTo(0, 0);
   });
   document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
     event.preventDefault();

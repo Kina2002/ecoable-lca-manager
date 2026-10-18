@@ -3,6 +3,9 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 
 LCA.views.glossary = (() => {
+  const PAGE_SIZE = 6;
+  let page = 1;
+  const pagers = [];
   function textElement(tag, className, value) {
     const element = document.createElement(tag);
     element.className = className;
@@ -10,10 +13,13 @@ LCA.views.glossary = (() => {
     return element;
   }
 
-  function render(query) {
+  function render(query, nextPage = 1, moveFocus = false) {
     const entries = LCA.glossary.search(query);
+    const pages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
+    page = Math.max(1, Math.min(pages, nextPage));
+    const start = (page - 1) * PAGE_SIZE;
     const fragment = document.createDocumentFragment();
-    entries.forEach((entry) => {
+    entries.slice(start, start + PAGE_SIZE).forEach((entry) => {
       const item = textElement('li', 'glossary-card', '');
       item.dataset.termId = entry.id;
       item.append(textElement('span', 'glossary-category', entry.category), textElement('h3', '', entry.term));
@@ -39,16 +45,44 @@ LCA.views.glossary = (() => {
     });
     document.querySelector('#glossary-results').replaceChildren(fragment);
     document.querySelector('#glossary-result-count').textContent = entries.length;
-    document.querySelector('#glossary-search-status').textContent = query.trim()
+    const status = query.trim()
       ? `검색 결과 ${entries.length}개 · 전체 ${LCA.glossary.TERMS.length}개`
       : `전체 ${LCA.glossary.TERMS.length}개 용어`;
+    document.querySelector('#glossary-search-status').textContent = `${status}${entries.length ? ` · ${start + 1}–${Math.min(start + PAGE_SIZE, entries.length)}번째 표시` : ''}`;
     document.querySelector('#glossary-empty').hidden = entries.length !== 0;
     document.querySelector('#glossary-results').hidden = entries.length === 0;
     document.querySelector('#clear-glossary-search').disabled = query.length === 0;
+    for (const pager of pagers) {
+      pager.nav.hidden = !entries.length;
+      pager.previous.disabled = page === 1; pager.next.disabled = page === pages;
+      if (pager.select.options.length !== pages) {
+        pager.select.replaceChildren(...Array.from({ length: pages }, (_, index) => {
+          const option = textElement('option', '', `${index + 1}페이지`); option.value = index + 1; return option;
+        }));
+      }
+      pager.select.value = String(page); pager.count.textContent = `/ ${pages}페이지 · 한 페이지에 ${PAGE_SIZE}개`;
+    }
+    if (moveFocus) {
+      const heading = document.querySelector('.glossary-results-heading'); heading.tabIndex = -1;
+      heading.focus({ preventScroll: true }); heading.scrollIntoView({ block: 'start' });
+    }
   }
 
   function init() {
     const searchInput = document.querySelector('#glossary-search');
+    for (const position of ['top', 'bottom']) {
+      const nav = textElement('nav', 'glossary-pagination', ''); nav.setAttribute('aria-label', `용어사전 페이지 ${position === 'top' ? '상단' : '하단'}`);
+      const previous = textElement('button', 'request-action-button', '← 이전'); previous.type = 'button';
+      const next = textElement('button', 'request-action-button', '다음 →'); next.type = 'button';
+      const select = document.createElement('select'); select.setAttribute('aria-label', '용어사전 페이지 선택'); select.setAttribute('aria-controls', 'glossary-results');
+      const count = textElement('span', 'detail-help', '');
+      previous.addEventListener('click', () => render(searchInput.value, page - 1, true));
+      next.addEventListener('click', () => render(searchInput.value, page + 1, true));
+      select.addEventListener('change', () => render(searchInput.value, Number(select.value), true));
+      nav.append(previous, select, count, next); pagers.push({ nav, previous, next, select, count });
+      const results = document.querySelector('#glossary-results');
+      if (position === 'top') results.before(nav); else results.after(nav);
+    }
     searchInput.addEventListener('input', () => render(searchInput.value));
     document.querySelector('#clear-glossary-search').addEventListener('click', () => {
       searchInput.value = '';

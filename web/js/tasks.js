@@ -55,5 +55,14 @@ LCA.tasks = (() => {
     });
     return { ok: true, items, warnings: [...new Set(warnings)], today };
   }
-  return { KINDS, build };
+  function deadline(item) {
+    const known = item.date && typeof item.days === 'number' && Number.isFinite(item.days);
+    return {
+      text: !known ? '기한 미정' : item.days < 0 ? `D+${-item.days}` : item.days === 0 ? 'D-DAY' : `D-${item.days}`,
+      detail: known ? `${item.date}${item.days === 0 ? ' · 오늘' : ''}` : '',
+      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
+      tone: item.kind === 'review' ? 'review' : !known ? 'unknown' : item.days < 0 ? 'elapsed' : item.days <= 3 ? 'soon' : 'upcoming'
+    };
+  }
+  return { KINDS, build, deadline };
 })();
