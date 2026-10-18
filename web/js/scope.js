@@ -59,7 +59,7 @@ LCA.scope = (() => {
       && (record.scopeStatus !== '확정' || !missing({ ...record, productName: '제품' }).length)
       && (record.stage < 3 || record.scopeStatus === '확정');
   }
-  function createStore(projects, getStorage = () => window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null, getVerificationStage = null) {
+  function createStore(projects, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null, getVerificationStage = null) {
     const originals = new Map(projects.map((project) => [project.id, JSON.parse(JSON.stringify(snapshot(project)))]));
     function normalize(value, original) {
       const record = snapshot(value);

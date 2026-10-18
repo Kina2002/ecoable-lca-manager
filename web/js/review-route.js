@@ -40,7 +40,7 @@ LCA.reviewRoute = (() => {
     const state = current(record);
     return state.method === method && !!state.review && state.review.method === method && JSON.stringify(state.review.report) === JSON.stringify(report);
   }
-  function createStore(projects, getProject, getReports, getComments, getVerification, getStorage = () => window.localStorage) {
+  function createStore(projects, getProject, getReports, getComments, getVerification, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage) {
     const failure = () => ({ ok: false, error: '검토 방식·내부 검토 기록을 읽지 못했어요. 기존 근거와 단계를 보호하기 위해 저장을 중단했어요.' });
     function read() {
       try {

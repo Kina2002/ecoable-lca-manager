@@ -59,7 +59,7 @@ LCA.report = (() => {
     lines.push('증빙과 결과 파일은 이름만 기록되어 있으며 파일 내용은 이 초안에 첨부되지 않습니다.', '');
     return '\uFEFF' + lines.join('\n');
   }
-  function createStore(projects, getInterpretation, getStorage = () => window.localStorage, getComments) {
+  function createStore(projects, getInterpretation, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getComments) {
     return LCA.reportHistory.createStore(projects, getInterpretation, getStorage, { validate, validSource, projectSnapshot, markdown, getComments });
   }
   return { STORAGE_KEY, validate, validSource, sections, createStore };

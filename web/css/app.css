@@ -659,3 +659,17 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 @media (max-width: 1000px) { .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .dashboard-panels { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .dashboard-metrics { grid-template-columns: 1fr; } }
+
+/* WEB-037: 전체 기록 백업과 복원 */
+.backup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.backup-card { min-width: 0; overflow-wrap: anywhere; }
+.backup-card > label { display: block; margin: 20px 0 8px; font-size: 14px; font-weight: 600; }
+.backup-card select, .backup-card input[type="file"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #cbd8ce; border-radius: 8px; background: white; color: #233b31; font: inherit; box-sizing: border-box; }
+.backup-card button { white-space: normal; }
+.backup-preview { margin-top: 20px; border-top: 1px solid #dce6dc; padding-top: 12px; font-size: 14px; line-height: 1.8; }
+#backup-preview-body ul { max-height: 240px; overflow-y: auto; padding-left: 20px; }
+.backup-confirm { display: flex; align-items: flex-start; gap: 10px; margin: 20px 0; font-size: 13px; line-height: 1.9; }
+.backup-confirm input { width: 18px; height: 18px; margin-top: 4px; flex-shrink: 0; }
+.storage-reload-notice { position: fixed; z-index: 1000; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: min(480px, calc(100vw - 48px)); box-sizing: border-box; padding: 28px; border: 1px solid #cbd8ce; border-radius: 14px; background: white; color: #233b31; box-shadow: 0 0 0 100vmax rgb(16 38 28 / 55%); line-height: 1.9; }
+.storage-reload-notice h2 { font-size: 21px; }
+@media (max-width: 900px) { .backup-grid { grid-template-columns: 1fr; } }

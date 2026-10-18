@@ -9,7 +9,7 @@ LCA.customerReview = (() => {
       || !validText(item.content, 3000) || !validText(item.reviewer, 100, false) || !Array.isArray(item.events) || !item.events.length) return false;
     return LCA.reviewWorkflow.validEvents(item.events, item.reportRevision);
   }
-  function createStore(projects, getReports, getProject, getStorage = () => window.localStorage) {
+  function createStore(projects, getReports, getProject, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage) {
     const failure = () => ({ ok: false, error: '고객 검토 기록을 읽지 못했어요. 기존 의견을 보호하기 위해 저장을 중단했어요.' });
     function read() {
       try {

@@ -37,7 +37,7 @@ LCA.requests = (() => {
     return errors;
   }
 
-  function createStore(projectIds, getStorage = () => window.localStorage, getStage = null) {
+  function createStore(projectIds, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getStage = null) {
     const knownProjects = new Set(projectIds);
     const failure = (message) => ({ ok: false, message });
 

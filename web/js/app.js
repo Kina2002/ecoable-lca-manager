@@ -1,5 +1,34 @@
 /* 시작 버튼 역할: 기준 날짜를 정하고, 명단을 받아서 화면에 전달한다. */
-(() => {
+(async () => {
+  function showStorageReload(message) {
+    const notice = document.querySelector('#storage-reload-notice');
+    document.querySelector('#storage-reload-message').textContent = message;
+    notice.hidden = false; document.querySelector('.app-shell').inert = true;
+    document.querySelector('#storage-reload-title').focus();
+  }
+  document.querySelector('#storage-reload').addEventListener('click', () => window.location.reload());
+  document.querySelector('#storage-reload-notice').addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') { event.preventDefault(); document.querySelector('#storage-reload').focus(); }
+  });
+  let sampleDate; let recovery;
+  try {
+    recovery = await LCA.storage.bootstrap();
+    sampleDate = LCA.storage.get().getItem(LCA.storage.SAMPLE_KEY) || LCA.rules.today();
+    if (!LCA.requests.validDate(sampleDate)) throw Error();
+  } catch {
+    showStorageReload('저장 기록을 안전하게 열지 못했어요. 중단된 복원 기록이나 브라우저 저장 설정을 확인한 뒤 새로고침해 주세요. 기존 백업 파일은 보관해 주세요.'); return;
+  }
+  window.addEventListener('storage', (event) => {
+    if ((event.key === LCA.storage.EPOCH_KEY || event.key === null) && LCA.storage.changed()) {
+      showStorageReload('다른 창에서 백업을 복원해 기록이 바뀌었어요. 오래된 화면에서 저장하지 않도록 멈췄어요. 새로고침하면 복원한 기록을 볼 수 있어요.');
+    }
+  });
+  window.addEventListener('pageshow', () => { if (LCA.storage.changed()) showStorageReload('백업 복원으로 기록이 바뀌었어요. 새로고침해서 최신 기록을 열어 주세요.'); });
+  if (recovery.recovered) {
+    const notice = document.querySelector('#backup-recovery-status'); notice.hidden = false;
+    notice.textContent = '지난번 복원이 중단되어 복원 전 기록으로 되돌렸어요. 설정에서 현재 기록을 백업하고 다시 진행해 주세요.';
+  }
+  LCA.views.backup.init(sampleDate, showStorageReload);
   const referenceDate = LCA.rules.today();
   function updateReferenceDate(value) {
     const [year, month, day] = value.split('-').map(Number);
@@ -12,7 +41,7 @@
   }
   updateReferenceDate(referenceDate);
 
-  const samples = LCA.data.createSampleProjects(referenceDate);
+  const samples = LCA.data.createSampleProjects(sampleDate);
   const projectStore = LCA.projects.createStore(samples, referenceDate, undefined, (id) => scopeStore.currentStage(id));
   const projectLoadResult = projectStore.list();
   const projectNotice = document.querySelector('#project-storage-status');
@@ -79,6 +108,7 @@
   const researcherView = document.querySelector('#researcher-view');
   const tasksView = document.querySelector('#tasks-view');
   const homeView = document.querySelector('#home-view');
+  const settingsView = document.querySelector('#settings-view');
   let dashboardPage = null;
   let taskReturn = null;
   let homeReturn = null;
@@ -91,7 +121,7 @@
   function setPage(label, title, section) {
     document.querySelector('#current-view-label').textContent = label;
     document.title = title;
-    for (const name of ['home', 'project', 'glossary', 'researcher', 'tasks']) {
+    for (const name of ['home', 'project', 'glossary', 'researcher', 'tasks', 'settings']) {
       const link = document.querySelector(`#${name}-navigation`);
       if (name === section) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
@@ -250,6 +280,7 @@
     researcherView.hidden = true;
     tasksView.hidden = true;
     homeView.hidden = true;
+    settingsView.hidden = true;
     detailView.hidden = false;
     projectView = detailView;
     projectPageTitle = `${project.companyName} 상세 | LCA 프로젝트 관리`;
@@ -412,7 +443,7 @@
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {
     event.preventDefault();
-    if (glossaryView.hidden && researcherView.hidden && tasksView.hidden && homeView.hidden) {
+    if (glossaryView.hidden && researcherView.hidden && tasksView.hidden && homeView.hidden && settingsView.hidden) {
       taskReturn = null;
       homeReturn = null;
       showList();
@@ -422,6 +453,7 @@
     researcherView.hidden = true;
     tasksView.hidden = true;
     homeView.hidden = true;
+    settingsView.hidden = true;
     projectView.hidden = false;
     setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
     if (projectView === listView) {
@@ -435,12 +467,13 @@
   document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
     event.preventDefault();
     if (glossaryView.hidden) {
-      if (researcherView.hidden && tasksView.hidden && homeView.hidden) projectScrollY = window.scrollY;
+      if (researcherView.hidden && tasksView.hidden && homeView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
       listView.hidden = true;
       detailView.hidden = true;
       researcherView.hidden = true;
       tasksView.hidden = true;
       homeView.hidden = true;
+      settingsView.hidden = true;
       glossaryView.hidden = false;
       setPage('용어사전', '용어사전 | LCA 프로젝트 관리', 'glossary');
     }
@@ -448,12 +481,13 @@
     window.scrollTo(0, 0);
   });
   function openResearchers(id = null) {
-    if (researcherView.hidden && glossaryView.hidden && tasksView.hidden && homeView.hidden) projectScrollY = window.scrollY;
+    if (researcherView.hidden && glossaryView.hidden && tasksView.hidden && homeView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
     listView.hidden = true;
     detailView.hidden = true;
     glossaryView.hidden = true;
     tasksView.hidden = true;
     homeView.hidden = true;
+    settingsView.hidden = true;
     researcherView.hidden = false;
     setPage('담당 연구원', '담당 연구원 | LCA 프로젝트 관리', 'researcher');
     if (id) researcherPage.focusResearcher(id);
@@ -468,22 +502,28 @@
     openResearchers();
   });
   function openTasks(back = null) {
-    if (tasksView.hidden && glossaryView.hidden && researcherView.hidden && homeView.hidden) projectScrollY = window.scrollY;
-    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; homeView.hidden = true; tasksView.hidden = false;
+    if (tasksView.hidden && glossaryView.hidden && researcherView.hidden && homeView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; homeView.hidden = true; settingsView.hidden = true; tasksView.hidden = false;
     setPage('할 일', '할 일 | LCA 프로젝트 관리', 'tasks'); tasksPage.refresh();
     if (back) { tasksPage.focus(back.id); window.scrollTo(0, back.scrollY); }
     else { document.querySelector('#tasks-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
   document.querySelector('#tasks-navigation').addEventListener('click', (event) => { event.preventDefault(); openTasks(); });
   function openHome(back = null) {
-    if (homeView.hidden && tasksView.hidden && glossaryView.hidden && researcherView.hidden) projectScrollY = window.scrollY;
-    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; tasksView.hidden = true; homeView.hidden = false;
+    if (homeView.hidden && tasksView.hidden && glossaryView.hidden && researcherView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; tasksView.hidden = true; settingsView.hidden = true; homeView.hidden = false;
     setPage('홈', '홈 | LCA 프로젝트 관리', 'home'); dashboardPage.refresh();
     if (back) { dashboardPage.focus(back.id, back.kind); window.scrollTo(0, back.scrollY); }
     else { document.querySelector('#home-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
   document.querySelector('#home-navigation').addEventListener('click', (event) => { event.preventDefault(); openHome(); });
   document.querySelector('#brand-home').addEventListener('click', (event) => { event.preventDefault(); openHome(); });
+  document.querySelector('#settings-navigation').addEventListener('click', (event) => {
+    event.preventDefault();
+    if (homeView.hidden && tasksView.hidden && glossaryView.hidden && researcherView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; tasksView.hidden = true; homeView.hidden = true; settingsView.hidden = false;
+    setPage('설정', '설정 | LCA 프로젝트 관리', 'settings'); document.querySelector('#settings-title').focus({ preventScroll: true }); window.scrollTo(0, 0);
+  });
   window.addEventListener('storage', () => {
     if (!tasksView.hidden) tasksPage.refresh();
     else if (!homeView.hidden) dashboardPage.refresh();

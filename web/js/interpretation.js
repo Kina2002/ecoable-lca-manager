@@ -31,7 +31,7 @@ LCA.interpretation = (() => {
     const state = LCA.modelling.sourceState(record.source.project, { ok: true, items: record.source.requests });
     return state.ok && state.ready && state.signature === record.source.signature;
   }
-  function createStore(projects, getCalculation, getStorage = () => window.localStorage) {
+  function createStore(projects, getCalculation, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage) {
     function read() {
       try {
         const raw = getStorage().getItem(STORAGE_KEY);

@@ -6,7 +6,7 @@ LCA.researchers = (() => {
     { id: 'researcher-sample-2', code: 'RSR-002', name: '박서연' },
     { id: 'researcher-sample-3', code: 'RSR-003', name: '이도윤' }
   ];
-  function createStore(getStorage = () => window.localStorage) {
+  function createStore(getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage) {
     const failure = () => ({ ok: false, error: '연구원 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 등록과 선택을 중단했어요.' });
     function read() {
       try {

@@ -82,7 +82,7 @@ LCA.modelling = (() => {
       calculatedOn: draft.calculatedOn, scopeConfirmed: true,
       indicators: draft.indicators.map((item) => ({ indicator: item.indicator.trim(), value: item.value.trim(), unit: item.unit.trim() })) };
   }
-  function createStore(projects, getStorage = () => window.localStorage, getRequests = null, getProject = null) {
+  function createStore(projects, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getRequests = null, getProject = null) {
     const failure = () => ({ ok: false, error: '외부 계산 결과를 읽지 못했어요. 기존 기록을 보호하기 위해 저장을 중단했어요.' });
     function read() {
       try {

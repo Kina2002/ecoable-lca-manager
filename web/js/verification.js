@@ -29,7 +29,7 @@ LCA.verification = (() => {
     }
     return record.revision === record.rounds.length + record.issues.reduce((total, item) => total + item.events.length, 0);
   }
-  function createStore(projects, getProject, getReports, getComments, getStorage = () => window.localStorage, getReviewRoute = null) {
+  function createStore(projects, getProject, getReports, getComments, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getReviewRoute = null) {
     const failure = () => ({ ok: false, error: '제3자 검증 기록을 읽지 못했어요. 기존 차수와 단계를 보호하기 위해 저장과 단계 이동을 중단했어요.' });
     function read() {
       try {

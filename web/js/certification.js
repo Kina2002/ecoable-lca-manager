@@ -49,7 +49,7 @@ LCA.certification = (() => {
     }
     return !!completion;
   }
-  function createStore(projects, getProject, getReports, getVerification, getStorage = () => window.localStorage, getReviewRoute = null) {
+  function createStore(projects, getProject, getReports, getVerification, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getReviewRoute = null) {
     const failure = () => ({ ok: false, error: '인증·등록 기록을 읽지 못했어요. 보관 근거와 단계를 보호하기 위해 저장을 중단했어요.' });
     function read() {
       try {
