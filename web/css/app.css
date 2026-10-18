@@ -633,3 +633,29 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .task-list > .empty-state { grid-column: 1 / -1; }
 @media (max-width: 760px) { .task-list { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .sidebar nav { flex-wrap: wrap; } }
+
+/* WEB-035: 진행 프로젝트 전체를 보여주는 홈 대시보드 */
+.dashboard-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.dashboard-metric { min-width: 0; padding: 20px; border: 1px solid #dce6dc; border-radius: 12px; background: white; }
+.dashboard-metric h3 { margin: 0; font-size: 13px; color: #526b58; }
+.dashboard-number { margin: 14px 0 10px; font-size: 29px; font-weight: 700; color: #174c3d; line-height: 1.3; overflow-wrap: anywhere; }
+.dashboard-metric-help { margin: 8px 0 0; color: #69786b; font-size: 11px; line-height: 1.8; }
+.dashboard-metric progress { display: block; width: 100%; height: 7px; margin: 10px 0; border: 0; border-radius: 6px; accent-color: #247158; }
+.dashboard-metric progress::-webkit-progress-bar { background: #e5eee4; border-radius: 6px; }
+.dashboard-metric progress::-webkit-progress-value { background: #247158; border-radius: 6px; }
+.dashboard-basis { margin: 14px 0 20px; font-size: 11px; color: #69786b; line-height: 1.9; }
+.dashboard-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 24px; }
+.dashboard-panel { min-width: 0; padding: 22px; border: 1px solid #dce6dc; border-radius: 12px; background: white; }
+.dashboard-panel h2 { font-size: 16px; line-height: 1.6; }
+.dashboard-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.dashboard-list { margin: 0; padding: 0; list-style: none; }
+.dashboard-list > li { padding: 14px 0; border-top: 1px solid #e6ece4; overflow-wrap: anywhere; }
+.dashboard-list > li:last-child { padding-bottom: 0; }
+.dashboard-project { padding: 0; border: 0; background: transparent; color: #174c3d; font: inherit; font-size: 14px; font-weight: 650; text-align: left; line-height: 1.8; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.dashboard-project:focus-visible { outline: 3px solid #247158; outline-offset: 4px; }
+.dashboard-reasons { margin: 6px 0 0; color: #805111; font-size: 12px; line-height: 1.8; }
+.dashboard-task-title { margin: 8px 0 4px; font-size: 14px; font-weight: 600; color: #233b31; line-height: 1.7; }
+.dashboard-list .detail-help { margin: 5px 0; }
+@media (max-width: 1000px) { .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .dashboard-panels { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .dashboard-metrics { grid-template-columns: 1fr; } }

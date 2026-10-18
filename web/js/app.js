@@ -78,7 +78,10 @@
   const glossaryView = document.querySelector('#glossary-view');
   const researcherView = document.querySelector('#researcher-view');
   const tasksView = document.querySelector('#tasks-view');
+  const homeView = document.querySelector('#home-view');
+  let dashboardPage = null;
   let taskReturn = null;
+  let homeReturn = null;
   let listScrollY = 0;
   let detailOpener = null;
   let projectView = listView;
@@ -88,7 +91,7 @@
   function setPage(label, title, section) {
     document.querySelector('#current-view-label').textContent = label;
     document.title = title;
-    for (const name of ['project', 'glossary', 'researcher', 'tasks']) {
+    for (const name of ['home', 'project', 'glossary', 'researcher', 'tasks']) {
       const link = document.querySelector(`#${name}-navigation`);
       if (name === section) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
@@ -144,7 +147,7 @@
     showDetail(id, opener);
     listScrollY = 0;
   });
-  function getTaskState() {
+  function getWorkflowState() {
     const loadedProjects = refreshCollectionDates();
     if (!loadedProjects.ok) return { ok: false, error: loadedProjects.error };
     if (loadedProjects.items.length !== projects.length || loadedProjects.items.some((p) => !projects.some((known) => known.id === p.id))) {
@@ -152,8 +155,13 @@
     }
     scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
     if (!scopeLoadResult.ok) return { ok: false, error: scopeLoadResult.error };
-    return LCA.tasks.build({ projects, requests: requestStore.listAll(), comments: customerReviewStore.snapshot(),
+    const requests = requestStore.listAll();
+    const tasks = LCA.tasks.build({ projects, requests, comments: customerReviewStore.snapshot(),
       verifications: Object.fromEntries(projects.filter((p) => p.stage < 10).map((p) => [p.id, verificationStore.snapshot(p.id)])) });
+    return { ok: true, projects, requests, tasks };
+  }
+  function getTaskState() {
+    const state = getWorkflowState(); return state.ok ? state.tasks : state;
   }
   const tasksPage = LCA.views.tasks.init(getTaskState, (id, opener) => {
     const current = getTaskState(); const task = current.ok && current.items.find((item) => item.id === id);
@@ -164,7 +172,7 @@
       LCA.views.projectDetail.refreshScope(projects.find((item) => item.id === task.projectId));
       LCA.views.projectDetail.refreshStage(projects.find((item) => item.id === task.projectId));
     } else { showDetail(task.projectId, opener); listScrollY = savedListScroll; }
-    taskReturn = back; document.querySelector('#back-to-projects').textContent = '← 할 일로';
+    homeReturn = null; taskReturn = back; document.querySelector('#back-to-projects').textContent = '← 할 일로';
     selectDetailTab(task.tab, true);
     if (task.requestId) LCA.views.requests.focus(task.requestId);
     else if (task.commentId) LCA.views.customerReview.focus(task.commentId);
@@ -172,6 +180,19 @@
     else { document.querySelector('#project-detail-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
     return { ok: true };
   });
+  dashboardPage = LCA.views.dashboard.init(() => {
+    const state = getWorkflowState(); return state.ok ? LCA.dashboard.build(state) : state;
+  }, () => openTasks(), (id, opener) => {
+    const back = { id, scrollY: window.scrollY }; const savedListScroll = listScrollY;
+    if (projectView === detailView && openedProjectId === id) {
+      homeView.hidden = true; detailView.hidden = false; setPage('프로젝트 상세', projectPageTitle, 'project');
+      const project = projects.find((item) => item.id === id); LCA.views.projectDetail.refreshScope(project); LCA.views.projectDetail.refreshStage(project);
+    } else { showDetail(id, opener); listScrollY = savedListScroll; }
+    taskReturn = null; homeReturn = back; document.querySelector('#back-to-projects').textContent = '← 홈으로';
+    selectDetailTab('overview', true); window.scrollTo(0, 0);
+  });
+  dashboardPage.refresh();
+  setPage('홈', '홈 | 에코에이블 LCA 관리', 'home');
   document.querySelector('#new-project').disabled = !projectLoadResult.ok;
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
@@ -202,6 +223,7 @@
 
   function showDetail(projectId, opener) {
     taskReturn = null;
+    homeReturn = null;
     document.querySelector('#back-to-projects').textContent = '← 목록으로';
     refreshCollectionDates();
     scopeLoadResult = scopeStore.load();
@@ -222,6 +244,7 @@
     glossaryView.hidden = true;
     researcherView.hidden = true;
     tasksView.hidden = true;
+    homeView.hidden = true;
     detailView.hidden = false;
     projectView = detailView;
     projectPageTitle = `${project.companyName} 상세 | 에코에이블 LCA 관리`;
@@ -320,6 +343,7 @@
 
   function showList() {
     if (detailView.hidden) return;
+    if (homeReturn) { const back = homeReturn; homeReturn = null; document.querySelector('#back-to-projects').textContent = '← 목록으로'; openHome(back); return; }
     if (taskReturn) { const back = taskReturn; taskReturn = null; document.querySelector('#back-to-projects').textContent = '← 목록으로'; openTasks(back); return; }
     detailView.hidden = true;
     listView.hidden = false;
@@ -383,14 +407,16 @@
   document.querySelector('#back-to-projects').addEventListener('click', showList);
   document.querySelector('#project-navigation').addEventListener('click', (event) => {
     event.preventDefault();
-    if (glossaryView.hidden && researcherView.hidden && tasksView.hidden) {
+    if (glossaryView.hidden && researcherView.hidden && tasksView.hidden && homeView.hidden) {
       taskReturn = null;
+      homeReturn = null;
       showList();
       return;
     }
     glossaryView.hidden = true;
     researcherView.hidden = true;
     tasksView.hidden = true;
+    homeView.hidden = true;
     projectView.hidden = false;
     setPage(projectView === detailView ? '프로젝트 상세' : '프로젝트', projectPageTitle, 'project');
     if (projectView === listView) {
@@ -404,11 +430,12 @@
   document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
     event.preventDefault();
     if (glossaryView.hidden) {
-      if (researcherView.hidden && tasksView.hidden) projectScrollY = window.scrollY;
+      if (researcherView.hidden && tasksView.hidden && homeView.hidden) projectScrollY = window.scrollY;
       listView.hidden = true;
       detailView.hidden = true;
       researcherView.hidden = true;
       tasksView.hidden = true;
+      homeView.hidden = true;
       glossaryView.hidden = false;
       setPage('용어사전', '용어사전 | 에코에이블 LCA 관리', 'glossary');
     }
@@ -416,11 +443,12 @@
     window.scrollTo(0, 0);
   });
   function openResearchers(id = null) {
-    if (researcherView.hidden && glossaryView.hidden && tasksView.hidden) projectScrollY = window.scrollY;
+    if (researcherView.hidden && glossaryView.hidden && tasksView.hidden && homeView.hidden) projectScrollY = window.scrollY;
     listView.hidden = true;
     detailView.hidden = true;
     glossaryView.hidden = true;
     tasksView.hidden = true;
+    homeView.hidden = true;
     researcherView.hidden = false;
     setPage('담당 연구원', '담당 연구원 | 에코에이블 LCA 관리', 'researcher');
     if (id) researcherPage.focusResearcher(id);
@@ -435,19 +463,31 @@
     openResearchers();
   });
   function openTasks(back = null) {
-    if (tasksView.hidden && glossaryView.hidden && researcherView.hidden) projectScrollY = window.scrollY;
-    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; tasksView.hidden = false;
+    if (tasksView.hidden && glossaryView.hidden && researcherView.hidden && homeView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; homeView.hidden = true; tasksView.hidden = false;
     setPage('할 일', '할 일 | 에코에이블 LCA 관리', 'tasks'); tasksPage.refresh();
     if (back) { tasksPage.focus(back.id); window.scrollTo(0, back.scrollY); }
     else { document.querySelector('#tasks-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
   document.querySelector('#tasks-navigation').addEventListener('click', (event) => { event.preventDefault(); openTasks(); });
-  window.addEventListener('storage', () => { if (!tasksView.hidden) tasksPage.refresh(); });
+  function openHome(back = null) {
+    if (homeView.hidden && tasksView.hidden && glossaryView.hidden && researcherView.hidden) projectScrollY = window.scrollY;
+    listView.hidden = true; detailView.hidden = true; glossaryView.hidden = true; researcherView.hidden = true; tasksView.hidden = true; homeView.hidden = false;
+    setPage('홈', '홈 | 에코에이블 LCA 관리', 'home'); dashboardPage.refresh();
+    if (back) { dashboardPage.focus(back.id); window.scrollTo(0, back.scrollY); }
+    else { document.querySelector('#home-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
+  }
+  document.querySelector('#home-navigation').addEventListener('click', (event) => { event.preventDefault(); openHome(); });
+  window.addEventListener('storage', () => {
+    if (!tasksView.hidden) tasksPage.refresh();
+    else if (!homeView.hidden) dashboardPage.refresh();
+  });
   // 날짜만 갱신한다. 입력 중인 폼이나 선택한 필터를 다시 만들지 않는다.
   function refreshDates() {
     updateReferenceDate(LCA.rules.today());
     LCA.views.deadlines.refresh();
     if (!tasksView.hidden) tasksPage.refresh();
+    else if (!homeView.hidden) dashboardPage.refresh();
   }
   window.setInterval(refreshDates, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDates(); });
