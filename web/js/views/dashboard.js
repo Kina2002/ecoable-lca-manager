@@ -2,7 +2,7 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.dashboard = (() => {
   function text(tag, className, value) { const node = document.createElement(tag); node.className = className; node.textContent = value; return node; }
-  function init(getState, onTasks, onProject) {
+  function init(getState, onTasks, onProject, onTask) {
     const host = document.querySelector('#home-dashboard'); let stateKey = '';
     const error = text('p', 'form-error', ''); error.setAttribute('role', 'alert'); error.hidden = true;
     const metrics = text('div', 'dashboard-metrics', '');
@@ -15,7 +15,8 @@ LCA.views.dashboard = (() => {
     const tasks = text('section', 'dashboard-panel', ''); tasks.setAttribute('aria-labelledby', 'dashboard-tasks-title');
     const taskHeading = text('div', 'dashboard-heading', ''); const taskTitle = text('h2', '', '우선 확인할 일'); taskTitle.id = 'dashboard-tasks-title';
     const more = text('button', 'request-action-button', '할 일 전체 보기'); more.type = 'button'; more.addEventListener('click', onTasks); taskHeading.append(taskTitle, more);
-    const taskCount = text('p', 'detail-help', ''); const taskList = text('ul', 'dashboard-list', ''); tasks.append(taskHeading, taskCount, taskList);
+    const taskCount = text('p', 'detail-help', ''); const taskList = text('ul', 'dashboard-list', '');
+    const taskFeedback = text('p', 'field-error', ''); taskFeedback.setAttribute('role', 'alert'); tasks.append(taskHeading, taskCount, taskFeedback, taskList);
     panels.append(attention, tasks); host.append(error, metrics, basis, panels);
     function metric(label, value, help, progress = null) {
       const card = text('section', 'dashboard-metric', ''); card.append(text('h3', '', label), text('p', 'dashboard-number', value));
@@ -26,6 +27,7 @@ LCA.views.dashboard = (() => {
       let state; try { state = getState(); } catch { state = { ok: false, error: '대시보드 기록을 읽지 못했어요. 저장된 데이터는 변경하지 않았어요.' }; }
       const key = JSON.stringify(state); if (key === stateKey) return; stateKey = key;
       const focused = host.contains(document.activeElement) ? document.activeElement.dataset.dashboardProject : null;
+      const focusedTask = host.contains(document.activeElement) ? document.activeElement.dataset.dashboardTask : null;
       metrics.replaceChildren(); attentionList.replaceChildren(); taskList.replaceChildren();
       panels.hidden = !state.ok; basis.hidden = !state.ok;
       error.hidden = state.ok && !state.warnings.length;
@@ -48,17 +50,23 @@ LCA.views.dashboard = (() => {
       if (!state.attention.length) attentionList.append(text('li', 'detail-help', state.warnings.length ? '확인 가능한 기록에는 주의 항목이 없어요. 읽지 못한 기록은 위 안내를 확인해 주세요.' : '현재 기준으로 주의·확인할 프로젝트가 없어요.'));
       taskCount.textContent = `${state.warnings.length ? '확인 가능한 ' : ''}할 일 ${state.taskCount}건 중 우선 ${state.tasks.length}건 · 할 일 탭과 같은 순서`;
       for (const item of state.tasks) {
-        const row = document.createElement('li'); row.append(text('span', `task-kind task-kind-${item.kind}`, LCA.tasks.KINDS[item.kind]), text('p', 'dashboard-task-title', item.title),
+        const row = document.createElement('li'); const button = text('button', 'dashboard-project dashboard-task-title', item.title);
+        button.type = 'button'; button.dataset.dashboardTask = item.id; button.setAttribute('aria-label', `${item.companyName} ${item.code} · ${item.title} 보기`);
+        button.addEventListener('click', () => {
+          taskFeedback.textContent = ''; const result = onTask(item.id, button);
+          if (!result.ok) { refresh(); taskFeedback.textContent = result.error; taskFeedback.tabIndex = -1; taskFeedback.focus(); }
+        });
+        row.append(text('span', `task-kind task-kind-${item.kind}`, LCA.tasks.KINDS[item.kind]), button,
           text('p', 'detail-help', `${item.companyName} (가상) · ${item.code}${item.date ? ` · 기한 ${item.date}` : ''}`)); taskList.append(row);
       }
       if (!state.tasks.length) taskList.append(text('li', 'detail-help', state.warnings.length ? '확인 가능한 기록에는 할 일이 없어요. 읽지 못한 기록은 위 안내를 확인해 주세요.' : '현재 규칙에 해당하는 할 일이 없어요.'));
-      if (focused) {
-        const target = [...host.querySelectorAll('[data-dashboard-project]')].find((node) => node.dataset.dashboardProject === focused) || more;
+      if (focused || focusedTask) {
+        const target = [...host.querySelectorAll('[data-dashboard-project], [data-dashboard-task]')].find((node) => focusedTask ? node.dataset.dashboardTask === focusedTask : node.dataset.dashboardProject === focused) || more;
         target.focus({ preventScroll: true });
       }
     }
-    return { refresh, focus(id) {
-      const target = [...host.querySelectorAll('[data-dashboard-project]')].find((node) => node.dataset.dashboardProject === id) || document.querySelector('#home-title');
+    return { refresh, focus(id, kind = 'project') {
+      const target = [...host.querySelectorAll('[data-dashboard-project], [data-dashboard-task]')].find((node) => kind === 'task' ? node.dataset.dashboardTask === id : node.dataset.dashboardProject === id) || document.querySelector('#home-title');
       target.focus({ preventScroll: true });
     } };
   }

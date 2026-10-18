@@ -23,11 +23,11 @@ svg { display: block; }
 a:focus-visible, button:focus-visible { outline: 3px solid #9cce9e; outline-offset: 5px; }
 .app-shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: 100vh; }
 .sidebar { display: flex; flex-direction: column; padding: 37px 22px 23px; border-right: 1px solid #e1e8df; background: #eef3ed; }
-.brand { display: flex; align-items: center; gap: 11px; margin-bottom: 55px; }
+.brand { display: flex; align-items: center; gap: 11px; margin-bottom: 55px; color: var(--ink); text-decoration: none; }
 .brand-mark { display: grid; flex: 0 0 39px; height: 43px; color: var(--green); }
 .brand-mark svg { width: 39px; height: 39px; }
 .brand-name { display: block; font-size: 19px; font-weight: 750; letter-spacing: -.7px; }
-.brand-subtitle { display: block; margin-top: 4px; font-size: 10px; color: var(--muted); letter-spacing: .3px; }
+.brand-subtitle { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .3px; }
 .nav-label { margin: 0 0 13px 12px; color: #6b7b6d; font-size: 10px; font-weight: 700; letter-spacing: .9px; }
 .sidebar nav { display: grid; gap: 8px; }
 .nav-item { display: flex; align-items: center; gap: 12px; min-height: 47px; padding: 12px 15px; border: 1px solid transparent; border-radius: 8px; color: #647860; background: transparent; font-size: 13px; font-weight: 700; text-decoration: none; }
@@ -315,7 +315,7 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
   .brand-name { font-size: 16px; }
   .brand-mark { flex-basis: 29px; height: 32px; }
   .brand-mark svg { width: 29px; height: 29px; }
-  .brand-subtitle { font-size: 9px; }
+  .brand-subtitle { font-size: 11px; }
   .sidebar nav { display: flex; margin-left: auto; }
   .nav-item { min-height: 38px; padding: 9px 12px; font-size: 11px; }
   .nav-label, .sidebar-note, .sidebar-footer { display: none; }
@@ -654,7 +654,7 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .dashboard-project { padding: 0; border: 0; background: transparent; color: #174c3d; font: inherit; font-size: 14px; font-weight: 650; text-align: left; line-height: 1.8; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
 .dashboard-project:focus-visible { outline: 3px solid #247158; outline-offset: 4px; }
 .dashboard-reasons { margin: 6px 0 0; color: #805111; font-size: 12px; line-height: 1.8; }
-.dashboard-task-title { margin: 8px 0 4px; font-size: 14px; font-weight: 600; color: #233b31; line-height: 1.7; }
+.dashboard-task-title { display: block; margin: 8px 0 4px; font-size: 14px; font-weight: 600; color: #174c3d; line-height: 1.7; }
 .dashboard-list .detail-help { margin: 5px 0; }
 @media (max-width: 1000px) { .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .dashboard-panels { grid-template-columns: 1fr; } }
