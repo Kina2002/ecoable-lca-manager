@@ -21,7 +21,9 @@
   const projects = projectLoadResult.ok ? projectLoadResult.items : samples;
   const researcherStore = LCA.researchers.createStore();
   let requestStore = LCA.requests.createStore(projects.map((project) => project.id));
-  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id));
+  let verificationStore = null;
+  const verificationStage = (id) => verificationStore ? verificationStore.currentStage(id) : { ok: true, stage: null };
+  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
   let scopeLoadResult = scopeStore.load();
   const modellingStore = LCA.modelling.createStore(projects, undefined, (id) => requestStore.list(id), (id) => {
     const loaded = scopeStore.load();
@@ -37,6 +39,13 @@
     const project = projects.find((item) => item.id === id);
     return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
   });
+  verificationStore = LCA.verification.createStore(projects, (id) => {
+    const loaded = scopeStore.load();
+    if (!loaded.ok) return loaded;
+    const project = projects.find((item) => item.id === id);
+    return project ? { ok: true, project } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+  }, (id) => reportStore.load(id), (id) => customerReviewStore.list(id));
+  scopeLoadResult = scopeStore.load();
   function showScopeStorageStatus() {
     const notice = document.querySelector('#scope-storage-status');
     notice.hidden = scopeLoadResult.ok;
@@ -118,7 +127,7 @@
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
     projects.splice(0, projects.length, ...result.items);
-    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id));
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     requestStore = LCA.requests.createStore(projects.map((project) => project.id));
@@ -198,6 +207,7 @@
     LCA.views.modelling.init(project, modellingStore, () => {
       LCA.views.interpretation.refresh();
       LCA.views.report.refresh();
+      LCA.views.verification.refresh();
     });
     function refreshLaterStage() {
       LCA.views.projectDetail.refreshStage(project);
@@ -208,14 +218,18 @@
       LCA.views.interpretation.refresh();
       LCA.views.report.refresh();
       LCA.views.customerReview.refresh();
+      LCA.views.verification.refresh();
     }
-    LCA.views.interpretation.init(project, interpretationStore, scopeStore, refreshLaterStage, () => LCA.views.report.refresh());
+    LCA.views.interpretation.init(project, interpretationStore, scopeStore, refreshLaterStage, () => { LCA.views.report.refresh(); LCA.views.verification.refresh(); });
     LCA.views.report.init(project, reportStore, scopeStore, refreshLaterStage, customerReviewStore, (id) => {
       selectDetailTab('comments', true); LCA.views.customerReview.focus(id);
-    }, () => LCA.views.customerReview.refresh());
-    LCA.views.customerReview.init(project, customerReviewStore, () => LCA.views.report.refresh(), (revision) => {
+    }, () => { LCA.views.customerReview.refresh(); LCA.views.verification.refresh(); });
+    LCA.views.customerReview.init(project, customerReviewStore, () => { LCA.views.report.refresh(); LCA.views.verification.refresh(); }, (revision) => {
       selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
     });
+    LCA.views.verification.init(project, verificationStore, refreshLaterStage, (revision) => {
+      selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
+    }, () => selectDetailTab('comments', true));
   }
   function refreshRequestViews(result) {
     LCA.views.collectionTransition.refresh(result);
@@ -223,6 +237,7 @@
     LCA.views.interpretation.refresh();
     LCA.views.report.refresh();
     LCA.views.customerReview.refresh();
+    LCA.views.verification.refresh();
   }
 
   function bindCollectionTransition(project) {
@@ -275,6 +290,7 @@
     LCA.views.interpretation.refresh();
     LCA.views.report.refresh();
     LCA.views.customerReview.refresh();
+    LCA.views.verification.refresh();
     for (const tab of detailView.querySelectorAll('[data-detail-tab]')) {
       const selected = tab.dataset.detailTab === key;
       tab.setAttribute('aria-selected', String(selected));

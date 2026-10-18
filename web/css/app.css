@@ -560,3 +560,12 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .report-comment-relations { padding: 16px; margin-block: 20px; background: #f1f7f2; border-radius: 10px; }
 .report-comment-relations button, .report-change-summary button { margin: 4px 8px 4px 0; white-space: normal; text-align: left; }
 @media (max-width: 640px) { .customer-review-card { padding: 16px; } }
+
+/* WEB-027: 제3자 검증 차수와 보완 지적 */
+#project-verification-panel input[type="text"], #project-verification-panel select { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #cbd8ce; border-radius: 8px; background: white; color: #233b31; font: inherit; }
+#project-verification-panel .request-action-button { margin: 6px 8px 6px 0; white-space: normal; }
+.verification-round-info { padding: 18px; background: #f1f7f2; border-radius: 10px; overflow-wrap: anywhere; }
+.verification-round-info h3 { font-size: 17px; margin-top: 0; line-height: 1.7; }
+.verification-processing { border-top: 1px solid #dce6dc; margin-top: 20px; padding-top: 10px; }
+.verification-issue .detail-note { font-weight: 600; }
+#project-verification-panel fieldset { min-width: 0; }

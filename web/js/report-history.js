@@ -118,7 +118,7 @@ LCA.reportHistory = (() => {
       const state = load(id);
       if (!state.ok) return state;
       if (state.currentError) return { ok: false, error: state.currentError };
-      if (state.project.stage !== 7) return { ok: false, error: '보고서 단계(7)에서 새 버전을 저장할 수 있어요.' };
+      if (![7, 8].includes(state.project.stage)) return { ok: false, error: '보고서(7)·제3자 검증(8) 단계에서 새 버전을 저장할 수 있어요.' };
       if (!state.ready) return { ok: false, error: '최신 승인 자료·계산 결과에 맞는 해석을 먼저 저장해 주세요.' };
       if ((state.record?.revision || 0) !== expectedRevision) return { ok: false, error: '다른 화면에서 새 보고서 버전을 저장했어요. 작성 내용은 유지했으니 프로젝트를 다시 열어 최신 버전을 확인해 주세요.' };
       if (state.sourceKey !== expectedSourceKey) return { ok: false, error: '보고서의 근거가 바뀌었어요. 자료와 해석을 읽고 초안 기준을 다시 확인해 주세요.' };
@@ -145,7 +145,7 @@ LCA.reportHistory = (() => {
     async function save(id, draft, expectedRevision, expectedSourceKey) {
       try {
         const locks = typeof navigator !== 'undefined' ? navigator.locks : null;
-        if (locks?.request) return await locks.request('ecoable-lca-manager.report.history-write', () => saveNow(id, draft, expectedRevision, expectedSourceKey));
+        if (locks?.request) return await locks.request('ecoable-lca-manager.review-workflow-write', () => saveNow(id, draft, expectedRevision, expectedSourceKey));
         return saveNow(id, draft, expectedRevision, expectedSourceKey);
       } catch { return { ok: false, error: '보고서 버전 저장을 시작하지 못했어요. 작성 내용과 기존 버전은 유지했으니 다시 시도해 주세요.' }; }
     }

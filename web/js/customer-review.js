@@ -2,44 +2,12 @@
 window.LCA = window.LCA || {};
 LCA.customerReview = (() => {
   const STORAGE_KEY = 'ecoable-lca-manager.comments.v1';
-  const STATUSES = ['열림', '답변됨', '종결'];
-  const RESOLUTIONS = { pending: '처리 방법 미정', report: '보고서 수정', explanation: '설명으로 해결' };
-  const clone = (value) => JSON.parse(JSON.stringify(value));
-  const validText = (value, limit, required = true) => typeof value === 'string' && (!required || !!value.trim()) && value.length <= limit;
-  const validDate = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value));
-  function current(item) {
-    const result = { ...clone(item), status: '열림', reply: '', responder: '', resolution: 'pending', appliedReportRevision: null, closedAt: '' };
-    for (const event of item.events) {
-      if (event.type === 'replied') Object.assign(result, { status: '답변됨', reply: event.reply, responder: event.actor, resolution: event.resolution, appliedReportRevision: event.appliedReportRevision });
-      if (event.type === 'closed') Object.assign(result, { status: '종결', closedAt: event.at });
-      if (event.type === 'reopened') Object.assign(result, { status: '열림', closedAt: '', resolution: 'pending', appliedReportRevision: null });
-    }
-    return { ...result, revision: item.events.length, createdAt: item.events[0].at, updatedAt: item.events.at(-1).at };
-  }
+  const { STATUSES, RESOLUTIONS, clone, text: validText, current } = LCA.reviewWorkflow;
   function validItem(item, projects) {
     if (!item || !/^CMT-[0-9]{4,}$/.test(item.id) || !projects.some((p) => p.id === item.projectId)
       || !Number.isSafeInteger(item.reportRevision) || item.reportRevision < 1 || !validText(item.reportTitle, 200)
       || !validText(item.content, 3000) || !validText(item.reviewer, 100, false) || !Array.isArray(item.events) || !item.events.length) return false;
-    let status = '열림'; let resolution = 'pending'; let lastDate = '';
-    for (const [index, event] of item.events.entries()) {
-      if (!event || !validText(event.actor, 100) || !validDate(event.at) || (lastDate && Date.parse(event.at) < Date.parse(lastDate))) return false;
-      lastDate = event.at;
-      if (index === 0) { if (event.type !== 'created') return false; continue; }
-      if (event.type === 'replied') {
-        if (status === '종결' || !validText(event.reply, 3000) || !Object.hasOwn(RESOLUTIONS, event.resolution)) return false;
-        if (event.resolution === 'report') {
-          if (!Number.isSafeInteger(event.appliedReportRevision) || event.appliedReportRevision <= item.reportRevision) return false;
-        } else if (event.appliedReportRevision !== null) return false;
-        status = '답변됨'; resolution = event.resolution;
-      } else if (event.type === 'closed') {
-        if (status !== '답변됨' || resolution === 'pending') return false;
-        status = '종결';
-      } else if (event.type === 'reopened') {
-        if (status !== '종결' || !validText(event.reason, 1000)) return false;
-        status = '열림'; resolution = 'pending';
-      } else return false;
-    }
-    return true;
+    return LCA.reviewWorkflow.validEvents(item.events, item.reportRevision);
   }
   function createStore(projects, getReports, getProject, getStorage = () => window.localStorage) {
     const failure = () => ({ ok: false, error: '고객 검토 기록을 읽지 못했어요. 기존 의견을 보호하기 위해 저장을 중단했어요.' });
@@ -121,7 +89,7 @@ LCA.customerReview = (() => {
     }
     async function locked(...args) {
       try {
-        if (typeof navigator !== 'undefined' && navigator.locks?.request) return await navigator.locks.request(`${STORAGE_KEY}.write`, () => mutate(...args));
+        if (typeof navigator !== 'undefined' && navigator.locks?.request) return await navigator.locks.request('ecoable-lca-manager.review-workflow-write', () => mutate(...args));
         return mutate(...args);
       } catch { return { ok: false, error: '고객 검토 기록 저장을 시작하지 못했어요. 입력 내용은 유지했으니 다시 시도해 주세요.' }; }
     }

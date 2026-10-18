@@ -59,7 +59,7 @@ LCA.scope = (() => {
       && (record.scopeStatus !== '확정' || !missing({ ...record, productName: '제품' }).length)
       && (record.stage < 3 || record.scopeStatus === '확정');
   }
-  function createStore(projects, getStorage = () => window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null) {
+  function createStore(projects, getStorage = () => window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null, getVerificationStage = null) {
     const originals = new Map(projects.map((project) => [project.id, JSON.parse(JSON.stringify(snapshot(project)))]));
     function normalize(value, original) {
       const record = snapshot(value);
@@ -85,14 +85,24 @@ LCA.scope = (() => {
     }
     function load() {
       const data = read();
-      if (data.ok) for (const project of projects) Object.assign(project, data.records[project.id] || JSON.parse(JSON.stringify(originals.get(project.id))));
+      if (!data.ok) return data;
+      const effective = [];
+      for (const project of projects) {
+        const current = data.records[project.id] || JSON.parse(JSON.stringify(originals.get(project.id)));
+        const verification = getVerificationStage ? getVerificationStage(project.id) : { ok: true, stage: null };
+        if (!verification.ok) return verification;
+        effective.push({ project, current: { ...current, stage: Math.max(current.stage, verification.stage || 0) } });
+      }
+      for (const { project, current } of effective) Object.assign(project, current);
       return data;
     }
     function currentStage(id) {
       const data = read();
       if (!data.ok) return data;
       const current = data.records[id] || originals.get(id);
-      return current ? { ok: true, stage: current.stage } : { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+      if (!current) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+      const verification = getVerificationStage ? getVerificationStage(id) : { ok: true, stage: null };
+      return verification.ok ? { ok: true, stage: Math.max(current.stage, verification.stage || 0) } : verification;
     }
     function collectionStatus(id) {
       try { return collectionReadiness(id, getRequests?.(id)); }
