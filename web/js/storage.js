@@ -46,7 +46,7 @@ LCA.storage = (() => {
     });
   }
   function assertCurrent() {
-    if (!ready || raw().getItem(JOURNAL_KEY) !== null || raw().getItem(EPOCH_KEY) !== epoch) throw Error('백업 복원으로 기록이 바뀌었어요. 작성 내용을 따로 보관한 뒤 새로고침해 주세요.');
+    if (!ready || raw().getItem(JOURNAL_KEY) !== null || raw().getItem(EPOCH_KEY) !== epoch) throw Error('프로젝트 삭제 또는 백업 복원으로 기록이 바뀌었어요. 작성 내용을 따로 보관한 뒤 새로고침해 주세요.');
   }
   const guarded = {
     getItem(key) { assertCurrent(); return raw().getItem(key); },
@@ -61,7 +61,7 @@ LCA.storage = (() => {
   async function replace(values, expected) {
     return locked(() => {
       assertCurrent();
-      if (!validValues(values) || JSON.stringify(readAll()) !== expected) return { ok: false, error: '현재 기록이 바뀌었어요. 현재 기록을 다시 백업한 뒤 복원해 주세요.' };
+      if (!validValues(values) || JSON.stringify(readAll()) !== expected) return { ok: false, error: '현재 기록이 바뀌었어요. 최신 기록을 확인한 뒤 다시 진행해 주세요.' };
       const before = readAll(); let journalSaved = false;
       try {
         raw().setItem(JOURNAL_KEY, JSON.stringify({ version: 1, before })); journalSaved = true;
@@ -69,15 +69,15 @@ LCA.storage = (() => {
         writeAll(values);
         raw().removeItem(JOURNAL_KEY);
         ready = false;
-        return { ok: true };
+        return { ok: true, epoch: raw().getItem(EPOCH_KEY) };
       } catch {
-        if (!journalSaved) return { ok: false, error: '복원을 위한 임시 공간을 확보하지 못했어요. 현재 기록은 바꾸지 않았어요. 브라우저 저장 공간을 확인해 주세요.' };
+        if (!journalSaved) return { ok: false, error: '기록 변경을 위한 임시 공간을 확보하지 못했어요. 현재 기록은 바꾸지 않았어요. 브라우저 저장 공간을 확인해 주세요.' };
         try {
           writeAll(before); raw().removeItem(JOURNAL_KEY); epoch = raw().getItem(EPOCH_KEY);
-          return { ok: false, error: '복원하지 못해 기존 기록으로 되돌렸어요. 브라우저 저장 공간을 확인해 주세요.' };
+          return { ok: false, error: '변경하지 못해 기존 기록으로 되돌렸어요. 브라우저 저장 공간을 확인해 주세요.' };
         } catch {
           ready = false;
-          return { ok: false, fatal: true, error: '복원을 끝내지 못했어요. 복구 기록을 보관했으니 다른 창을 닫고 새로고침해 주세요. 문제가 계속되면 내려받은 기존 백업 파일을 보관해 주세요.' };
+          return { ok: false, fatal: true, error: '기록 변경을 끝내지 못했어요. 복구 기록을 보관했으니 다른 창을 닫고 새로고침해 주세요. 문제가 계속되면 내려받은 기존 백업 파일을 보관해 주세요.' };
         }
       }
     });
@@ -85,5 +85,9 @@ LCA.storage = (() => {
   function changed() {
     try { return !ready || raw().getItem(EPOCH_KEY) !== epoch; } catch { return true; }
   }
-  return { DATA_KEYS, SAMPLE_KEY, JOURNAL_KEY, EPOCH_KEY, bootstrap, get: () => guarded, capture, replace, changed };
+  function resumeReplacement(expectedEpoch) {
+    if (ready || !expectedEpoch || raw().getItem(EPOCH_KEY) !== expectedEpoch || raw().getItem(JOURNAL_KEY) !== null) throw Error('변경된 기록을 다시 연결하지 못했어요. 새로고침해 주세요.');
+    epoch = expectedEpoch; ready = true;
+  }
+  return { DATA_KEYS, SAMPLE_KEY, JOURNAL_KEY, EPOCH_KEY, bootstrap, get: () => guarded, capture, replace, changed, resumeReplacement };
 })();

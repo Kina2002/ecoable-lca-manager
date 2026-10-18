@@ -673,3 +673,9 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .storage-reload-notice { position: fixed; z-index: 1000; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: min(480px, calc(100vw - 48px)); box-sizing: border-box; padding: 28px; border: 1px solid #cbd8ce; border-radius: 14px; background: white; color: #233b31; box-shadow: 0 0 0 100vmax rgb(16 38 28 / 55%); line-height: 1.9; }
 .storage-reload-notice h2 { font-size: 21px; }
 @media (max-width: 900px) { .backup-grid { grid-template-columns: 1fr; } }
+
+/* WEB-038: 직접 생성한 프로젝트의 삭제 확인 */
+.project-delete-button { color: #963c2d; border-color: #dab7ad; background: #fff6f2; }
+.project-delete-button:hover:not(:disabled) { color: #7c281d; background: #ffe9e1; }
+.project-delete-details { font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
+.project-delete-details p:first-child { font-size: 17px; font-weight: 650; color: #174c3d; }

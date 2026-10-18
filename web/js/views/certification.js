@@ -45,10 +45,22 @@ LCA.views.certification = (() => {
     processForm.append(processFields, processSave, processError);
     processCard.append(processForm, text('p', 'detail-help', '제출 준비 → 제출 완료 → 보완 요청 → 재제출 또는 승인·등록/반려로 기록해요. 승인·등록과 반려 후에는 상태를 유지하며 오기 정정만 사유와 함께 남길 수 있어요. 앱 기록이 기관의 공식 결정을 대신하지 않아요.'));
     const rebase = text('button', 'request-action-button', '최신 기준 다시 확인'); rebase.type = 'button';
+    const finishCard = text('section', 'detail-card calculation-card', ''); finishCard.append(text('h2', '', '프로젝트 완료 처리'));
+    const finishInfo = text('div', 'verification-round-info', ''); const finishBlock = text('p', 'detail-help', '');
+    const finishForm = document.createElement('form'); finishForm.noValidate = true;
+    const finishFields = document.createElement('fieldset'); finishFields.className = 'calculation-fields'; finishFields.append(text('legend', '', '최종 기록 확인'));
+    const finishedOn = dateField(finishFields, 'project-finished-on', '프로젝트 완료일 (필수)'); finishedOn.value = LCA.rules.today();
+    const finishActor = field(finishFields, 'project-finish-actor', '완료 기록 담당자 (필수)'); finishActor.value = project.researcherName || ''; LCA.views.inputAssist.person(finishActor, project);
+    const finishReason = field(finishFields, 'project-finish-reason', '완료 확인 근거 (필수 · 불러온 내용 수정 가능)', 'textarea', 1000);
+    const finishCheck = checkbox(finishFields, '최종 보고서와 인증·등록 또는 고객의 최종 확인 기록을 확인했어요. 프로젝트를 완료·사후관리 단계로 옮길게요.');
+    const finishSave = text('button', 'primary-button', '프로젝트 완료 · 10단계로'); finishSave.type = 'submit';
+    const finishError = text('p', 'field-error', ''); finishError.setAttribute('role', 'alert');
+    finishForm.append(finishFields, finishSave, finishError); finishCard.append(finishInfo, finishBlock, finishForm,
+      text('p', 'detail-help', '완료하면 진행 중 집계와 할 일에서 빠지고 기록은 계속 조회할 수 있어요. 완료 취소와 인증 만료·갱신 관리는 아직 지원하지 않아요.'));
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);
-    host.replaceChildren(intro, completionCard, processCard, rebase, feedback, history);
-    let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1;
+    host.replaceChildren(intro, completionCard, processCard, finishCard, rebase, feedback, history);
+    let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let finishReasonAuto = '';
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
     function adopt(loaded) {
       revision = loaded.record.revision;
@@ -57,7 +69,7 @@ LCA.views.certification = (() => {
     }
     function refresh() {
       state = store.load(project.id);
-      if (!state.ok) { notice.textContent = state.error; completionFields.disabled = true; completionSave.disabled = true; processFields.disabled = true; processSave.disabled = true; LCA.views.inputAssist.sync(host); return; }
+      if (!state.ok) { notice.textContent = state.error; completionFields.disabled = true; completionSave.disabled = true; processFields.disabled = true; processSave.disabled = true; finishFields.disabled = true; finishSave.disabled = true; LCA.views.inputAssist.sync(host); return; }
       if (!dirty) adopt(state);
       if (!dirty && state.record.revision !== formRevision) {
         if (state.process) {
@@ -93,11 +105,32 @@ LCA.views.certification = (() => {
       processFields.disabled = busy || !(state.process ? state.canWrite : state.canStart); processSave.disabled = processFields.disabled;
       processSave.textContent = busy ? '저장 중…' : state.process ? '진행 정보·이력 저장' : '인증·등록 준비 시작 · 9단계로'; startLabel.hidden = !!state.process;
       rebase.disabled = busy;
+      finishCard.hidden = state.project.stage < 9;
+      finishForm.hidden = !!state.finished || state.project.stage !== 9;
+      finishFields.disabled = finishSave.disabled = busy || !state.canFinish;
+      finishBlock.textContent = state.project.stage === 10 && !state.finished ? '기본 가상 샘플은 완료 단계로 제공되며 별도로 입력한 완료 기록은 없어요.' : state.finishBlock;
+      finishInfo.replaceChildren();
+      if (state.process && state.completion) {
+        const d = state.finished?.details || state.process.details;
+        finishInfo.append(text('p', 'detail-help', `${d.kind} · ${d.organization} · ${d.scheme}`), text('p', 'detail-help', `최종 보고서 v${state.finished?.reportRevision || state.completion.report.revision} · 확인 번호 ${d.registrationNumber || '미정'} · 발급·확인일 ${d.issuedOn || '미정'}`));
+        const open = text('button', 'request-action-button', '최종 보고서 보기'); open.type = 'button'; open.addEventListener('click', () => onOpenReport(state.finished?.reportRevision || state.completion.report.revision)); finishInfo.append(open);
+      }
+      if (state.finished) {
+        finishBlock.textContent = `프로젝트 완료일 ${state.finished.finishedOn} · 기록자 ${state.finished.actor}`;
+        finishInfo.append(text('p', 'interpretation-text', state.finished.reason));
+      }
+      if (!dirty && state.canFinish && (!finishReason.value || finishReason.value === finishReasonAuto)) {
+        const d = state.process.details;
+        finishReasonAuto = `최종 보고서 v${state.completion.report.revision}와 ${d.organization}의 ${d.kind} 확인 기록(${d.registrationNumber}, ${d.issuedOn})을 확인하고 프로젝트를 완료해요.`;
+        finishReason.value = finishReasonAuto;
+      }
       historyList.replaceChildren();
       for (const event of state.record.events.slice().reverse()) {
-        const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.status} · ${event.actor}`));
+        const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
         if (event.type === 'completed') {
           item.append(text('p', 'detail-help', `완료일 ${event.completedOn} · 보고서 v${event.report.revision} · ${event.reviewMethod === 'internal' ? '내부 검토 완료' : `외부 검증 ${event.verification.rounds.length}차까지 보관`} · 결과 기록 ${event.documentName}`));
+        } else if (event.type === 'finished') {
+          item.append(text('p', 'detail-help', `프로젝트 완료일 ${event.finishedOn} · 최종 보고서 v${event.reportRevision} · ${event.details.kind} · ${event.details.organization} · 확인 번호 ${event.details.registrationNumber} · 발급·확인일 ${event.details.issuedOn}`));
         } else {
           const d = event.details;
           item.append(text('p', 'detail-help', `${d.kind} · ${d.organization} · ${d.scheme}`), text('p', 'detail-help', `상태 ${event.status} · 제출일 ${d.submittedOn || '미정'} · 번호 ${d.registrationNumber || '미정'} · 발급·확인일 ${d.issuedOn || '미정'}`));
@@ -108,7 +141,7 @@ LCA.views.certification = (() => {
       if (!state.record.events.length) historyList.append(text('p', 'detail-help', '아직 보관한 완료·제출 이력이 없어요.'));
       LCA.views.inputAssist.sync(host);
     }
-    for (const form of [completionForm, processForm]) {
+    for (const form of [completionForm, processForm, finishForm]) {
       form.addEventListener('input', () => { dirty = true; }); form.addEventListener('change', () => { dirty = true; });
     }
     async function run(action, draft, error) {
@@ -118,9 +151,10 @@ LCA.views.certification = (() => {
       catch { result = { ok: false, error: '저장하지 못했어요. 입력과 보관 기록은 유지했어요.' }; }
       busy = false; error.textContent = result.error || '';
       if (result.ok) {
-        dirty = false; completionCheck.checked = false; startCheck.checked = false;
+        dirty = false; completionCheck.checked = false; startCheck.checked = false; finishCheck.checked = false;
         feedback.textContent = action === 'completed' ? '선택한 검토 경로의 완료 근거와 최종 보고서 사본을 보관했어요. 아직 8단계예요.' : action === 'started' ? '9단계로 이동하고 제출 준비 기록을 보관했어요.' : '진행 정보와 변경 사유를 이력에 추가했어요.';
         onChanged();
+        if (action === 'finished') feedback.textContent = '프로젝트를 완료·사후관리(10) 단계로 옮겼어요. 기록은 보관하고 진행 중 집계와 할 일에서는 제외해요.';
       }
       refresh(); const target = result.ok ? feedback : error; target.tabIndex = -1; target.focus();
     }
@@ -130,9 +164,10 @@ LCA.views.certification = (() => {
     });
     rebase.addEventListener('click', () => {
       const latest = store.load(project.id); if (!latest.ok) { refresh(); return; }
-      adopt(latest); dirty = true; completionCheck.checked = false; startCheck.checked = false; completionError.textContent = ''; processError.textContent = '';
+      adopt(latest); dirty = true; completionCheck.checked = false; startCheck.checked = false; finishCheck.checked = false; completionError.textContent = ''; processError.textContent = ''; finishError.textContent = '';
       feedback.textContent = '입력은 유지하고 최신 보고서·검증·제출 기록으로 기준을 맞췄어요. 저장 전에 내용과 확인 체크를 다시 검토해 주세요.'; refresh();
     });
+    finishForm.addEventListener('submit', (event) => { event.preventDefault(); run('finished', { finishedOn: finishedOn.value, actor: finishActor.value, reason: finishReason.value, confirmed: finishCheck.checked }, finishError); });
     refreshCurrent = refresh; refresh();
   }
   function dateField(parent, id, label) {

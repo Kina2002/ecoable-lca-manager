@@ -17,9 +17,9 @@ LCA.certification = (() => {
   }
   function validRecord(record, id) {
     if (!record || !Array.isArray(record.events) || !record.events.length || record.revision !== record.events.length) return false;
-    let started = false; let status = ''; let lastDate = ''; let completion = null;
+    let started = false; let status = ''; let lastDate = ''; let completion = null; let process = null; let finished = false;
     for (const event of record.events) {
-      if (!event || !date(event.at) || !text(event.actor, 100) || (lastDate && Date.parse(event.at) < Date.parse(lastDate))) return false;
+      if (finished || !event || !date(event.at) || !text(event.actor, 100) || (lastDate && Date.parse(event.at) < Date.parse(lastDate))) return false;
       lastDate = event.at;
       if (event.type === 'completed') {
         const report = event.report;
@@ -41,10 +41,16 @@ LCA.certification = (() => {
         completion = event;
       } else if (event.type === 'started') {
         if (started || !completion || event.status !== '제출 준비' || !validDetails(event.details, event.status) || !text(event.reason, 1000)) return false;
-        started = true; status = event.status;
+        started = true; status = event.status; process = event;
       } else if (event.type === 'updated') {
         if (!started || !TRANSITIONS[status]?.includes(event.status) || !validDetails(event.details, event.status) || !text(event.reason, 1000)) return false;
-        status = event.status;
+        status = event.status; process = event;
+      } else if (event.type === 'finished') {
+        if (!started || status !== '승인·등록' || !process || !LCA.requests.validDate(event.finishedOn)
+          || event.finishedOn < process.details.issuedOn || event.finishedOn < completion.completedOn
+          || event.confirmed !== true || !text(event.reason, 1000) || event.reportRevision !== completion.report.revision
+          || JSON.stringify(event.details) !== JSON.stringify(process.details)) return false;
+        finished = true;
       } else return false;
     }
     return !!completion;
@@ -64,7 +70,7 @@ LCA.certification = (() => {
     // 범위 저장소에서 호출하므로 다른 저장소를 재조회하지 않는다.
     function currentStage(id) {
       const data = read();
-      return data.ok ? { ok: true, stage: data.records[id]?.events.some((event) => event.type === 'started') ? 9 : null } : data;
+      return data.ok ? { ok: true, stage: data.records[id]?.events.some((event) => event.type === 'finished') ? 10 : data.records[id]?.events.some((event) => event.type === 'started') ? 9 : null } : data;
     }
     function load(id) {
       const data = read(); if (!data.ok) return data;
@@ -73,7 +79,8 @@ LCA.certification = (() => {
       try { scope = getProject(id); reports = getReports(id); verification = getVerification(id); route = getReviewRoute?.(id); } catch { /* 보관 사본은 계속 조회한다. */ }
       const record = clone(data.records[id] || { revision: 0, events: [] });
       const completion = record.events.filter((event) => event.type === 'completed').at(-1) || null;
-      const process = record.events.filter((event) => event.type !== 'completed').at(-1) || null;
+      const process = record.events.filter((event) => ['started', 'updated'].includes(event.type)).at(-1) || null;
+      const finished = record.events.find((event) => event.type === 'finished') || null;
       const project = scope?.ok ? scope.project : fallback;
       const method = getReviewRoute ? route?.method || 'undecided' : 'external';
       const warning = !scope?.ok ? scope?.error || '현재 프로젝트를 확인하지 못했어요.' : !reports?.ok ? reports?.error || '보고서를 확인하지 못했어요.'
@@ -89,10 +96,12 @@ LCA.certification = (() => {
         || (method === 'external' && JSON.stringify(completion.verification) !== JSON.stringify(verification?.record))
         || (completion.reviewMethod !== undefined ? JSON.stringify(completion.reviewRoute) !== JSON.stringify(route?.record) : !!route?.record.events.length));
       const startBlock = completeBlock || (!completion ? '선택한 검토 경로의 완료 근거를 먼저 보관해 주세요.' : stale ? '완료 기록 이후 보고서·검토 방식·확인 기록이 바뀌었어요. 완료 근거를 다시 기록해 주세요.' : '');
-      return { ok: true, project, record, completion, process, warning, completeBlock, startBlock, stale,
+      const finishBlock = startBlock || (!process || process.status !== '승인·등록' ? '진행 상태를 승인·등록으로 저장해 주세요. 고객 제출도 고객의 접수·최종 확인 번호와 확인일이 필요해요.' : '');
+      return { ok: true, project, record, completion, process, finished, warning, completeBlock, startBlock, finishBlock, stale,
         latest: reports?.record || null, verification: verification?.record || null, reviewMethod: method, reviewRoute: route?.record || null,
         canComplete: project.stage === 8 && !process && !completeBlock,
-        canStart: project.stage === 8 && !process && !startBlock, canWrite: project.stage === 9 && !!process && !warning };
+        canStart: project.stage === 8 && !process && !startBlock, canWrite: project.stage === 9 && !!process && !finished && !warning,
+        canFinish: project.stage === 9 && !finished && !finishBlock };
     }
     function mutate(id, action, draft, expectedRevision, expectedBasis) {
       const data = read(); if (!data.ok) return data;
@@ -111,6 +120,11 @@ LCA.certification = (() => {
         if (!LCA.requests.validDate(draft.completedOn) || !text(draft.documentName, 200) || draft.confirmed !== true) return { ok: false, error: '검토 완료일·확인 기록이나 문서 이름을 적고 최종 보고서와 선택한 경로의 완료 근거를 확인해 주세요.' };
         Object.assign(event, { completedOn: draft.completedOn, documentName: draft.documentName.trim(), report: clone(state.latest), verification: state.reviewMethod === 'internal' ? null : clone(state.verification) });
         if (getReviewRoute) Object.assign(event, { reviewMethod: state.reviewMethod, reviewRoute: clone(state.reviewRoute) });
+      } else if (action === 'finished') {
+        if (!state.canFinish) return { ok: false, error: state.finishBlock || '인증·등록(9) 단계에서 최종 확인 후 완료할 수 있어요.' };
+        if (!LCA.requests.validDate(draft.finishedOn) || draft.finishedOn > LCA.rules.today()
+          || draft.finishedOn < state.process.details.issuedOn || draft.finishedOn < state.completion.completedOn || draft.confirmed !== true) return { ok: false, error: '완료일은 검토 완료일·발급 또는 고객 확인일 이후이며 오늘까지의 날짜여야 해요. 최종 기록 확인에도 체크해 주세요.' };
+        Object.assign(event, { finishedOn: draft.finishedOn, confirmed: true, reportRevision: state.completion.report.revision, details: clone(state.process.details) });
       } else {
         if (action === 'started') {
           if (!state.canStart || draft.confirmed !== true) return { ok: false, error: state.startBlock || '8단계에서 완료 근거를 확인하고 단계 이동에 체크해 주세요.' };
@@ -127,6 +141,7 @@ LCA.certification = (() => {
       try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: { ...data.records, [id]: record } })); }
       catch { return { ok: false, error: '브라우저에 저장하지 못했어요. 기존 근거·단계와 입력은 유지했으니 저장 공간을 확인해 주세요.' }; }
       if (action === 'started') state.project.stage = 9;
+      if (action === 'finished') state.project.stage = 10;
       return { ok: true, record: clone(record) };
     }
     async function save(...args) {

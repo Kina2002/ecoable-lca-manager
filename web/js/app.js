@@ -1,6 +1,7 @@
 /* 시작 버튼 역할: 기준 날짜를 정하고, 명단을 받아서 화면에 전달한다. */
 (async () => {
   function showStorageReload(message) {
+    for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
     const notice = document.querySelector('#storage-reload-notice');
     document.querySelector('#storage-reload-message').textContent = message;
     notice.hidden = false; document.querySelector('.app-shell').inert = true;
@@ -20,13 +21,13 @@
   }
   window.addEventListener('storage', (event) => {
     if ((event.key === LCA.storage.EPOCH_KEY || event.key === null) && LCA.storage.changed()) {
-      showStorageReload('다른 창에서 백업을 복원해 기록이 바뀌었어요. 오래된 화면에서 저장하지 않도록 멈췄어요. 새로고침하면 복원한 기록을 볼 수 있어요.');
+      showStorageReload('다른 창에서 프로젝트 삭제 또는 백업 복원으로 기록이 바뀌었어요. 오래된 화면에서 저장하지 않도록 멈췄어요. 새로고침하면 최신 기록을 볼 수 있어요.');
     }
   });
-  window.addEventListener('pageshow', () => { if (LCA.storage.changed()) showStorageReload('백업 복원으로 기록이 바뀌었어요. 새로고침해서 최신 기록을 열어 주세요.'); });
+  window.addEventListener('pageshow', () => { if (LCA.storage.changed()) showStorageReload('프로젝트 삭제 또는 백업 복원으로 기록이 바뀌었어요. 새로고침해서 최신 기록을 열어 주세요.'); });
   if (recovery.recovered) {
     const notice = document.querySelector('#backup-recovery-status'); notice.hidden = false;
-    notice.textContent = '지난번 복원이 중단되어 복원 전 기록으로 되돌렸어요. 설정에서 현재 기록을 백업하고 다시 진행해 주세요.';
+    notice.textContent = '지난번 프로젝트 삭제 또는 백업 복원이 중단되어 변경 전 기록으로 되돌렸어요. 기록을 확인하고 다시 진행해 주세요.';
   }
   LCA.views.backup.init(sampleDate, showStorageReload);
   const referenceDate = LCA.rules.today();
@@ -248,6 +249,25 @@
     }
   });
 
+  const deletionPage = LCA.views.projectDeletion.init(sampleDate, (result) => {
+    // 새 명단으로 모든 저장소의 참조를 연결한 뒤 현재 창의 쓰기를 다시 연다.
+    projects.splice(0, projects.length, ...result.items);
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
+    requestStore = LCA.requests.createStore(projects.map((p) => p.id), undefined, (id) => scopeStore.currentStage(id));
+    LCA.storage.resumeReplacement(result.epoch);
+    taskReturn = null; homeReturn = null; detailOpener = null; openedProjectId = null;
+    document.querySelector('#back-to-projects').textContent = '← 목록으로';
+    showList();
+    dashboardPage.refresh(); tasksPage.refresh(); researcherPage.refresh();
+    const message = document.querySelector('#project-create-status');
+    message.textContent = `${result.project.companyName} · ${result.project.code} 프로젝트와 관련 기록을 삭제했어요.`;
+    message.tabIndex = -1; message.focus({ preventScroll: true });
+  }, showStorageReload);
+  detailView.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-delete-project]');
+    if (button) deletionPage.open(button.dataset.deleteProject, button);
+  });
+
   document.querySelector('#stage-filters').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-stage]');
     if (!button) return;
@@ -321,6 +341,7 @@
       LCA.views.verification.refresh(); LCA.views.certification.refresh();
     });
     function refreshLaterStage() {
+      LCA.views.deadlines.refresh();
       LCA.views.projectDetail.refreshStage(project);
       LCA.views.requests.refresh();
       bindCollectionTransition(project);
