@@ -1,5 +1,7 @@
 # 웹앱 기능별 SPEC
 
+**다음 작업(2026-10-19): [UI 사용성 개선 인수인계](UI-IMPROVEMENT-HANDOFF.md)** — 큰 버튼/블록 축소, 스크롤 감소, 핵심 정보 우선 배치. 계획이며 구현 완료 SPEC이 아니다.
+
 최신: [WEB-041 연구원 한 줄 목록과 접기·펼치기](WEB-041-researcher-list-disclosures.md) — 등록·프로젝트 목록 접기, 한 명당 한 행, 진행 중/완료 건수와 목록 분리.
 
 최신: [WEB-040 자료 요청문과 연구원 소속 정보](WEB-040-request-message-researcher-profile.md) — 요청문 종류·자료 선택·생성·편집·복사, 연구원 회사·부서 등록/수정과 인사말 연결. 자동검사 217개와 별도 origin의 핵심 UI 흐름을 확인했다.
