@@ -49,6 +49,7 @@ LCA.views.requests = (() => {
     let selectedStatus = null;
     const drafts = new Map();
     const statusButtons = new Map();
+    const expandedRecords = new Set();
     for (const status of [null, ...LCA.requestFilter.STATUSES]) {
       const button = textElement('button', 'request-status-filter', '');
       button.type = 'button';
@@ -118,6 +119,9 @@ LCA.views.requests = (() => {
     });
 
     function renderItems() {
+      for (const details of panel.querySelectorAll('details[data-record-details]')) {
+        if (details.open) expandedRecords.add(details.dataset.recordDetails); else expandedRecords.delete(details.dataset.recordDetails);
+      }
       const result = store.list(project.id);
       messageEditor.refresh();
       batchEditor.render(result);
@@ -150,7 +154,8 @@ LCA.views.requests = (() => {
         const category = LCA.constants.CATEGORIES.find((value) => value.key === item.categoryKey);
         const card = textElement('li', 'request-item', '');
         card.dataset.requestId = item.id;
-        const top = textElement('div', 'request-item-top', '');
+        const top = textElement('div', 'request-item-header', '');
+        const identity = textElement('div', 'request-item-identity', '');
         const actions = textElement('div', 'request-item-actions', '');
         const action = textElement('button', `request-action-button${deleted ? '' : ' request-delete-button'}`, deleted ? '복원' : '삭제');
         action.type = 'button';
@@ -159,8 +164,7 @@ LCA.views.requests = (() => {
         action.dataset.requestId = item.id;
         action.setAttribute('aria-label', `${item.id} ${category.name} 자료 요청 ${deleted ? '복원' : '삭제'}`);
         const stateClass = !deleted && item.status === '보완 요청' ? ' request-state-revision' : !deleted && item.receipt ? ' request-state-received' : '';
-        actions.append(textElement('span', `request-state${stateClass}`, deleted ? '삭제됨' : item.status), action);
-        top.append(textElement('span', 'request-code', item.id), actions);
+        identity.append(textElement('h3', '', category.name), textElement('span', 'request-code', item.id), textElement('span', `request-state${stateClass}`, deleted ? '삭제됨' : item.status));
         const due = textElement('p', 'request-item-due', '제출 기한 ');
         const date = textElement('time', '', item.dueDate.replaceAll('-', '.'));
         date.dateTime = item.dueDate;
@@ -169,16 +173,19 @@ LCA.views.requests = (() => {
         const reference = document.createElement('details');
         reference.className = 'request-reference';
         reference.append(textElement('summary', '', '지침 근거 보기'), referenceContent(item.guideline));
-        card.append(top, textElement('h3', '', category.name), textElement('p', 'request-item-detail', item.detail), due);
-        if (item.receipt) card.append(LCA.views.receivedData.summary(item.receipt, item.status));
-        if (item.review) card.append(LCA.views.review.summary(item));
+        const details = document.createElement('details'); details.className = 'request-record-details';
+        const recordKey = `${deleted ? 'deleted' : 'active'}:${item.id}`; details.dataset.recordDetails = recordKey; details.open = expandedRecords.has(recordKey);
+        const detailsToggle = textElement('summary', '', '요청 내용·자료·검토 기록'); detailsToggle.setAttribute('aria-label', `${item.id} ${category.name} 요청 내용·자료·검토 기록`);
+        details.append(detailsToggle, textElement('p', 'request-item-detail', item.detail));
+        if (item.receipt) details.append(LCA.views.receivedData.summary(item.receipt, item.status));
+        if (item.review) details.append(LCA.views.review.summary(item));
         if (!deleted) {
           const record = textElement('button', 'request-action-button receipt-open-button', item.receipt ? '받은 자료 보기·수정' : '받은 자료 기록');
           record.type = 'button';
           record.disabled = !result.canWrite;
           record.dataset.receiptId = item.id;
           record.setAttribute('aria-label', `${item.id} ${category.name} ${record.textContent}`);
-          card.append(record);
+          actions.append(record);
           if (item.receipt) {
             const reviewLabel = item.status === '제출됨' ? '검토 시작' : item.status === '검토 중' ? '이어서 검토' : '검토 결과 보기';
             const reviewButton = textElement('button', 'request-action-button receipt-open-button review-open-button', reviewLabel);
@@ -186,10 +193,14 @@ LCA.views.requests = (() => {
             reviewButton.disabled = !result.canWrite;
             reviewButton.dataset.reviewId = item.id;
             reviewButton.setAttribute('aria-label', `${item.id} ${category.name} ${reviewLabel}`);
-            card.append(reviewButton);
+            actions.append(reviewButton);
           }
         }
-        card.append(reference);
+        actions.append(action); top.append(identity, due, actions); card.append(top);
+        if (item.receipt) card.append(textElement('p', 'request-item-value', item.receipt.kind === 'quantity'
+          ? `${LCA.receivedData.displayNumber(item.receipt.value)} ${item.receipt.unit} · ${item.receipt.evidenceFileName}` : `문서 자료 · ${item.receipt.evidenceFileName}`));
+        if (item.status === '보완 요청' && item.review?.note) card.append(textElement('p', 'request-revision-note', `보완 필요: ${item.review.note}`));
+        details.append(reference); card.append(details);
         return card;
       }
       find('#request-items').replaceChildren(...snapshot.visible.map((item) => requestCard(item, false)));

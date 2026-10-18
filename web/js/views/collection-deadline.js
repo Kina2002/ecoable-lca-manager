@@ -7,7 +7,7 @@ LCA.views.collectionDeadline = (() => {
     const completed = project.stage >= 4;
     const host = document.querySelector('#collection-deadline-editor');
     const section = document.createElement('section');
-    section.className = 'detail-card';
+    section.className = 'detail-card collection-deadline-card';
     const heading = document.createElement('h2');
     heading.textContent = '자료 수집 일정';
     const help = document.createElement('p');
@@ -24,7 +24,10 @@ LCA.views.collectionDeadline = (() => {
     else summary.textContent = '수집 일정 확인 필요';
     const feedback = document.createElement('p');
     feedback.setAttribute('role', 'status');
-    section.append(heading, help, summary, feedback);
+    const details = document.createElement('details'); details.className = 'collection-deadline-edit';
+    const toggle = document.createElement('summary'); toggle.textContent = completed ? '일정 설명' : '마감일 입력·수정';
+    details.append(toggle, help);
+    section.append(heading, summary, details, feedback);
     host.replaceChildren(section);
     if (!loadResult.ok) { feedback.textContent = loadResult.error; return; }
     if (project.stage >= 4) return;
@@ -62,7 +65,7 @@ LCA.views.collectionDeadline = (() => {
     save.className = 'primary-button';
     save.textContent = '수집 마감일 저장';
     form.append(box, save);
-    section.append(form);
+    details.append(form);
     let expected = project.collectionDueDate || '';
     let busy = false;
     form.addEventListener('submit', async (event) => {

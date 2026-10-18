@@ -33,7 +33,7 @@ LCA.views.customerReview = (() => {
     LCA.views.inputAssist.person(recorder, project);
     const save = text('button', 'primary-button', '고객 의견 등록'); save.type = 'submit';
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
-    const error = text('p', 'field-error', ''); error.setAttribute('role', 'alert'); form.append(fields, save, error, feedback); register.append(form);
+    const error = text('p', 'field-error', ''); error.setAttribute('role', 'alert'); form.append(fields, save, error, feedback); register.append(LCA.views.compact.form(form, '고객 의견 입력'));
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '의견·답변과 처리 이력'));
     const filters = text('div', 'report-version-selectors', '');
     const statusFilter = field(filters, 'comment-status-filter', '처리 상태', 'select'); option(statusFilter, '', '전체 상태');

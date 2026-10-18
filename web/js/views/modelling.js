@@ -97,7 +97,7 @@ LCA.views.modelling = (() => {
     const saveButton = text('button', 'primary-button', '외부 계산 결과 저장');
     saveButton.type = 'submit';
     form.append(fieldset, errors, saveButton, feedback);
-    editor.append(saved, context, notice, sourceWarning, refreshBasis, form);
+    editor.append(saved, context, notice, sourceWarning, refreshBasis, LCA.views.compact.form(form, '계산 결과 입력·수정'));
     host.replaceChildren(preparation, editor);
 
     function updateRows() {

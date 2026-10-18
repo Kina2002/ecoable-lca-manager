@@ -47,7 +47,7 @@ LCA.views.verificationIssue = (() => {
     const adopt = text('button', 'request-action-button', '최신 답변 불러오기 · 입력 초기화'); adopt.type = 'button';
     const timeline = document.createElement('details'); timeline.append(text('summary', '', '지적 처리 이력 펼쳐보기'));
     const events = text('ol', 'customer-review-events', ''); timeline.append(events);
-    element.append(form, openApplied, processing, message, notice, adopt, timeline);
+    element.append(LCA.views.compact.form(form, '지적 답변·처리 내용 입력'), openApplied, processing, message, notice, adopt, timeline);
     let current = issue; let expected = issue.revision; let dirty = false; let responseDirty = false;
     function fill(item) {
       reply.value = item.reply; actor.value = item.responder || project.researcherName || ''; resolution.value = item.resolution;

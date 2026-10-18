@@ -17,7 +17,7 @@ LCA.views.reviewRoute = (() => {
     const reason = field(fields, 'review-route-reason', '선택 근거·변경 사유 (미정이면 선택)', 'textarea', 1000);
     reason.placeholder = '예: 고객과 내부 개선용 보고서로 협의하여 내부 검토로 확정 / 제출 제도에서 제3자 검증을 요구함';
     const save = text('button', 'primary-button', '검토 방식 저장'); save.type = 'submit';
-    const error = text('p', 'field-error', ''); error.setAttribute('role', 'alert'); form.append(fields, save, error); decisionCard.append(status, form);
+    const error = text('p', 'field-error', ''); error.setAttribute('role', 'alert'); form.append(fields, save, error); decisionCard.append(status, LCA.views.compact.form(form, '검토 방식 선택·수정'));
     const reviewCard = text('section', 'detail-card calculation-card', ''); const title = text('h2', '', '내부 검토');
     const readiness = text('p', 'calculation-notice', ''); readiness.setAttribute('role', 'status');
     const reportInfo = text('p', 'detail-note', '');
@@ -37,7 +37,7 @@ LCA.views.reviewRoute = (() => {
     const confirmed = checkbox(reviewFields, '선택한 검토 방식과 최신 보고서를 확인했고, 검토자의 역할·독립성은 적용 기준과 고객 요구에 맞게 확인했어요.');
     const reviewSave = text('button', 'primary-button', '내부 검토 완료 기록'); reviewSave.type = 'submit';
     const reviewError = text('p', 'field-error', ''); reviewError.setAttribute('role', 'alert'); reviewForm.append(reviewFields, reviewSave, reviewError);
-    reviewCard.append(title, readiness, reportInfo, open, reviewForm);
+    reviewCard.append(title, readiness, reportInfo, open, LCA.views.compact.form(reviewForm, '내부 검토 결과 입력'));
     const rebase = text('button', 'request-action-button', '검토 기준 다시 확인'); rebase.type = 'button';
     const feedback = text('p', 'detail-help', ''); feedback.setAttribute('role', 'status');
     const history = document.createElement('details'); history.className = 'detail-card review-route-history'; history.append(text('summary', '', '검토 방식·내부 검토 이력'));

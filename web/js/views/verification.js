@@ -29,7 +29,7 @@ LCA.views.verification = (() => {
     const rebase = text('button', 'request-action-button', '검증 기준 다시 확인'); rebase.type = 'button';
     const roundError = text('p', 'field-error', ''); roundError.setAttribute('role', 'alert');
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
-    roundForm.append(roundFields, roundSave, rebase, roundError, feedback); roundEditor.append(roundForm);
+    roundForm.append(roundFields, roundSave, rebase, roundError, feedback); roundEditor.append(LCA.views.compact.form(roundForm, '이번 차수 검증 정보 입력'));
     const archive = text('section', 'detail-card calculation-card', ''); archive.append(text('h2', '', '차수별 검증 기록'));
     const selectors = text('div', 'report-version-selectors', '');
     const selectedRound = field(selectors, 'verification-round-filter', '검증 차수', 'select');
@@ -50,7 +50,7 @@ LCA.views.verification = (() => {
     const issueSave = text('button', 'primary-button', '검증 지적 등록'); issueSave.type = 'submit';
     const issueReload = text('button', 'request-action-button', '지적 등록 기준 다시 확인'); issueReload.type = 'button';
     const issueError = text('p', 'field-error', ''); issueError.setAttribute('role', 'alert');
-    issueForm.append(issueFields, issueSave, issueReload, issueError); issueEditor.append(issueForm);
+    issueForm.append(issueFields, issueSave, issueReload, issueError); issueEditor.append(LCA.views.compact.form(issueForm, '새 검증 지적 입력'));
     const routeHost = text('div', '', ''); routeHost.id = 'project-review-route';
     const externalHost = text('div', '', ''); externalHost.id = 'project-external-verification';
     externalHost.append(introduction, roundEditor, issueEditor, archive); host.replaceChildren(routeHost, externalHost);

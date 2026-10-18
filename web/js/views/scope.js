@@ -27,7 +27,9 @@ LCA.views.scope = (() => {
     if (project.stage >= 3) {
       const text = document.createElement('p');
       text.textContent = `범위 상태: ${project.scopeStatus}. 수집 이후의 범위 재협의·단계 되돌리기는 별도 기능으로 구현할 예정이에요.`;
-      section.append(text);
+      section.classList.add('scope-readonly');
+      const details = document.createElement('details'); const summary = document.createElement('summary');
+      summary.append(title); details.append(summary, intro, message, text); section.replaceChildren(details);
       return;
     }
     let expected = LCA.scope.snapshot(project);
@@ -268,6 +270,7 @@ LCA.views.scope = (() => {
   function focusEditor() {
     const target = document.querySelector('#scope-scopeStatus') || document.querySelector('#scope-editor-title');
     if (!target) return;
+    const details = target.closest('details'); if (details) details.open = true;
     target.focus({ preventScroll: true });
     document.querySelector('#scope-editor').scrollIntoView({ block: 'start' });
   }

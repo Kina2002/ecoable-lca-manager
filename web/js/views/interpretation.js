@@ -48,7 +48,7 @@ LCA.views.interpretation = (() => {
     const errors = text('p', 'field-error', ''); errors.setAttribute('role', 'alert');
     const saveButton = text('button', 'primary-button', '결과 해석 저장'); saveButton.type = 'submit';
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
-    form.append(fields, errors, saveButton, feedback); editor.append(result, saved, warning, adopt, form); host.replaceChildren(start, editor);
+    form.append(fields, errors, saveButton, feedback); editor.append(result, saved, warning, adopt, LCA.views.compact.form(form, '해석 내용 입력·수정')); host.replaceChildren(start, editor);
     function fill(record) { for (const [key, input] of Object.entries(controls)) input.value = record?.[key] || ''; confirmed.checked = false; }
     function showCalculation(calculation, target, title) {
       target.replaceChildren(text('h3', '', title));

@@ -47,7 +47,7 @@ LCA.views.report = (() => {
     const error = text('p', 'field-error', ''); error.setAttribute('role', 'alert');
     const save = text('button', 'primary-button', '보고서 새 버전 저장'); save.type = 'submit';
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
-    form.append(fields, error, save, feedback); editor.append(basis, warning, adopt, form);
+    form.append(fields, error, save, feedback); editor.append(basis, warning, adopt, LCA.views.compact.form(form, '새 보고서의 제목·변경 내용 입력'));
     const saved = text('section', 'detail-card calculation-card', '');
     saved.append(text('h2', '', '보관된 보고서 버전'));
     const savedStatus = text('p', '', ''); savedStatus.setAttribute('role', 'status');

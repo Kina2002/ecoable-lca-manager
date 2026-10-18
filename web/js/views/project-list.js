@@ -48,7 +48,7 @@ LCA.views.projectList = (() => {
       const arrow = textElement('span', 'project-code-arrow', '↗');
       arrow.setAttribute('aria-hidden', 'true');
       detailButton.append(arrow);
-      company.append(companyLine, detailButton);
+      companyLine.append(detailButton); company.append(companyLine);
       company.append(textElement('p', 'project-researcher', `담당 연구원: ${project.researcherName || '미정'}${project.researcherId ? ` · ${LCA.projectFilter.researcherCode(project.researcherId)}` : project.researcherName ? ' · 기존 이름 기록' : ''}`));
       if (project.origin === 'user') {
         const remove = textElement('button', 'request-action-button project-delete-button', '프로젝트 삭제'); remove.type = 'button'; remove.dataset.deleteProject = project.id;
@@ -81,20 +81,22 @@ LCA.views.projectList = (() => {
       }
 
       const target = cell('일정 · 자료 현황');
-      target.append(textElement('span', 'deadline-label', '프로젝트 목표'));
-      target.append(LCA.views.deadlines.badge(LCA.deadlines.project(project)));
+      const targetLine = textElement('div', 'project-target-line', '');
+      targetLine.append(textElement('span', 'deadline-label', '목표'));
+      targetLine.append(LCA.views.deadlines.badge(LCA.deadlines.project(project)));
       if (project.targetDate) {
         const time = textElement('time', 'target-date', project.targetDate.replaceAll('-', '.'));
         time.dateTime = project.targetDate;
-        target.append(time);
+        targetLine.append(time);
       } else {
-        target.append(textElement('span', 'target-date', '미정'));
+        targetLine.append(textElement('span', 'target-date', '미정'));
       }
       const materials = textElement('div', 'project-deadline-materials', '');
+      const more = textElement('details', 'deadline-more', ''); more.append(textElement('summary', '', '일정 상세'));
       materials.append(textElement('span', 'deadline-label', '자료 현황'));
       materials.append(LCA.views.deadlines.badge(deadlines.collectionDates?.ok === false
         ? { staticText: true, text: '수집 일정 확인 필요', tone: 'unknown' } : LCA.deadlines.collection(project)));
-      if (deadlines.collectionDates?.ok !== false && project.collectionDueDate) materials.append(textElement('span', 'deadline-detail', `수집 마감 ${project.collectionDueDate.replaceAll('-', '.')}`));
+      if (deadlines.collectionDates?.ok !== false && project.collectionDueDate) more.append(textElement('p', 'deadline-detail', `수집 마감 ${project.collectionDueDate.replaceAll('-', '.')}`));
       if (!deadlines.requests?.ok) {
         const warning = textElement('span', 'deadline-badge deadline-badge--unknown', '자료 확인 필요');
         warning.title = deadlines.requests?.message || '자료 기록을 읽을 수 없어요.';
@@ -102,9 +104,10 @@ LCA.views.projectList = (() => {
       } else {
         const state = LCA.deadlines.summary(project.id, deadlines.requests.items);
         materials.append(textElement('span', 'deadline-detail', state.total ? `승인 ${state.approved}/${state.total}건` : '요청 기록 없음'));
-        if (state.sourceId) materials.append(textElement('span', 'deadline-detail', `가장 이른 요청: ${state.sourceId} · ${state.status} · ${state.date}`));
+        if (state.sourceId) more.append(textElement('p', 'deadline-detail', `가장 이른 요청: ${state.sourceId} · ${state.status} · ${state.date}`));
       }
-      target.append(materials);
+      target.append(targetLine, materials);
+      if (more.childElementCount > 1) target.append(more);
 
       row.append(company, product, purpose, stageCell, target);
       fragment.append(row);

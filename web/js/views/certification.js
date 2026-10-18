@@ -23,7 +23,7 @@ LCA.views.certification = (() => {
     const completionSave = text('button', 'primary-button', '검증 완료 기록 보관'); completionSave.type = 'submit';
     const completionError = text('p', 'field-error', ''); completionError.setAttribute('role', 'alert');
     completionForm.append(completionFields, completionSave, completionError);
-    completionCard.append(completionInfo, completionForm, text('p', 'detail-help', '완료 기록을 보관해도 8단계에 머물러요. 보고서나 검토 기록을 보완하면 완료 근거를 다시 기록해 주세요. 보관한 이전 사본은 이력에 남아요.'));
+    completionCard.append(completionInfo, LCA.views.compact.form(completionForm, '검토·검증 완료 근거 입력'), text('p', 'detail-help', '완료 기록을 보관해도 8단계에 머물러요. 보고서나 검토 기록을 보완하면 완료 근거를 다시 기록해 주세요. 보관한 이전 사본은 이력에 남아요.'));
     const processCard = text('section', 'detail-card calculation-card', ''); const processTitle = text('h2', '', '인증·등록 또는 고객 제출 시작'); processCard.append(processTitle);
     const processForm = document.createElement('form'); processForm.noValidate = true;
     const processFields = document.createElement('fieldset'); processFields.className = 'calculation-fields'; processFields.append(text('legend', '', '제출 진행 정보'));
@@ -43,7 +43,7 @@ LCA.views.certification = (() => {
     const processSave = text('button', 'primary-button', '인증·등록 준비 시작 · 9단계로'); processSave.type = 'submit';
     const processError = text('p', 'field-error', ''); processError.setAttribute('role', 'alert');
     processForm.append(processFields, processSave, processError);
-    processCard.append(processForm, text('p', 'detail-help', '제출 준비 → 제출 완료 → 보완 요청 → 재제출 또는 승인·등록/반려로 기록해요. 승인·등록과 반려 후에는 상태를 유지하며 오기 정정만 사유와 함께 남길 수 있어요. 앱 기록이 기관의 공식 결정을 대신하지 않아요.'));
+    processCard.append(LCA.views.compact.form(processForm, '제출 정보 입력·상태 변경'), text('p', 'detail-help', '제출 준비 → 제출 완료 → 보완 요청 → 재제출 또는 승인·등록/반려로 기록해요. 승인·등록과 반려 후에는 상태를 유지하며 오기 정정만 사유와 함께 남길 수 있어요. 앱 기록이 기관의 공식 결정을 대신하지 않아요.'));
     const rebase = text('button', 'request-action-button', '최신 기준 다시 확인'); rebase.type = 'button';
     const finishCard = text('section', 'detail-card calculation-card', ''); finishCard.append(text('h2', '', '프로젝트 완료 처리'));
     const finishInfo = text('div', 'verification-round-info', ''); const finishBlock = text('p', 'detail-help', '');
@@ -55,7 +55,7 @@ LCA.views.certification = (() => {
     const finishCheck = checkbox(finishFields, '최종 보고서와 인증·등록 또는 고객의 최종 확인 기록을 확인했어요. 프로젝트를 완료·사후관리 단계로 옮길게요.');
     const finishSave = text('button', 'primary-button', '프로젝트 완료 · 10단계로'); finishSave.type = 'submit';
     const finishError = text('p', 'field-error', ''); finishError.setAttribute('role', 'alert');
-    finishForm.append(finishFields, finishSave, finishError); finishCard.append(finishInfo, finishBlock, finishForm,
+    finishForm.append(finishFields, finishSave, finishError); finishCard.append(finishInfo, finishBlock, LCA.views.compact.form(finishForm, '프로젝트 최종 완료 확인'),
       text('p', 'detail-help', '완료하면 진행 중 집계와 할 일에서 빠지고 기록은 계속 조회할 수 있어요. 완료 취소와 인증 만료·갱신 관리는 아직 지원하지 않아요.'));
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);

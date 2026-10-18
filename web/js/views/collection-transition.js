@@ -24,6 +24,8 @@ LCA.views.collectionTransition = (() => {
     status.id = 'collection-transition-status';
     const missing = document.createElement('ul');
     missing.className = 'collection-missing';
+    const missingDetails = document.createElement('details'); missingDetails.className = 'collection-missing-details';
+    const missingTitle = document.createElement('summary'); missingDetails.append(missingTitle, missing);
     const feedback = document.createElement('p');
     feedback.setAttribute('role', 'alert');
     const actions = document.createElement('div');
@@ -35,11 +37,15 @@ LCA.views.collectionTransition = (() => {
     finish.setAttribute('aria-describedby', status.id);
     finish.hidden = project.stage === 5;
     actions.append(finish);
-    section.append(heading, help, status, missing, feedback, actions);
+    const titleRow = document.createElement('div'); titleRow.className = 'collection-transition-heading';
+    const guide = document.createElement('details'); guide.className = 'collection-transition-guide';
+    const guideTitle = document.createElement('summary'); guideTitle.textContent = '단계 안내'; guide.append(guideTitle, help);
+    titleRow.append(heading, guide);
+    section.append(titleRow, status, missingDetails, feedback, actions);
     host.append(section);
     const expected = LCA.scope.snapshot(project);
     function refresh(result) {
-      missing.replaceChildren();
+      missing.replaceChildren(); missingDetails.hidden = true;
       const reviewing = project.stage === 4;
       finish.hidden = project.stage === 5;
       finish.textContent = reviewing ? '자료 검토 완료 · 계산 단계로' : '자료 수집 완료 · 검토 시작';
@@ -69,6 +75,8 @@ LCA.views.collectionTransition = (() => {
         line.textContent = `${item.id} · ${category?.name || item.categoryKey} · ${item.status}${reviewing ? ' — 검토와 승인이 필요해요.' : item.status === '보완 요청' ? ' — 보완 자료를 다시 기록해 주세요.' : ' — 받은 자료 기록이 필요해요.'}`;
         missing.append(line);
       }
+      missingDetails.hidden = !missing.childElementCount;
+      missingTitle.textContent = `확인이 필요한 자료 ${missing.childElementCount}건 보기`;
     }
     refreshCurrent = refresh;
     refresh();

@@ -42,17 +42,28 @@ LCA.views.projectDetail = (() => {
     } else {
       description.append(textElement('span', 'detail-value', value || '미정'));
     }
-    if (help) description.append(textElement('p', 'detail-help', help));
+    if (help) {
+      const explanation = textElement('details', 'field-help', '');
+      const summary = textElement('summary', '', '설명'); summary.setAttribute('aria-label', `${label} 설명`);
+      explanation.append(summary, textElement('p', 'detail-help', help)); description.append(explanation);
+    }
     item.append(term, description);
     return item;
   }
 
   function card(title, subtitle, fields) {
     const section = textElement('section', 'detail-card', '');
-    section.append(textElement('h2', '', title), textElement('p', 'detail-card-intro', subtitle));
+    section.append(textElement('h2', '', title));
+    const guide = textElement('details', 'card-field-guide', '');
+    guide.append(textElement('summary', '', '항목 설명'), textElement('p', 'detail-help', subtitle));
+    for (const item of fields) {
+      const help = item.querySelector('.field-help');
+      if (!help) continue;
+      guide.append(textElement('strong', '', item.querySelector('dt').textContent), help.querySelector('p')); help.remove();
+    }
     const descriptionList = textElement('dl', 'detail-fields', '');
     descriptionList.append(...fields);
-    section.append(descriptionList);
+    section.append(descriptionList, guide);
     return section;
   }
 
@@ -79,9 +90,9 @@ LCA.views.projectDetail = (() => {
       field('고객 담당자', project.customerContactName),
       researcher,
       field('평가 대상 제품', project.productName),
-      field('평가 기준량 · 얼마만큼을 기준으로 하나요?', quantity,
+      field('평가 기준량', quantity,
         unit && unit.unit ? `${UNIT_HELP[unit.unit] || ''} 평가 결과를 제품 ${quantity} 기준으로 정리한다는 뜻이에요. 공장의 실제 생산량이 아니에요.`.trim() : '결과를 정리할 기준 수량과 단위를 정해요.'),
-      field('시스템 경계 · 어디까지 살펴보나요?', project.boundary,
+      field('시스템 경계', project.boundary,
         BOUNDARY_HELP[project.boundary] || '평가가 시작되고 끝나는 범위를 정해요.')
     ];
     scopeFields.push(field('기준기간', project.refStart && project.refEnd ? `${project.refStart} ~ ${project.refEnd}` : '미정'));
@@ -93,17 +104,19 @@ LCA.views.projectDetail = (() => {
         project.modules === 'A1–A3' ? '건설제품 평가의 단계 표기예요. A1은 원료 공급, A2는 원료 운송, A3는 제품 제조를 뜻해요.' : '이 프로젝트에서 평가할 과정의 구분이에요.'));
     }
     const scope = card('제품과 평가 범위', '무엇을, 얼마만큼, 어디까지 살펴볼까요?', scopeFields);
-    scope.append(textElement('p', 'detail-note', '기능·선언 단위는 여기서 기준량으로 간단히 표시했어요. 실제로 제품을 비교하려면 기능·성능·수명 같은 조건도 함께 정해야 해요.'));
+    scope.querySelector('.card-field-guide').append(textElement('p', 'detail-note', '기능·선언 단위는 여기서 기준량으로 간단히 표시했어요. 실제로 제품을 비교하려면 기능·성능·수명 같은 조건도 함께 정해야 해요.'));
     scope.id = 'scope-summary';
     return scope;
   }
 
   function refreshScope(project) {
-    document.querySelector('#scope-summary').replaceWith(scopeCard(project));
+    const previous = document.querySelector('#scope-summary'); const next = scopeCard(project);
+    next.querySelector('.card-field-guide').open = previous.querySelector('.card-field-guide')?.open || false;
+    previous.replaceWith(next);
   }
   function stageField(project) {
     const stage = LCA.constants.stageByNo(project.stage);
-    const element = field('현재 단계', stage ? stage.name : '단계 확인 필요', stage ? `${stage.no} / ${LCA.constants.STAGES.length} 단계 · 번호는 업무 순서이며 완료율이 아니에요.` : '');
+    const element = field('현재 단계', stage ? `${stage.name} · ${stage.no}/${LCA.constants.STAGES.length}` : '단계 확인 필요', stage ? '번호는 업무 순서이며 완료율이 아니에요.' : '');
     element.id = 'project-current-stage';
     return element;
   }
@@ -120,9 +133,9 @@ LCA.views.projectDetail = (() => {
   }
   function purposeCard(project) {
     const result = card('업무 목적과 활용', '왜 시작했고, 결과를 어디에 쓸까요?', [
-      field('업무 목적 · 왜 하나요?', project.purpose, PURPOSE_HELP[project.purpose] || '이 업무를 진행하는 이유예요.'),
-      field('세부 동인 · 어떤 요구가 있나요?', project.drivers, '이 업무와 관련해 확인할 구체적인 요구나 기준이에요. 실제 적용 조건은 프로젝트 범위를 정할 때 검토해요.'),
-      field('결과 활용처 · 어디에 쓰나요?', project.uses, '결과를 쓰려는 곳이에요. 여기에 인증 이름이 있어도 이미 인증을 받았다는 뜻은 아니에요.')
+      field('업무 목적', project.purpose, PURPOSE_HELP[project.purpose] || '이 업무를 진행하는 이유예요.'),
+      field('세부 동인', project.drivers, '이 업무와 관련해 확인할 구체적인 요구나 기준이에요. 실제 적용 조건은 프로젝트 범위를 정할 때 검토해요.'),
+      field('결과 활용처', project.uses, '결과를 쓰려는 곳이에요. 여기에 인증 이름이 있어도 이미 인증을 받았다는 뜻은 아니에요.')
     ]); result.id = 'project-purpose-summary'; return result;
   }
   function refreshBasics(project) {
@@ -130,20 +143,23 @@ LCA.views.projectDetail = (() => {
     if (project.isFictional) title.append(textElement('span', 'fictional-tag', '가상'));
     document.querySelector('#project-detail-description').textContent = `${project.productName} · ${project.code}`;
     document.querySelector('#project-target-date').replaceWith(targetField(project));
-    document.querySelector('#project-purpose-summary').replaceWith(purposeCard(project)); refreshScope(project); refreshStage(project);
+    const previousPurpose = document.querySelector('#project-purpose-summary'); const nextPurpose = purposeCard(project);
+    nextPurpose.querySelector('.card-field-guide').open = previousPurpose.querySelector('.card-field-guide')?.open || false;
+    previousPurpose.replaceWith(nextPurpose); refreshScope(project); refreshStage(project);
   }
 
   function render(project) {
     const fragment = document.createDocumentFragment();
     const heading = textElement('div', 'page-heading detail-heading', '');
-    const identity = document.createElement('div');
+    const identity = textElement('div', 'detail-identity', '');
     identity.append(textElement('p', 'eyebrow', 'PROJECT DETAIL'));
     const title = textElement('h1', 'detail-title', project.companyName);
     title.id = 'project-detail-title';
     title.tabIndex = -1;
     if (project.isFictional) title.append(textElement('span', 'fictional-tag', '가상'));
     const description = textElement('p', 'page-description', `${project.productName} · ${project.code}`); description.id = 'project-detail-description'; identity.append(title, description);
-    heading.append(identity, textElement('span', 'demo-pill', project.origin === 'user' ? '직접 등록한 프로젝트' : '기본 샘플 · 삭제 대상 아님'));
+    const back = document.querySelector('#back-to-projects');
+    heading.append(back, identity, textElement('span', 'demo-pill', project.origin === 'user' ? '직접 등록한 프로젝트' : '기본 샘플 · 삭제 대상 아님'));
     const edit = textElement('button', 'request-action-button', project.stage >= 10 ? '기본정보·변경 이력' : '기본정보 수정'); edit.type = 'button'; edit.dataset.editProjectBasic = project.id;
     edit.setAttribute('aria-haspopup', 'dialog'); edit.setAttribute('aria-controls', 'project-basic-dialog'); heading.append(edit);
     if (project.origin === 'user') {
@@ -154,10 +170,10 @@ LCA.views.projectDetail = (() => {
 
     const summary = textElement('dl', 'detail-summary', '');
     summary.append(
-      field('고객사 업종', project.industry),
-      field('프로젝트 유형', project.type),
       stageField(project),
-      targetField(project)
+      targetField(project),
+      field('고객사 업종', project.industry),
+      field('프로젝트 유형', project.type)
     );
     fragment.append(summary);
     const transition = document.createElement('div');
