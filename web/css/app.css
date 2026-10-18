@@ -589,3 +589,26 @@ details.input-assist-person[open] > .interpretation-field { margin-top: 12px; }
 .input-assist-date { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .input-assist-date input[type="date"] { flex: 1 1 170px; min-width: 0; width: auto; min-height: 44px; padding: 8px 10px; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; color: #233b31; background: white; box-sizing: border-box; }
 .input-assist-date .request-action-button { margin: 0; }
+
+/* WEB-031: 여러 자료 요청을 선택해 한 번에 등록 */
+.request-batch { margin: 0 0 24px; padding: 22px 26px; border: 1px solid #cbdccc; border-radius: 13px; background: white; }
+.request-batch > summary { cursor: pointer; font-size: 18px; font-weight: 650; color: #174c3d; line-height: 1.8; }
+.request-batch summary:focus-visible { outline: 3px solid #247158; outline-offset: 4px; }
+.request-batch-fields { border: 0; padding: 0; margin: 20px 0; min-width: 0; }
+.request-batch-fields:disabled { opacity: .65; }
+.request-batch-fields > legend { font-size: 15px; font-weight: 600; }
+.request-batch input[type="text"], .request-batch textarea { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #cbd8ce; border-radius: 8px; font: inherit; color: #233b31; background: white; }
+.request-batch textarea { resize: vertical; }
+.request-batch-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.request-batch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.request-batch-item { min-width: 0; padding: 14px 16px; border: 1px solid #dce6dc; border-radius: 8px; background: #fcfdfb; overflow-wrap: anywhere; }
+.request-batch-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; font-weight: 600; }
+.request-batch-choice input { width: 18px; height: 18px; flex-shrink: 0; }
+.request-batch-item .detail-help { margin: 4px 0 8px; }
+.request-batch-editor > summary { cursor: pointer; line-height: 1.8; font-size: 13px; color: #174c3d; }
+.request-batch-editor > label { display: block; margin: 12px 0 8px; font-size: 13px; }
+.request-batch [aria-invalid="true"] { border-color: #a52b2b; }
+@media (max-width: 640px) {
+  .request-batch { padding: 20px; }
+  .request-batch-grid { grid-template-columns: 1fr; }
+}

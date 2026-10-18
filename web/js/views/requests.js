@@ -107,9 +107,14 @@ LCA.views.requests = (() => {
       showFeedback(item, `${item.id} · ${message}`);
       focusChanged(item, 'review');
     });
+    const batchEditor = LCA.views.requestBatch.init(panel, project, store, () => {
+      find('#request-action-error').hidden = true;
+      renderItems();
+    });
 
     function renderItems() {
       const result = store.list(project.id);
+      batchEditor.render(result);
       onChanged(result);
       find('#request-storage-error').hidden = result.ok;
       find('#request-storage-error').textContent = result.message || '';
@@ -189,7 +194,7 @@ LCA.views.requests = (() => {
       document.querySelector('#detail-request-count').textContent = snapshot.total;
       find('#request-empty').hidden = snapshot.visible.length !== 0;
       find('#request-empty').textContent = selectedStatus === null
-        ? '아직 등록한 자료 요청이 없어요. 필요한 자료를 하나씩 등록해 보세요.'
+        ? '아직 등록한 자료 요청이 없어요. 위에서 여러 자료를 선택하거나 한 개씩 등록해 보세요.'
         : `‘${selectedStatus}’ 상태의 자료 요청이 없어요. ‘전체’를 누르면 이 프로젝트의 현재 요청을 모두 볼 수 있어요.`;
       const registered = new Set(result.items.map((item) => item.categoryKey));
       for (const option of fields.categoryKey.options) {

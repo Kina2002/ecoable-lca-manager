@@ -118,6 +118,54 @@ LCA.requests = (() => {
       }
     }
 
+    function addMany(projectId, draft) {
+      if (!knownProjects.has(projectId)) return failure('프로젝트를 확인할 수 없습니다. 목록에서 다시 열어 주세요.');
+      const errors = {};
+      if (!draft || !validDate(draft.dueDate)) errors.dueDate = '공통 제출 기한을 올바른 날짜로 골라 주세요.';
+      if (!Array.isArray(draft?.items) || !draft.items.length || draft.items.length > LCA.constants.CATEGORIES.length) {
+        errors.items = '필요한 자료 구분을 한 개 이상 선택해 주세요.';
+      } else {
+        const selected = new Set();
+        for (const item of draft.items) {
+          if (!item || !categoryByKey(item.categoryKey) || selected.has(item.categoryKey)) {
+            errors.items = '자료 구분이 올바른지, 같은 구분을 중복 선택하지 않았는지 확인해 주세요.';
+            continue;
+          }
+          selected.add(item.categoryKey);
+        }
+      }
+      if (Object.keys(errors).length) return { ok: false, errors };
+      const current = read();
+      if (!current.ok) return current;
+      const existing = current.data.requests.filter((item) => item.projectId === projectId && !item.deletedAt);
+      const skipped = draft.items.filter((item) => existing.some((saved) => saved.categoryKey === item.categoryKey)).map((item) => ({
+        categoryKey: item.categoryKey, id: existing.find((saved) => saved.categoryKey === item.categoryKey).id
+      }));
+      const pending = draft.items.filter((item) => !existing.some((saved) => saved.categoryKey === item.categoryKey));
+      for (const item of pending) {
+        const itemErrors = validate({ ...item, dueDate: draft.dueDate });
+        if (itemErrors.detail) errors[`detail_${item.categoryKey}`] = itemErrors.detail;
+      }
+      if (Object.keys(errors).length) return { ok: false, errors };
+      if (!pending.length) return { ok: true, items: [], skipped };
+      const number = current.data.nextNumber;
+      if (!Number.isSafeInteger(number + pending.length)) return failure('요청 번호를 만들 수 없습니다. 저장 기록을 확인해 주세요.');
+      const now = new Date().toISOString();
+      const items = pending.map((item, index) => ({
+        id: `DRQ-${String(number + index).padStart(4, '0')}`, projectId, categoryKey: item.categoryKey,
+        detail: item.detail.trim(), dueDate: draft.dueDate, status: '요청', createdAt: now,
+        guideline: LCA.constants.requestGuideline(item.categoryKey)
+      }));
+      const data = { ...current.data, nextNumber: number + items.length, requests: [...current.data.requests, ...items] };
+      try {
+        // 개별 add를 반복하지 않는다. 전부 준비한 뒤 한 번만 저장해 부분 등록을 피한다.
+        getStorage().setItem(STORAGE_KEY, JSON.stringify(data));
+        return { ok: true, items, skipped };
+      } catch {
+        return failure('일괄 등록을 저장하지 못했어요. 이번 항목은 등록하지 않았고 입력은 유지했어요. 저장 공간과 브라우저 설정을 확인해 주세요.');
+      }
+    }
+
     function changeDeleted(projectId, id, deleting) {
       if (!knownProjects.has(projectId)) return failure('프로젝트를 확인할 수 없습니다. 목록에서 다시 열어 주세요.');
       const current = read();
@@ -212,7 +260,7 @@ LCA.requests = (() => {
         return action(projectId, ...args);
       };
     }
-    return { list, listAll, add: writable(add), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
+    return { list, listAll, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };
