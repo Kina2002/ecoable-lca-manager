@@ -187,8 +187,8 @@ LCA.views.modelling = (() => {
     function refresh() {
       const state = store.load(project.id);
       exportButton.disabled = !state.ok || !state.source.approved.length;
-      fieldset.disabled = !state.ok || state.project.stage < 5;
-      saveButton.disabled = !state.ok || state.project.stage < 5 || !state.source.ready;
+      fieldset.disabled = !state.ok || state.project.stage < 5 || state.project.stage >= 9;
+      saveButton.disabled = !state.ok || state.project.stage < 5 || state.project.stage >= 9 || !state.source.ready;
       refreshBasis.disabled = saveButton.disabled;
       if (!state.ok) {
         counts.textContent = state.error; notice.textContent = state.error;
@@ -213,7 +213,7 @@ LCA.views.modelling = (() => {
       }));
       const p = state.project;
       context.textContent = `결과 기준: ${p.productName} · ${p.functionalUnit?.qty || '미정'} ${p.functionalUnit?.unit || ''} · ${p.boundary || '경계 미정'} · ${p.refStart || '기간 미정'} ~ ${p.refEnd || '미정'}`;
-      notice.textContent = p.stage < 5 ? '계산 단계(5)부터 외부 계산 결과를 등록할 수 있어요.'
+      notice.textContent = p.stage >= 9 ? '인증·등록 준비 이후의 계산 결과는 읽기 전용이에요.' : p.stage < 5 ? '계산 단계(5)부터 외부 계산 결과를 등록할 수 있어요.'
         : !state.source.ready ? '현재 자료가 최소 한 건 있고 모두 승인돼야 결과를 저장할 수 있어요.' : '외부 도구에서 같은 기준으로 계산한 결과를 기록해 주세요.';
       sourceWarning.textContent = sourceSignature !== state.source.signature ? '입력 기준이 현재 자료와 달라요. 외부 계산 결과를 다시 확인한 뒤 입력 기준 다시 확인을 눌러 주세요.' : '';
       showRecord(state.record, state.stale);

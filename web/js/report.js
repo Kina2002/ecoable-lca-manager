@@ -62,5 +62,5 @@ LCA.report = (() => {
   function createStore(projects, getInterpretation, getStorage = () => window.localStorage, getComments) {
     return LCA.reportHistory.createStore(projects, getInterpretation, getStorage, { validate, validSource, projectSnapshot, markdown, getComments });
   }
-  return { STORAGE_KEY, validate, sections, createStore };
+  return { STORAGE_KEY, validate, validSource, sections, createStore };
 })();

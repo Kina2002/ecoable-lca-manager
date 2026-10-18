@@ -37,7 +37,7 @@ LCA.requests = (() => {
     return errors;
   }
 
-  function createStore(projectIds, getStorage = () => window.localStorage) {
+  function createStore(projectIds, getStorage = () => window.localStorage, getStage = null) {
     const knownProjects = new Set(projectIds);
     const failure = (message) => ({ ok: false, message });
 
@@ -79,7 +79,10 @@ LCA.requests = (() => {
       const result = read();
       if (!result.ok) return result;
       const requests = result.data.requests.filter((item) => item.projectId === projectId);
-      return { ok: true, items: requests.filter((item) => !item.deletedAt), deletedItems: requests.filter((item) => item.deletedAt) };
+      let stage; try { stage = getStage ? getStage(projectId) : { ok: true, stage: 0 }; } catch { stage = { ok: false }; }
+      return { ok: true, canWrite: stage.ok && stage.stage < 9,
+        readOnlyReason: !stage.ok ? stage.error || '현재 프로젝트 단계를 확인하지 못해 자료를 읽기 전용으로 보관해요.' : stage.stage >= 9 ? '인증·등록 준비 이후에는 완료 근거를 보호하기 위해 자료를 읽기 전용으로 보관해요. 제출 내용과 검토 결과는 아래에서 확인할 수 있어요.' : '',
+        items: requests.filter((item) => !item.deletedAt), deletedItems: requests.filter((item) => item.deletedAt) };
     }
 
     function listAll() {
@@ -199,7 +202,17 @@ LCA.requests = (() => {
       return writeReview(current, { ...current.item, status, review });
     }
 
-    return { list, listAll, add, recordReceipt, startReview, saveReview, remove: (projectId, id) => changeDeleted(projectId, id, true), restore: (projectId, id) => changeDeleted(projectId, id, false) };
+    function writable(action) {
+      return (projectId, ...args) => {
+        if (getStage) {
+          let result; try { result = getStage(projectId); } catch { return failure('프로젝트 단계를 확인하지 못해 저장을 중단했어요.'); }
+          if (!result.ok) return failure(result.error || '프로젝트 단계를 확인하지 못했어요.');
+          if (result.stage >= 9) return failure('인증·등록 준비를 시작한 뒤에는 완료 근거를 보호하기 위해 자료를 읽기 전용으로 보관해요.');
+        }
+        return action(projectId, ...args);
+      };
+    }
+    return { list, listAll, add: writable(add), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };

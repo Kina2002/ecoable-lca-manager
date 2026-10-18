@@ -36,6 +36,7 @@ SPEC은 '이 기능이 무엇을 하고, 어떤 규칙으로 움직이며, 무�
 | 25 | 수집·검토 완료 확인을 자료 요청 탭 상단으로 이동 | WEB-018·019 배치 교정, 기존 조건·기록 유지 | [WEB-025](WEB-025-collection-panel-placement.md) |
 | 26 | 고객 의견·답변·종결·재개와 보고서 버전 연결 | F-08 고객 검토 부분, 변경 기록에 실제 의견 사본 연결 | [WEB-026](WEB-026-customer-review-comments.md) |
 | 27 | 제3자 검증 시작·차수별 지적·보완·보고서 연결 | F-01 7→8, F-08 제3자 지적·차수 부분 | [WEB-027](WEB-027-third-party-verification.md) |
+| 28 | 검증 완료 근거·최종 사본·인증/등록/고객 제출 이력 | F-01 8→9, F-12 번호·날짜·상태 부분 | [WEB-028](WEB-028-certification-registration.md) |
 
 ## 다음 기능을 정하는 방법
 

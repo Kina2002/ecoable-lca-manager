@@ -135,6 +135,7 @@ LCA.modelling = (() => {
       const state = current(id);
       if (!state.ok) return state;
       if (state.project.stage < 5) return { ok: false, error: '계산 단계에 들어간 뒤 외부 계산 결과를 등록해 주세요.' };
+      if (state.project.stage >= 9) return { ok: false, error: '인증·등록 준비 이후에는 완료 근거를 보호하기 위해 계산 결과를 읽기 전용으로 보관해요.' };
       if (!state.source.ready) return { ok: false, error: '현재 프로젝트의 자료를 최소 한 건 등록하고 모두 승인한 뒤 결과를 저장해 주세요.' };
       const previous = data.records[id];
       if ((previous?.revision || 0) !== expectedRevision) return { ok: false, error: '다른 화면에서 계산 결과가 바뀌었어요. 입력은 유지했으니 저장된 결과를 다시 열어 확인해 주세요.' };

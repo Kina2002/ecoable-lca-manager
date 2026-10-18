@@ -3,6 +3,7 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 
 LCA.views.requests = (() => {
+  let refreshCurrent = () => {};
   function textElement(tag, className, value) {
     const element = document.createElement(tag);
     element.className = className;
@@ -112,7 +113,9 @@ LCA.views.requests = (() => {
       onChanged(result);
       find('#request-storage-error').hidden = result.ok;
       find('#request-storage-error').textContent = result.message || '';
-      find('#register-request').disabled = !result.ok;
+      find('#register-request').disabled = !result.ok || !result.canWrite;
+      for (const input of find('#request-form').querySelectorAll('input, textarea, select, button')) input.disabled = !result.ok || !result.canWrite;
+      if (result.ok && !result.canWrite) find('.request-intro').textContent = result.readOnlyReason;
       find('#request-status-controls').hidden = !result.ok;
       if (!result.ok) {
         find('#request-count').textContent = '—';
@@ -140,6 +143,7 @@ LCA.views.requests = (() => {
         const actions = textElement('div', 'request-item-actions', '');
         const action = textElement('button', `request-action-button${deleted ? '' : ' request-delete-button'}`, deleted ? '복원' : '삭제');
         action.type = 'button';
+        action.disabled = !result.canWrite;
         action.dataset.requestAction = deleted ? 'restore' : 'remove';
         action.dataset.requestId = item.id;
         action.setAttribute('aria-label', `${item.id} ${category.name} 자료 요청 ${deleted ? '복원' : '삭제'}`);
@@ -160,6 +164,7 @@ LCA.views.requests = (() => {
         if (!deleted) {
           const record = textElement('button', 'request-action-button receipt-open-button', item.receipt ? '받은 자료 보기·수정' : '받은 자료 기록');
           record.type = 'button';
+          record.disabled = !result.canWrite;
           record.dataset.receiptId = item.id;
           record.setAttribute('aria-label', `${item.id} ${category.name} ${record.textContent}`);
           card.append(record);
@@ -167,6 +172,7 @@ LCA.views.requests = (() => {
             const reviewLabel = item.status === '제출됨' ? '검토 시작' : item.status === '검토 중' ? '이어서 검토' : '검토 결과 보기';
             const reviewButton = textElement('button', 'request-action-button receipt-open-button review-open-button', reviewLabel);
             reviewButton.type = 'button';
+            reviewButton.disabled = !result.canWrite;
             reviewButton.dataset.reviewId = item.id;
             reviewButton.setAttribute('aria-label', `${item.id} ${category.name} ${reviewLabel}`);
             card.append(reviewButton);
@@ -259,8 +265,9 @@ LCA.views.requests = (() => {
       showFeedback(result.item, `${result.item.id} · ${category.name} 자료 요청을 이 브라우저에 저장했어요.`);
     });
     showGuide();
+    refreshCurrent = renderItems;
     renderItems();
   }
 
-  return { init };
+  return { init, refresh: () => refreshCurrent() };
 })();
