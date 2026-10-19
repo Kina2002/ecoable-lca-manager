@@ -30,6 +30,7 @@ LCA.report = (() => {
     const output = [
       { title: '프로젝트', paragraphs: [`프로젝트 번호: ${p.code}`, `회사: ${p.companyName} (가상)`, `제품: ${p.productName}`, `업무 목적: ${p.purpose || '미정'}`, `프로젝트 유형: ${p.type || '미정'}`, `고객 담당자: ${p.customerContactName || '미정'}`, `담당 연구원: ${p.researcherName || '미정'}`,
         ...(p.profile ? [`고객사 업종: ${p.profile.industry || '미정'}`, `세부 동인: ${p.profile.drivers.join(' / ') || '미정'}`, `결과 활용처: ${p.profile.uses.join(' / ') || '미정'}`] : [])] },
+      ...(p.profile?.information ? [{ title: '고객·제품·평가 계획 보충 정보', paragraphs: Object.entries(LCA.projects.INFORMATION).map(([key,label]) => `${label}: ${p.profile.information[key] || '미기록'}`) }] : []),
       { title: '평가 범위', paragraphs: [`평가 기준량: ${scope.functionalUnit.qty} ${scope.functionalUnit.unit}`, `시스템 경계: ${scope.boundary}`, `평가 모듈: ${scope.modules || '별도 기록 없음'}`, `기준기간: ${scope.refStart} ~ ${scope.refEnd}`, `적용 기준: ${scope.standards.join(' / ')}`] },
       { title: `계산에 연결한 승인 원자료 (${c.source.requests.filter((item) => item.status === '승인').length}건)`, paragraphs: c.source.requests.filter((item) => item.status === '승인').map((item) => {
         const r = item.receipt;

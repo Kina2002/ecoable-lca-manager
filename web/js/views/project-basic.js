@@ -42,9 +42,19 @@ LCA.views.projectBasic = (() => {
       }
       group.append(summary, options); profileFields.append(group); multi[key] = { summary, inputs };
     }
-    function profileDraft() { return { industry: profileControls.industry.value, type: profileControls.type.value,
+    const informationControls = {};
+    const informationGroup = text('details', 'project-profile-group', ''); informationGroup.append(text('summary', '', '고객·제품·평가 방법 보충 정보'));
+    informationGroup.append(text('p', 'detail-help', '빈칸은 나중에 확인할 권장 정보예요. 중량과 생산량은 단위를 함께 적어요. 컷오프는 작은 투입을 어디까지 포함할지, 할당은 여러 제품 사이의 영향을 어떻게 나눌지 정한 근거예요. 배경 DB는 외부 계산에서 사용할 자료집이에요. 실제 계산 결과에 쓴 방법은 계산 탭에 따로 남겨요.'));
+    for (const [key,label] of Object.entries(LCA.projects.INFORMATION)) {
+      const box = text('div', 'interpretation-field', ''); const caption = text('label','',label); caption.htmlFor = `project-information-${key}`;
+      const input = document.createElement('input'); input.type = key === 'contactEmail' ? 'email' : 'text'; input.id = caption.htmlFor; input.maxLength = key.endsWith('On') ? 10 : 500;
+      if (key.endsWith('On')) { input.inputMode = 'numeric'; input.placeholder = 'YYYY-MM-DD'; input.addEventListener('input', () => { input.value = LCA.requests.formatDateInput(input.value); }); LCA.views.inputAssist.date(input); }
+      box.append(caption,input); informationGroup.append(box); informationControls[key] = input;
+    }
+    profileFields.append(informationGroup);
+    function profileDraft() { const information = Object.fromEntries(Object.entries(informationControls).map(([key,input]) => [key,input.value.trim()])); return { industry: profileControls.industry.value, type: profileControls.type.value,
       drivers: [...multi.drivers.inputs.values()].filter((input) => input.checked).map((input) => input.value),
-      uses: [...multi.uses.inputs.values()].filter((input) => input.checked).map((input) => input.value) }; }
+      uses: [...multi.uses.inputs.values()].filter((input) => input.checked).map((input) => input.value), ...(state?.project.information || Object.values(information).some(Boolean) ? { information } : {}) }; }
     function updateCounts() { for (const key of ['drivers', 'uses']) multi[key].summary.textContent = `${PROFILE_LABELS[key]} 선택 · ${[...multi[key].inputs.values()].filter((input) => input.checked).length}개`; }
     const reasonBox = text('div', 'interpretation-field', ''); const reasonLabel = text('label', '', '변경 사유 (선택 · 최대 1,000자)');
     reasonLabel.htmlFor = 'project-basic-reason'; const reason = document.createElement('textarea'); reason.id = reasonLabel.htmlFor; reason.maxLength = 1000; reason.rows = 2; reasonBox.append(reasonLabel, reason); fields.append(reasonBox);
@@ -59,6 +69,7 @@ LCA.views.projectBasic = (() => {
         item.append(text('summary', '', `${at} (한국 시간) · ${event.stage}단계에서 ${event.profile ? '추가정보' : '기본정보'} 변경`));
         const display = (value) => (Array.isArray(value) ? value.join(' / ') : value) || '미정';
         for (const [key, label] of Object.entries({ ...LABELS, ...PROFILE_LABELS })) if (JSON.stringify(event.before[key]) !== JSON.stringify(event.after[key])) item.append(text('p', 'detail-help', `${label}: ${display(event.before[key])} → ${display(event.after[key])}`));
+        for (const [key,label] of Object.entries(LCA.projects.INFORMATION)) if ((event.before.information?.[key] || '') !== (event.after.information?.[key] || '')) item.append(text('p','detail-help',`${label}: ${display(event.before.information?.[key])} → ${display(event.after.information?.[key])}`));
         if (event.reason) item.append(text('p', 'interpretation-text', `변경 사유: ${event.reason}`)); history.append(item);
       }
     }
@@ -75,6 +86,8 @@ LCA.views.projectBasic = (() => {
       if (loaded.ok) {
         state = loaded; heading.textContent = `${loaded.project.code} · 기본정보와 변경 이력`;
         for (const key of Object.keys(controls)) controls[key].value = loaded.project[key];
+        for (const [key,input] of Object.entries(informationControls)) input.value = loaded.project.information?.[key] || '';
+        informationGroup.open = false;
         for (const key of ['industry', 'type']) profileControls[key].value = loaded.project[key] || '';
         for (const key of ['drivers', 'uses']) for (const [value, input] of multi[key].inputs) { input.checked = loaded.project[key]?.includes(value) || false; input.parentElement.hidden = value === '국내 환경성적표지' && !input.checked; }
         updateCounts();

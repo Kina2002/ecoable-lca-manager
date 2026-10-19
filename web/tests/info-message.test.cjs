@@ -23,6 +23,8 @@ test('정보가 채워지면 대상에서 빠지고 이전 초안의 기준 변�
   assert.equal(LCA.requestMessage.candidates(state, 'info').items.some((item) => item.id === 'customerContactName'), false);
   assert.equal(LCA.requestMessage.check(state, 'info', result.ids, result.fingerprint).ok, false);
   Object.assign(state.project, { uses: ['환경성적표지'], functionalUnit: { qty: '1', unit: 'kg' }, boundary: '요람~문', scopeStatus: '확정', refStart: '2025-01-01', refEnd: '2025-12-31', standards: ['ISO 14040/44'] });
+  assert.equal(LCA.requestMessage.candidates(state, 'info').items.length, 6);
+  state.project.information = { contactDepartment:'자료팀', contactEmail:'demo@example.com', productCode:'DEMO', unitWeight:'1 kg', annualProduction:'100 kg', customerDueOn:'2026-12-01' };
   assert.equal(LCA.requestMessage.candidates(state, 'info').items.length, 0);
   state.project.researcherName = '';
   assert.equal(LCA.requestMessage.candidates(state, 'info').items.length, 0);

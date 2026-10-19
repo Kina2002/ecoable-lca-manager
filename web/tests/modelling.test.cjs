@@ -61,6 +61,13 @@ test('승인 자료와 해당 없음 사유를 계산 근거에 보관하고 다
 function save(s, value = draft(), loaded = s.store.load(s.project.id)) {
   return s.store.save(s.project.id, value, loaded.record?.revision || 0, loaded.source?.signature || '');
 }
+test('평가 방법 계획 변경은 기존 계산 사본을 유지하며 재확인이 필요해진다', () => {
+  const s = setup(); ready(s); s.project.information = { cutoff:'1% 검토', allocation:'질량', backgroundDatabase:'가상 DB' };
+  const result = save(s); assert.equal(result.ok,true,result.error); const copy = JSON.stringify(result.record);
+  assert.equal(s.store.load(s.project.id).stale,false);
+  s.project.information.cutoff='전체 포함'; assert.equal(s.store.load(s.project.id).stale,true);
+  assert.equal(JSON.stringify(s.store.load(s.project.id).record),copy);
+});
 
 test('CSV는 현재 프로젝트의 미삭제 승인 자료만 내보내고 수치·밀도·문서를 원래대로 보존한다', () => {
   const s = setup(), energy = add(s), water = add(s, 'water'), document = add(s, 'general');

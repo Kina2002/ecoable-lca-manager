@@ -5,12 +5,27 @@ LCA.projects = (() => {
   const PURPOSES = ['고객사 요구 대응', '규제 대응', '제품 환경성 진단'];
   const BASIC_FIELDS = ['companyName', 'productName', 'purpose', 'targetDate'];
   const PROFILE_FIELDS = ['industry', 'type', 'drivers', 'uses'];
+  const INFORMATION = { contactDepartment: '고객 담당 부서', contactPosition: '고객 담당자 직책', contactEmail: '고객 담당자 이메일', productCode: '제품 코드', unitWeight: '단위 중량·단위', annualProduction: '연간 생산량·단위', startedOn: '착수일', customerDueOn: '고객이 요청한 마감일', cutoff: '컷오프 기준·근거', allocation: '할당 방법·근거', backgroundDatabase: '사용할 배경 DB·버전' };
+  const informationSnapshot = (p) => Object.fromEntries(Object.keys(INFORMATION).map((key) => [key, p.information?.[key] || '']));
+  function validInformation(info) {
+    return info && typeof info === 'object' && !Array.isArray(info) && Object.keys(info).length === Object.keys(INFORMATION).length
+      && Object.keys(INFORMATION).every((key) => typeof info[key] === 'string' && info[key] === info[key].trim() && info[key].length <= 500)
+      && ['startedOn','customerDueOn'].every((key) => !info[key] || LCA.requests.validDate(info[key]))
+      && (!info.contactEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.contactEmail));
+  }
+  function missingInformation(project) {
+    const missing = [];
+    if (!project.industry) missing.push('고객사 업종'); if (!project.type) missing.push('프로젝트 유형'); if (!project.uses?.length) missing.push('결과 활용처');
+    if (project.stage >= 2) for (const [key,label] of Object.entries(INFORMATION)) if (!project.information?.[key]?.trim()) missing.push(label);
+    return missing;
+  }
   const PROFILE_OPTIONS = { industry: LCA.constants.INDUSTRIES, type: LCA.constants.PROJECT_TYPES,
     drivers: [...new Set([...Object.values(LCA.constants.DRIVERS).flat(), '국내 환경성적표지'])], uses: LCA.constants.USES };
   function basicSnapshot(project) { return Object.fromEntries(BASIC_FIELDS.map((key) => [key, project[key]])); }
-  function profileSnapshot(project) { return { industry: project.industry || '', type: project.type || '', drivers: [...(project.drivers || [])].sort(), uses: [...(project.uses || [])].sort() }; }
+  function profileSnapshot(project) { return { industry: project.industry || '', type: project.type || '', drivers: [...(project.drivers || [])].sort(), uses: [...(project.uses || [])].sort(), ...(project.information ? { information: informationSnapshot(project) } : {}) }; }
   function validProfile(profile) {
-    return profile && typeof profile === 'object' && !Array.isArray(profile) && Object.keys(profile).length === PROFILE_FIELDS.length
+    return profile && typeof profile === 'object' && !Array.isArray(profile) && Object.keys(profile).every((key) => [...PROFILE_FIELDS,'information'].includes(key))
+      && PROFILE_FIELDS.every((key) => Object.hasOwn(profile,key)) && (profile.information === undefined || validInformation(profile.information))
       && ['industry', 'type'].every((key) => profile[key] === '' || PROFILE_OPTIONS[key].includes(profile[key]))
       && ['drivers', 'uses'].every((key) => Array.isArray(profile[key]) && new Set(profile[key]).size === profile[key].length
         && profile[key].every((value) => PROFILE_OPTIONS[key].includes(value)));
@@ -151,7 +166,7 @@ LCA.projects = (() => {
     }
     function updateBasic(id, draft, expected) {
       const errors = validate(draft);
-      if (draft.profile !== undefined && !validProfile(draft.profile)) errors.profile = '업종·프로젝트 유형·세부 동인·결과 활용처를 선택 목록에서 중복 없이 골라 주세요.';
+      if (draft.profile !== undefined && !validProfile(draft.profile)) errors.profile = '추가정보의 선택 목록·이메일·날짜·500자 이내 입력을 확인해 주세요.';
       if (typeof draft.reason !== 'string' || draft.reason.trim().length > 1000) errors.reason = '변경 사유는 1,000자 이내로 적어 주세요.';
       if (Object.keys(errors).length) return { ok: false, errors };
       const loaded = read(); if (!loaded.ok) return loaded;
@@ -190,5 +205,5 @@ LCA.projects = (() => {
     }
     return { list, basic, add: (...args) => locked(() => add(...args)), saveCollectionDeadline: (...args) => locked(() => saveCollectionDeadline(...args)), updateBasic: (...args) => locked(() => updateBasic(...args)) };
   }
-  return { STORAGE_KEY, PURPOSES, BASIC_FIELDS, PROFILE_FIELDS, PROFILE_OPTIONS, basicSnapshot, profileSnapshot, validProfile, validate, createStore };
+  return { INFORMATION, informationSnapshot, validInformation, missingInformation, STORAGE_KEY, PURPOSES, BASIC_FIELDS, PROFILE_FIELDS, PROFILE_OPTIONS, basicSnapshot, profileSnapshot, validProfile, validate, createStore };
 })();

@@ -29,6 +29,7 @@ LCA.tasks = (() => {
       if (!project.customerContactName?.trim()) missing.push('고객 담당자');
       if (!project.researcherName?.trim()) missing.push('담당 연구원');
       if (!LCA.requests.validDate(project.targetDate)) missing.push('목표 완료일');
+      if (project.stage < 9) missing.push(...(LCA.projects?.missingInformation(project) || []));
       if (project.stage >= 2 && project.stage < 9) {
         missing.push(...LCA.scope.missing(project));
         if (project.scopeStatus !== '확정') missing.push('평가 범위 합의·확정');

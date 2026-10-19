@@ -5,6 +5,7 @@ for (const name of ['constants','rules','requests','deadlines','request-message'
 const { LCA } = context; LCA.rules.today = () => '2026-10-19';
 const project = { id:'p', stage:3, companyName:'가상 회사', productName:'제품', customerContactName:'고객', researcherName:'연구원', targetDate:'2026-12-01', uses:['PCF'], functionalUnit:{qty:1,unit:'kg'}, boundary:'요람~문', scopeStatus:'확정', refStart:'2025-01-01', refEnd:'2025-12-31', standards:['ISO'] };
 const item = (id,status,dueDate) => ({ id, projectId:'p', status, dueDate, categoryKey:'energy', detail:id, review:status === '보완 요청' ? {note:'합계 확인'} : undefined });
+project.information = { contactDepartment:'자료팀', contactEmail:'demo@example.com', productCode:'DEMO', unitWeight:'1 kg', annualProduction:'100 kg', customerDueOn:'2026-12-01' };
 const state = (items) => ({ok:true,project,items});
 test('추천 우선순위는 기한 초과·보완과 임박·보완·임박·정보 확인·없음이다', () => {
   const revise = item('DRQ-0001','보완 요청','2026-10-01'); const soon = item('DRQ-0002','요청','2026-10-22'); const overdue = item('DRQ-0003','요청','2026-10-18');

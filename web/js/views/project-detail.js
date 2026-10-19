@@ -98,6 +98,9 @@ LCA.views.projectDetail = (() => {
     scopeFields.push(field('기준기간', project.refStart && project.refEnd ? `${project.refStart} ~ ${project.refEnd}` : '미정'));
     scopeFields.push(field('적용 기준', project.standards || []));
     if (project.periodReason) scopeFields.push(field('기준기간 사유', project.periodReason));
+    if (project.information) for (const [key,label] of Object.entries(LCA.projects.INFORMATION)) scopeFields.push(field(label, project.information[key] || '미기록'));
+    const missingInfo = LCA.projects.missingInformation(project);
+    if (missingInfo.length) scopeFields.push(field('추가 확인할 권장 정보', missingInfo, '상단 기본정보 수정에서 보충해요. 지금 단계의 필수 이동 조건과는 구분해요.'));
     scopeFields.push(field('협의 메모', project.scopeMemo || '기록한 메모가 없어요.'));
     if (project.modules) {
       scopeFields.push(field('평가 모듈', project.modules,

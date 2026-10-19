@@ -5,12 +5,15 @@ LCA.modelling = (() => {
   const LIMITS = { tool: 100, database: 200, method: 200, allocation: 500, resultFileName: 200, note: 1000 };
   const LABELS = { tool: '계산 도구', database: '배경 DB·버전', method: '평가 방법·버전', allocation: '할당 방법·적용 근거', resultFileName: '결과 파일 이름', note: '계산 메모' };
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const METHOD_FIELDS = ['cutoff','allocation','backgroundDatabase'];
   function projectSnapshot(project) {
+    const plan = project.methodPlan || project.information;
     return {
       id: project.id, code: project.code, companyName: project.companyName, productName: project.productName,
       functionalUnit: { qty: String(project.functionalUnit?.qty ?? ''), unit: project.functionalUnit?.unit || '' },
       boundary: project.boundary || '', modules: project.modules || '',
-      refStart: project.refStart || '', refEnd: project.refEnd || '', standards: (project.standards || []).slice()
+      refStart: project.refStart || '', refEnd: project.refEnd || '', standards: (project.standards || []).slice(),
+      ...(plan && METHOD_FIELDS.some((key) => plan[key]) ? { methodPlan: Object.fromEntries(METHOD_FIELDS.map((key) => [key, plan[key] || ''])) } : {})
     };
   }
   function sourceState(project, result) {
@@ -106,6 +109,7 @@ LCA.modelling = (() => {
             || ['createdAt', 'updatedAt'].some((key) => typeof record[key] !== 'string' || !Number.isFinite(Date.parse(record[key])))
             || record.createdAt > record.updatedAt) return failure();
           const p = record.source.project;
+          if (p.methodPlan !== undefined && (!p.methodPlan || Object.keys(p.methodPlan).length !== METHOD_FIELDS.length || METHOD_FIELDS.some((key) => typeof p.methodPlan[key] !== 'string' || p.methodPlan[key].length > 500))) return failure();
           if (['id', 'code', 'companyName', 'productName'].some((key) => typeof p[key] !== 'string' || !p[key].trim())
             || !p.functionalUnit || !/^\d+(\.\d+)?$/.test(p.functionalUnit.qty) || !Number.isFinite(Number(p.functionalUnit.qty)) || Number(p.functionalUnit.qty) <= 0
             || typeof p.functionalUnit.unit !== 'string' || !p.functionalUnit.unit.trim() || !['요람~문', '요람~무덤', '기타'].includes(p.boundary)

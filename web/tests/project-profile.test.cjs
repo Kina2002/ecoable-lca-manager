@@ -7,6 +7,14 @@ for (const file of ['constants', 'rules', 'data', 'requests', 'projects', 'repor
 const { LCA } = context; const P = LCA.projects;
 const profile = () => ({ industry: '배터리·소재', type: 'PCF 산정', drivers: ['Catena-X'], uses: ['PCF', '환경성적표지'] });
 const expected = (state) => ({ revision: state.revision, stage: state.stage, basic: P.basicSnapshot(state.project), profileRevision: state.profileRevision, profile: P.profileSnapshot(state.project) });
+test('보충 정보를 같은 변경 이력에 저장하고 날짜·이메일 오류와 내부 누락을 구분한다', async () => {
+  const s = setup(); const state = s.store.basic(s.project.id); const information = { ...P.informationSnapshot({}), contactEmail:'demo@example.com', cutoff:'미량 제외 기준 협의 중', allocation:'질량 기준 협의', backgroundDatabase:'가상 DB v1' };
+  const result = await s.store.updateBasic(s.project.id,{...P.basicSnapshot(state.project),profile:{...profile(),information},reason:'범위 협의'},expected(state));
+  assert.equal(result.ok,true,result.error);
+  const loaded = s.store.basic(s.project.id); assert.equal(loaded.project.information.allocation,information.allocation); assert.equal(loaded.profileHistory[0].after.information.contactEmail,'demo@example.com');
+  assert.equal(P.missingInformation(loaded.project).includes('할당 방법·근거'),false); assert.equal(P.missingInformation(loaded.project).includes('착수일'),true);
+  for (const changes of [{contactEmail:'bad'},{startedOn:'2026-02-30'},{cutoff:'가'.repeat(501)}]) assert.equal(P.validInformation({...information,...changes}),false);
+});
 function setup(stage = 2) {
   const values = new Map(); let fail = false; const storage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => { if (fail) throw Error('full'); values.set(key, value); } };
   const samples = LCA.data.createSampleProjects('2026-10-19'); const project = samples.find((p) => p.stage === 2); let currentStage = stage;

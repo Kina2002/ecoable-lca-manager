@@ -312,7 +312,7 @@
     if (openedProjectId === id) {
       LCA.views.projectDetail.refreshBasics(project);
       const intro = detailView.querySelector('.request-intro'); if (intro) intro.textContent = `${project.companyName}의 ${project.productName} 평가에 필요한 자료를 적어 두는 목록이에요.`;
-      LCA.views.report.refreshBasics();
+      LCA.views.report.refreshBasics(); LCA.views.modelling.refresh(); LCA.views.interpretation.refresh();
       LCA.views.requests.refresh(); LCA.views.verification.refresh(); LCA.views.certification.refresh();
       projectPageTitle = `${project.companyName} 상세 | LCA 프로젝트 관리`;
       if (!detailView.hidden) setPage('프로젝트 상세', projectPageTitle, 'project');

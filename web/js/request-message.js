@@ -16,6 +16,11 @@ LCA.requestMessage = (() => {
     else if (project.scopeStatus !== '확정' && project.stage <= 2) add('scopeAgreement', '협의 중인 평가 범위', `현재 기록한 범위안은 ‘${line(project.boundary)}’입니다. 요청하신 목적에 맞는지 의견과 추가 요구를 확인 부탁드립니다.`);
     if (!LCA.requests.validDate(project.refStart) || !LCA.requests.validDate(project.refEnd) || project.refStart > project.refEnd) add('period', '자료 기준기간', '생산량·투입량 등 자료를 제공할 수 있는 기간과 최근 자료의 확보 여부를 알려 주세요.');
     if (!project.standards?.length) add('standards', '요구받은 평가 기준', '거래처나 인증기관에서 지정한 평가 기준·작성지침·양식이 있다면 공유해 주세요. 적용 기준은 확인 후 협의하겠습니다.');
+    if (project.stage >= 2) for (const [id,name,detail] of [
+      ['contactDepartment','고객 담당 부서·직책','담당 부서와 직책을 알려 주세요.'], ['contactEmail','자료 담당자 이메일','자료 전달과 일정 협의에 사용할 이메일을 알려 주세요.'],
+      ['productCode','제품 코드','평가 대상 제품의 관리 코드나 모델명을 알려 주세요.'], ['unitWeight','제품 단위 중량','제품 한 단위의 중량과 단위를 알려 주세요.'],
+      ['annualProduction','연간 생산량','해당 기간의 연간 생산량과 단위를 알려 주세요.'], ['customerDueOn','고객 요청 일정','고객사에서 결과를 필요로 하는 날짜가 따로 있는지 알려 주세요.']
+    ]) if (!project.information?.[id]?.trim()) add(id,name,detail);
     return items;
   }
   function candidates(state, type) {
