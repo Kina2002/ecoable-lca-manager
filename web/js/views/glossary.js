@@ -5,6 +5,7 @@ LCA.views = LCA.views || {};
 LCA.views.glossary = (() => {
   const PAGE_SIZE = 6;
   let page = 1;
+  let targetTermId = '';
   const pagers = [];
   function textElement(tag, className, value) {
     const element = document.createElement(tag);
@@ -22,6 +23,7 @@ LCA.views.glossary = (() => {
     entries.slice(start, start + PAGE_SIZE).forEach((entry) => {
       const item = textElement('li', 'glossary-card', '');
       item.dataset.termId = entry.id;
+      if (entry.id === targetTermId) item.classList.add('glossary-card-target');
       item.append(textElement('span', 'glossary-category', entry.category), textElement('h3', '', entry.term));
       if (entry.english) item.append(textElement('p', 'glossary-english', entry.english));
       item.append(textElement('p', 'glossary-meaning', entry.meaning));
@@ -41,6 +43,7 @@ LCA.views.glossary = (() => {
         reference.append(document.createTextNode(`${source.label} · ${source.note}`));
       }
       item.append(reference);
+      if (entry.checkedOn) item.append(textElement('p', 'glossary-source', `이 설명 확인일: ${entry.checkedOn.replaceAll('-', '.')}`));
       fragment.append(item);
     });
     document.querySelector('#glossary-results').replaceChildren(fragment);
@@ -83,9 +86,10 @@ LCA.views.glossary = (() => {
       const results = document.querySelector('#glossary-results');
       if (position === 'top') results.before(nav); else results.after(nav);
     }
-    searchInput.addEventListener('input', () => render(searchInput.value));
+    searchInput.addEventListener('input', () => { targetTermId = ''; render(searchInput.value); });
     document.querySelector('#clear-glossary-search').addEventListener('click', () => {
       searchInput.value = '';
+      targetTermId = '';
       render('');
       searchInput.focus();
     });
@@ -94,5 +98,26 @@ LCA.views.glossary = (() => {
     render('');
   }
 
-  return { init };
+  function standardLink(standard) {
+    const id = LCA.glossary.STANDARD_TERMS[standard];
+    if (!id) return document.createTextNode(standard);
+    const link = textElement('a', 'standard-glossary-link', standard);
+    link.href = '#glossary-view'; link.dataset.glossaryTerm = id;
+    link.setAttribute('aria-label', `${standard} · 용어사전 설명 보기`); return link;
+  }
+  function openTerm(id) {
+    const entry = LCA.glossary.TERMS.find((term) => term.id === id); if (!entry) return false;
+    const search = document.querySelector('#glossary-search'); search.value = entry.term; targetTermId = id;
+    const index = LCA.glossary.search(entry.term).findIndex((term) => term.id === id);
+    render(entry.term, Math.floor(Math.max(0, index) / PAGE_SIZE) + 1);
+    const card = document.querySelector(`#glossary-results [data-term-id="${id}"]`);
+    if (card) { card.tabIndex = -1; card.focus({ preventScroll: true }); card.scrollIntoView({ block: 'center' }); }
+    return true;
+  }
+  function capture() { return { query: document.querySelector('#glossary-search').value, page, targetTermId }; }
+  function restore(state) {
+    document.querySelector('#glossary-search').value = state.query;
+    targetTermId = state.targetTermId; render(state.query, state.page);
+  }
+  return { init, standardLink, openTerm, capture, restore };
 })();

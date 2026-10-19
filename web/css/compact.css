@@ -329,3 +329,12 @@ h1 { font-size: 25px; }
 
 .project-attention-control { display: flex; align-items: center; gap: .4rem; align-self: end; padding: .45rem 0; }
 .project-list-controls .project-attention-control input { width: auto; min-height: auto; }
+
+/* WEB-066: 적용 여부 선택과 용어 설명 이동을 독립적인 조작으로 제공한다. */
+.scope-standard-option { display: inline-flex; align-items: center; gap: 7px; margin: 5px 18px 5px 0; }
+.scope-standard-option input[type="checkbox"] { width: 18px; height: 18px; margin: 0; flex-shrink: 0; }
+.standard-glossary-link { color: #174c3d; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; }
+.standard-glossary-link:hover { text-decoration-style: solid; }
+.standard-glossary-link:focus-visible { outline: 3px solid #247158; outline-offset: 4px; border-radius: 2px; }
+.glossary-card-target { border-color: #247158; box-shadow: 0 0 0 2px #24715833; }
+.glossary-return { margin: 0 0 12px; }

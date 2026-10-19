@@ -122,8 +122,10 @@
   let projectView = listView;
   let projectPageTitle = '프로젝트 목록 | LCA 프로젝트 관리';
   let projectScrollY = 0;
+  let glossaryReturn = null;
 
   function setPage(label, title, section) {
+    if (section !== 'glossary') { glossaryReturn = null; document.querySelector('#glossary-back-to-project').hidden = true; }
     document.querySelector('#current-view-label').textContent = label;
     document.title = title;
     for (const name of ['home', 'project', 'glossary', 'researcher', 'tasks', 'settings']) {
@@ -569,8 +571,7 @@
     listView.querySelector('h1').focus({ preventScroll: true });
     listScrollY = 0; projectScrollY = 0; window.scrollTo(0, 0);
   });
-  document.querySelector('#glossary-navigation').addEventListener('click', (event) => {
-    event.preventDefault();
+  function openGlossary() {
     if (glossaryView.hidden) {
       if (researcherView.hidden && tasksView.hidden && homeView.hidden && settingsView.hidden) projectScrollY = window.scrollY;
       listView.hidden = true;
@@ -584,6 +585,26 @@
     }
     document.querySelector('#glossary-search').focus({ preventScroll: true });
     window.scrollTo(0, 0);
+  }
+  document.querySelector('#glossary-navigation').addEventListener('click', (event) => { event.preventDefault(); openGlossary(); });
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[data-glossary-term]');
+    if (!link || detailView.hidden || !detailView.contains(link) || !LCA.glossary.TERMS.some((term) => term.id === link.dataset.glossaryTerm)) return;
+    event.preventDefault();
+    glossaryReturn = { projectId: openedProjectId, opener: link, scrollY: window.scrollY, title: projectPageTitle, glossary: LCA.views.glossary.capture() };
+    openGlossary(); document.querySelector('#glossary-back-to-project').hidden = false;
+    LCA.views.glossary.openTerm(link.dataset.glossaryTerm);
+  });
+  document.querySelector('#glossary-back-to-project').addEventListener('click', () => {
+    const back = glossaryReturn;
+    if (!back || back.projectId !== openedProjectId || !back.opener.isConnected) {
+      glossaryReturn = null; document.querySelector('#glossary-back-to-project').hidden = true; return;
+    }
+    LCA.views.glossary.restore(back.glossary);
+    glossaryView.hidden = true; listView.hidden = true; researcherView.hidden = true; tasksView.hidden = true; homeView.hidden = true; settingsView.hidden = true;
+    detailView.hidden = false; projectView = detailView;
+    setPage('프로젝트 상세', back.title, 'project');
+    window.scrollTo(0, back.scrollY); back.opener.focus({ preventScroll: true });
   });
   function openResearchers(id = null) {
     if (researcherView.hidden && glossaryView.hidden && tasksView.hidden && homeView.hidden && settingsView.hidden) projectScrollY = window.scrollY;

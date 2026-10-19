@@ -204,14 +204,18 @@ LCA.views.scope = (() => {
     const legend = document.createElement('legend');
     legend.textContent = '적용 기준 (하나 이상 선택)';
     standards.append(legend);
-    for (const standard of LCA.scope.STANDARDS) {
-      const label = document.createElement('label');
+    const standardHelp = document.createElement('p'); standardHelp.className = 'detail-help';
+    standardHelp.textContent = '체크박스는 적용 여부를 선택하고, 기준 이름은 용어사전 설명을 열어요. 설명을 본 뒤 돌아와도 작성 중인 내용은 유지돼요.';
+    standards.append(standardHelp);
+    for (const [index, standard] of LCA.scope.STANDARDS.entries()) {
+      const row = document.createElement('div'); row.className = 'scope-standard-option';
       const input = document.createElement('input');
       input.type = 'checkbox';
+      input.id = `scope-standard-${index}`; input.setAttribute('aria-label', standard);
       input.value = standard;
       input.checked = project.standards.includes(standard);
-      label.append(input, document.createTextNode(standard));
-      standards.append(label);
+      row.append(input, LCA.views.glossary.standardLink(standard));
+      standards.append(row);
     }
     form.append(standards);
     const help = document.createElement('p');

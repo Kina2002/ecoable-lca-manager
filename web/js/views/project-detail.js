@@ -96,7 +96,9 @@ LCA.views.projectDetail = (() => {
         BOUNDARY_HELP[project.boundary] || '평가가 시작되고 끝나는 범위를 정해요.')
     ];
     scopeFields.push(field('기준기간', project.refStart && project.refEnd ? `${project.refStart} ~ ${project.refEnd}` : '미정'));
-    scopeFields.push(field('적용 기준', project.standards || []));
+    const standards = field('적용 기준', project.standards || []);
+    standards.querySelectorAll('li').forEach((item, index) => item.replaceChildren(LCA.views.glossary.standardLink(project.standards[index])));
+    scopeFields.push(standards);
     if (project.periodReason) scopeFields.push(field('기준기간 사유', project.periodReason));
     if (project.information) for (const [key,label] of Object.entries(LCA.projects.INFORMATION)) scopeFields.push(field(label, project.information[key] || '미기록'));
     const missingInfo = LCA.projects.missingInformation(project);
