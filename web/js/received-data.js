@@ -6,6 +6,8 @@ LCA.receivedData = (() => {
   const MAX_DESCRIPTION = 1000;
   const MAX_FILE_NAME = 200;
   const SOURCES = ['1차', '2차'];
+  // 저장된 1차/2차 코드는 유지하되 계수에는 자료 출처의 성격을 표시한다.
+  const factorSourceLabel = (value) => ({ '1차': '해당 공급자·공정 계수', '2차': '외부 데이터셋 계수' })[value] || '미기록';
   const METHODS = ['측정', '계산', '추정', '가정'];
   const SOURCE_FIELDS = ['activitySource', 'activitySourceDetail', 'factorSource', 'acquisitionMethod', 'datasetDatabase', 'datasetName', 'datasetVersion', 'datasetYear', 'datasetSource'];
   const hasSource = (source) => source && SOURCE_FIELDS.some((key) => typeof source[key] === 'string' && source[key].trim());
@@ -45,9 +47,9 @@ LCA.receivedData = (() => {
         if (!source.activitySource && source.activitySourceDetail?.trim()) errors.activitySource = '자료 이름을 적었다면 활동량 출처도 골라 주세요.';
         if (source.factorSource === '2차') {
           for (const [key, label] of [['datasetDatabase', 'DB 이름'], ['datasetName', '데이터셋 이름'], ['datasetVersion', '버전'], ['datasetSource', '제공처·출처']]) {
-            if (!source[key]?.trim()) errors[key] = `2차 계수의 ${label}을 적어 주세요.`;
+            if (!source[key]?.trim()) errors[key] = `외부 데이터셋 계수의 ${label}을 적어 주세요.`;
           }
-          if (!/^\d{4}$/.test(source.datasetYear || '')) errors.datasetYear = '2차 계수의 기준연도를 네 자리 숫자로 적어 주세요.';
+          if (!/^\d{4}$/.test(source.datasetYear || '')) errors.datasetYear = '외부 데이터셋 계수의 기준연도를 네 자리 숫자로 적어 주세요.';
         }
       }
     }
@@ -95,5 +97,5 @@ LCA.receivedData = (() => {
     const [whole, fraction] = value.split('.');
     return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction === undefined ? '' : `.${fraction}`);
   }
-  return { UNITS, VOLUME_UNITS, SOURCES, METHODS, SOURCE_FIELDS, MAX_DESCRIPTION, MAX_FILE_NAME, validate, normalize, validRecord, displayNumber };
+  return { UNITS, VOLUME_UNITS, SOURCES, METHODS, SOURCE_FIELDS, MAX_DESCRIPTION, MAX_FILE_NAME, validate, normalize, validRecord, displayNumber, factorSourceLabel };
 })();

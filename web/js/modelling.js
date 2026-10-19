@@ -49,7 +49,7 @@ LCA.modelling = (() => {
         LCA.constants.CATEGORIES.find((category) => category.key === item.categoryKey)?.name || item.categoryKey,
         item.detail, item.dueDate, r.kind === 'quantity' ? '수치' : '문서·설명', r.value, r.unit, r.density, r.description,
         r.periodStart, r.periodEnd, r.evidenceFileName, item.review.note, item.review.updatedAt, exportedAt, state.total, state.approved.length,
-        r.provenance?.activitySource, r.provenance?.activitySourceDetail, r.provenance?.acquisitionMethod, r.provenance?.factorSource,
+        r.provenance?.activitySource, r.provenance?.activitySourceDetail, r.provenance?.acquisitionMethod, r.provenance?.factorSource ? LCA.receivedData.factorSourceLabel(r.provenance.factorSource) : '',
         r.provenance?.datasetDatabase, r.provenance?.datasetName, r.provenance?.datasetVersion, r.provenance?.datasetYear, r.provenance?.datasetSource];
     });
     return { ok: true, csv: '\uFEFF' + [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n',

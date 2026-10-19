@@ -15,6 +15,18 @@ const base = (changes = {}) => ({ kind: 'quantity', value: '12,000', unit: 'kWh'
   periodStart: '2025-01-01', periodEnd: '2025-12-31', evidenceFileName: '가상전력.xlsx', ...changes });
 const source = (changes = {}) => ({ activitySource: '1차', activitySourceDetail: '가상 전력 고지서', factorSource: '2차', acquisitionMethod: '측정',
   datasetDatabase: '가상 LCI DB', datasetName: '전력 생산', datasetVersion: 'v1.0', datasetYear: '2022', datasetSource: '가상 발행기관', ...changes });
+test('기존 계수 저장값은 유지하면서 사람에게는 출처 성격을 보여 준다', () => {
+  assert.equal(R.factorSourceLabel('1차'), '해당 공급자·공정 계수');
+  assert.equal(R.factorSourceLabel('2차'), '외부 데이터셋 계수');
+  assert.equal(R.factorSourceLabel(''), '미기록');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  assert.match(html, /value="1차">해당 공급자·공정 계수<\/option>/);
+  assert.match(html, /value="2차">외부 데이터셋 계수<\/option>/);
+  const s = setup();
+  const saved = s.store.recordReceipt('p', s.item.id, base({ provenance: source() }));
+  assert.equal(saved.item.receipt.provenance.factorSource, '2차');
+  assert.equal(s.store.list('p').items[0].receipt.provenance.factorSource, '2차');
+});
 function setup() {
   let raw = null;
   const storage = { getItem() { return raw; }, setItem(_key, value) { raw = value; } };
@@ -73,6 +85,7 @@ test('출처를 고쳐 저장하면 기존 승인을 초기화하고 계산 CSV�
   const csv = M.exportCsv(project, { ok: true, items: s.store.list('p').items });
   assert.equal(csv.ok, true);
   assert.match(csv.csv, /"계수 데이터셋 버전"/);
+  assert.match(csv.csv, /"외부 데이터셋 계수","가상 LCI DB"/);
   assert.match(csv.csv, /"가상 LCI DB","전력 생산","v1.0","2022","가상 발행기관"/);
 });
 
@@ -103,5 +116,6 @@ test('계산 결과를 다시 열고 보고서에도 당시 데이터셋 출처�
   assert.equal(loaded.ok, true); assert.equal(loaded.stale, false);
   assert.equal(loaded.record.source.requests[0].receipt.provenance.datasetSource, '가상 발행기관');
   const sections = context.LCA.report.sections({ source: { project, interpretation: { revision: 1, calculation: loaded.record } }, note: '' });
+  assert.match(sections.find((section) => section.title.startsWith('계산에 연결한 승인 원자료')).paragraphs[0], /계수 출처: 외부 데이터셋 계수/);
   assert.match(sections.find((section) => section.title.startsWith('계산에 연결한 승인 원자료')).paragraphs[0], /가상 LCI DB · 전력 생산 · v1\.0 · 2022 · 가상 발행기관/);
 });

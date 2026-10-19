@@ -31,7 +31,7 @@ LCA.report = (() => {
         const r = item.receipt;
         const category = LCA.constants.CATEGORIES.find((entry) => entry.key === item.categoryKey)?.name || item.categoryKey;
         const source = r.provenance;
-        const sourceText = source ? `\n활동량 출처: ${source.activitySource || '미기록'}${source.activitySourceDetail ? ` · ${source.activitySourceDetail}` : ''}\n획득 방법: ${source.acquisitionMethod || '미기록'}${r.kind === 'quantity' ? `\n계수 출처: ${source.factorSource || '미기록'}` : ''}` : '';
+        const sourceText = source ? `\n활동량 출처: ${source.activitySource || '미기록'}${source.activitySourceDetail ? ` · ${source.activitySourceDetail}` : ''}\n획득 방법: ${source.acquisitionMethod || '미기록'}${r.kind === 'quantity' ? `\n계수 출처: ${LCA.receivedData.factorSourceLabel(source.factorSource)}` : ''}` : '';
         const dataset = source?.factorSource === '2차' ? `\n계수 데이터셋: ${source.datasetDatabase} · ${source.datasetName} · ${source.datasetVersion} · ${source.datasetYear} · ${source.datasetSource}` : '';
         return `${item.id} · ${category}\n요청 내용: ${item.detail}\n원자료: ${r.kind === 'quantity' ? `${r.value} ${r.unit}${r.density ? ` · 밀도 ${r.density} kg/m³` : ''}` : r.description}\n자료 기간: ${r.periodStart} ~ ${r.periodEnd}\n증빙 파일 이름: ${r.evidenceFileName}${sourceText}${dataset}\n검토 메모: ${item.review.note || '없음'}`;
       }) },

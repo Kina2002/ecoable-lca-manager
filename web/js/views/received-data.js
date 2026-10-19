@@ -23,7 +23,7 @@ LCA.views.receivedData = (() => {
     if (!source) section.append(text('p', 'receipt-meta', '자료 출처: 아직 기록하지 않았어요.'));
     else {
       section.append(text('p', 'receipt-meta', `활동량 출처 ${source.activitySource || '미기록'}${source.activitySourceDetail ? ` · ${source.activitySourceDetail}` : ''} · 획득 방법 ${source.acquisitionMethod || '미기록'}`));
-      if (receipt.kind === 'quantity') section.append(text('p', 'receipt-meta', `계수 출처 ${source.factorSource || '미기록'}`));
+      if (receipt.kind === 'quantity') section.append(text('p', 'receipt-meta', `계수 출처 ${LCA.receivedData.factorSourceLabel(source.factorSource)}`));
       if (source.factorSource === '2차') section.append(text('p', 'receipt-meta', `계수 데이터셋: ${source.datasetDatabase} · ${source.datasetName} · ${source.datasetVersion} · ${source.datasetYear} · ${source.datasetSource}`));
     }
     return section;
