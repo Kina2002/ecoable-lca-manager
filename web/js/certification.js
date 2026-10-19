@@ -7,6 +7,19 @@ LCA.certification = (() => {
     '보완 요청': ['보완 요청', '제출 완료', '반려'], '승인·등록': ['승인·등록'], '반려': ['반려'] };
   const { text, date, clone } = LCA.reviewWorkflow;
   const FIELDS = ['kind', 'organization', 'scheme', 'submittedOn', 'registrationNumber', 'issuedOn', 'note'];
+  const EXPIRY_SCHEMES = Object.freeze({ '환경성적표지': { kind: '인증', years: 3, minusOne: true }, '저탄소제품': { kind: '인증', years: 3, minusOne: true },
+    'International EPD': { kind: '등록', years: 5, minusOne: false }, 'EPD Norway': { kind: '등록', years: 5, minusOne: false }, 'UL EPD': { kind: '등록', years: 5, minusOne: false } });
+  function expectedExpiry(details, status) {
+    if (!details || status !== '승인·등록' || !['인증', '등록'].includes(details.kind)) return null;
+    const scheme = EXPIRY_SCHEMES[details.scheme?.trim()];
+    if (!scheme || scheme.kind !== details.kind || !LCA.requests.validDate(details.issuedOn)) return null;
+    const [year, month, day] = details.issuedOn.split('-').map(Number);
+    if (year + scheme.years > 9999) return null;
+    const anniversary = new Date(0);
+    anniversary.setUTCFullYear(year + scheme.years, month - 1, day);
+    if (scheme.minusOne) anniversary.setUTCDate(anniversary.getUTCDate() - 1);
+    return { date: anniversary.toISOString().slice(0, 10), scheme: details.scheme.trim(), issuedOn: details.issuedOn };
+  }
   function validDetails(value, status) {
     if (!value || !['인증', '등록', '고객 제출'].includes(value.kind) || !text(value.organization, 200) || !text(value.scheme, 200)
       || !text(value.registrationNumber, 200, false) || !text(value.note, 2000, false)
@@ -152,5 +165,5 @@ LCA.certification = (() => {
     }
     return { load, currentStage, save };
   }
-  return { STORAGE_KEY, STATUSES, TRANSITIONS, validRecord, createStore };
+  return { STORAGE_KEY, STATUSES, TRANSITIONS, EXPIRY_SCHEMES, expectedExpiry, validRecord, createStore };
 })();

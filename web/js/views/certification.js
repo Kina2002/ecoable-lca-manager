@@ -32,9 +32,14 @@ LCA.views.certification = (() => {
     for (const value of ['인증', '등록', '고객 제출']) option(kind, value, value);
     const organization = field(processFields, 'certification-organization', '제출기관·고객 (필수)', 'input', 200);
     const scheme = field(processFields, 'certification-scheme', '제도·제출 요구명 (필수)', 'input', 200);
+    const schemeSuggestions = document.createElement('datalist'); schemeSuggestions.id = 'certification-scheme-suggestions';
+    for (const name of Object.keys(LCA.certification.EXPIRY_SCHEMES)) option(schemeSuggestions, name, name);
+    processFields.append(schemeSuggestions); scheme.setAttribute('list', schemeSuggestions.id);
+    scheme.parentElement.append(text('p', 'detail-help', '예상 만료일을 보려면 환경성적표지·저탄소제품·International EPD·EPD Norway·UL EPD 중 해당 제도의 정확한 이름을 골라 주세요. 다른 요구명도 자유롭게 적을 수 있어요.'));
     const submittedOn = dateField(processFields, 'certification-submitted-on', '제출일 (제출 완료부터 필수)');
     const registrationNumber = field(processFields, 'certification-number', '인증·등록 번호 / 고객 접수·확인 번호 (승인·등록 시 필수)', 'input', 200);
     const issuedOn = dateField(processFields, 'certification-issued-on', '발급·확인일 (승인·등록 시 필수)');
+    const expiryInfo = text('p', 'detail-note', ''); expiryInfo.setAttribute('role', 'status');
     const note = field(processFields, 'certification-note', '제출·보완·결과 메모 (선택)', 'textarea', 2000);
     const actor = field(processFields, 'certification-actor', '기록 담당자 (필수)'); actor.value = project.researcherName || '';
     LCA.views.inputAssist.person(actor, project);
@@ -43,7 +48,7 @@ LCA.views.certification = (() => {
     const processSave = text('button', 'primary-button', '인증·등록 준비 시작 · 9단계로'); processSave.type = 'submit';
     const processError = text('p', 'field-error', ''); processError.setAttribute('role', 'alert');
     processForm.append(processFields, processSave, processError);
-    processCard.append(LCA.views.compact.form(processForm, '제출 정보 입력·상태 변경'), text('p', 'detail-help', '제출 준비 → 제출 완료 → 보완 요청 → 재제출 또는 승인·등록/반려로 기록해요. 승인·등록과 반려 후에는 상태를 유지하며 오기 정정만 사유와 함께 남길 수 있어요. 앱 기록이 기관의 공식 결정을 대신하지 않아요.'));
+    processCard.append(LCA.views.compact.form(processForm, '제출 정보 입력·상태 변경'), expiryInfo, text('p', 'detail-help', '제출 준비 → 제출 완료 → 보완 요청 → 재제출 또는 승인·등록/반려로 기록해요. 승인·등록과 반려 후에는 상태를 유지하며 오기 정정만 사유와 함께 남길 수 있어요. 앱 기록이 기관의 공식 결정을 대신하지 않아요.'));
     const rebase = text('button', 'request-action-button', '최신 기준 다시 확인'); rebase.type = 'button';
     const finishCard = text('section', 'detail-card calculation-card', ''); finishCard.append(text('h2', '', '프로젝트 완료 처리'));
     const finishInfo = text('div', 'verification-round-info', ''); const finishBlock = text('p', 'detail-help', '');
@@ -56,12 +61,20 @@ LCA.views.certification = (() => {
     const finishSave = text('button', 'primary-button', '프로젝트 완료 · 10단계로'); finishSave.type = 'submit';
     const finishError = text('p', 'field-error', ''); finishError.setAttribute('role', 'alert');
     finishForm.append(finishFields, finishSave, finishError); finishCard.append(finishInfo, finishBlock, LCA.views.compact.form(finishForm, '프로젝트 최종 완료 확인'),
-      text('p', 'detail-help', '완료하면 진행 중 집계와 할 일에서 빠지고 기록은 계속 조회할 수 있어요. 완료 취소와 인증 만료·갱신 관리는 아직 지원하지 않아요.'));
+      text('p', 'detail-help', '완료하면 진행 중 집계와 할 일에서 빠지고 기록은 계속 조회할 수 있어요. 만료일은 위에서 예상만 확인할 수 있고, 갱신 관리는 아직 지원하지 않아요.'));
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);
     host.replaceChildren(intro, completionCard, processCard, finishCard, rebase, feedback, history);
     let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let finishReasonAuto = '';
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
+    function updateExpiry() {
+      issuedOn.parentElement.querySelector('label').textContent = kind.value === '고객 제출' ? '고객 확인일 (최종 확인 시 필수)' : '인증·등록 발급일 (승인·등록 시 필수)';
+      const expected = LCA.certification.expectedExpiry({ kind: kind.value, scheme: scheme.value, issuedOn: issuedOn.value }, status.value);
+      expiryInfo.textContent = expected ? `입력된 정보 기준 예상 만료일 ${expected.date} · ${expected.scheme} · 발급일 ${expected.issuedOn}. 실제 유효기간은 발급 문서와 기관의 등록 기록을 확인해 주세요.`
+        : kind.value === '고객 제출' ? '고객 제출의 확인일은 인증 만료일이 아니므로 계산하지 않아요.'
+          : status.value !== '승인·등록' ? '인증·등록이 승인되고 발급일을 기록하면 예상 만료일을 볼 수 있어요.'
+            : '예상 만료일을 계산하려면 진행 유형과 제도 이름(추천 목록의 정확한 이름), 올바른 발급일을 확인해 주세요.';
+    }
     function adopt(loaded) {
       revision = loaded.record.revision;
       basis = loaded.latest && loaded.verification ? { reportRevision: loaded.latest.revision, sourceKey: loaded.latest.sourceKey, verificationRevision: loaded.verification.revision,
@@ -139,11 +152,14 @@ LCA.views.certification = (() => {
         item.append(text('p', 'interpretation-text', event.reason)); historyList.append(item);
       }
       if (!state.record.events.length) historyList.append(text('p', 'detail-help', '아직 보관한 완료·제출 이력이 없어요.'));
+      updateExpiry();
       LCA.views.inputAssist.sync(host);
     }
     for (const form of [completionForm, processForm, finishForm]) {
       form.addEventListener('input', () => { dirty = true; }); form.addEventListener('change', () => { dirty = true; });
     }
+    processForm.addEventListener('input', updateExpiry);
+    processForm.addEventListener('change', updateExpiry);
     async function run(action, draft, error) {
       if (busy) return; const expectedRevision = revision; const expectedBasis = basis;
       busy = true; refresh(); let result;
