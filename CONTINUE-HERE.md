@@ -1,15 +1,15 @@
 # 다른 노트북에서 바로 이어가기
 
-최종 정리: **2026-10-19 (한국 시간)** · 구현 기준 **WEB-045** · 브랜치 **main**
+최종 정리: **2026-10-19 (한국 시간)** · 구현 기준 **WEB-046** · 브랜치 **main**
 
-**이번 컴퓨터의 최신 작업:** WEB-045 ‘자료 해당 없음’ 사유·복귀·필터/기한/단계/계산/보고서 연결을 구현했다. 전체 자동검사 222개 통과, 실제 브라우저 클릭과 좁은 화면 확인은 남았다. [WEB-045 SPEC](docs/04-webapp-spec/WEB-045-not-applicable-request.md)을 먼저 읽는다. 아래 WEB-044까지의 이관 기록은 이전 시점의 상태다.
+**이번 컴퓨터의 최신 작업:** WEB-046은 받은 자료에 활동량·계수 출처와 획득 방법, 2차 계수 데이터셋을 기록하고 CSV·계산 근거·보고서에 연결한다. 기존 출처 미기록 자료는 보존한다. 전체 자동검사 228개 통과, 실제 브라우저 입력과 좁은 화면 확인은 남았다. [WEB-046 SPEC](docs/04-webapp-spec/WEB-046-received-data-source.md)을 먼저 읽는다. WEB-045는 ‘해당 없음’ 사유·복귀 기능이다. 아래 WEB-044까지의 이관 기록은 이전 시점의 상태다.
 
 ## 먼저 알아둘 것
 
 - **코드·문서:** GitHub에서 최신 main을 받는다. 저장소는 [Kina2002/ecoable-lca-manager](https://github.com/Kina2002/ecoable-lca-manager)다.
 - **입력한 업무 기록:** 원래 브라우저의 **설정 → 백업 내려받기**로 JSON을 따로 옮긴다. 코드만 받아서는 추가 프로젝트·자료·보고서·연구원 수정 기록이 이동하지 않는다.
 - **미리보기:** 새 노트북에서 서버를 실행한 뒤 **http://127.0.0.1:5180/** 을 연다. 기존 노트북의 서버가 새 노트북을 대신해 주지는 않는다.
-- **이어서 읽을 문서:** [전체 기능 체크리스트](CHECKLIST.md), [협업 규칙](AGENTS.md), [최신 기능 WEB-045](docs/04-webapp-spec/WEB-045-not-applicable-request.md).
+- **이어서 읽을 문서:** [전체 기능 체크리스트](CHECKLIST.md), [협업 규칙](AGENTS.md), [최신 기능 WEB-046](docs/04-webapp-spec/WEB-046-received-data-source.md).
 
 ## 1. 떠나기 전 기록 보관
 
@@ -93,13 +93,14 @@ Codex가 사용자 확인 없이 기존 기록 위로 복원하거나 초기화�
 
 ## 5. 어디까지 만들었는지
 
-전체 체크 여부는 **[CHECKLIST.md](CHECKLIST.md)**에서 관리한다. 기능 명세는 WEB-001~045이며, 설계서의 큰 요구사항 F-01~18 전체 완료를 뜻하지 않는다. 예전 추정 진행률을 최신 개발 공정률로 사용하지 않는다.
+전체 체크 여부는 **[CHECKLIST.md](CHECKLIST.md)**에서 관리한다. 기능 명세는 WEB-001~046이며, 설계서의 큰 요구사항 F-01~18 전체 완료를 뜻하지 않는다. 예전 추정 진행률을 최신 개발 공정률로 사용하지 않는다.
 
 ### 최근 구현
 
 | 작업 | 내용 | 구현 커밋 |
 | --- | --- | --- |
-| [WEB-045](docs/04-webapp-spec/WEB-045-not-applicable-request.md) | 자료 요청의 해당 없음 사유·복귀와 필터·기한·단계·계산/보고서 연결 | 이번 작업 |
+| [WEB-046](docs/04-webapp-spec/WEB-046-received-data-source.md) | 받은 자료의 활동량/계수 출처·획득 방법·2차 데이터셋과 CSV/보고서 연결 | 이번 작업 |
+| [WEB-045](docs/04-webapp-spec/WEB-045-not-applicable-request.md) | 자료 요청의 해당 없음 사유·복귀와 필터·기한·단계·계산/보고서 연결 | `1faf01e` |
 | [WEB-044](docs/04-webapp-spec/WEB-044-task-request-message-shortcut.md) | 할 일에서 상황에 맞는 요청문 바로 만들기, 해당 자료 한 건 선택, 마감 임박 안내, 직접 수정 글 보호 | `87aecad` |
 | [WEB-043](docs/04-webapp-spec/WEB-043-task-rows-home-filter-glossary-pages.md) | 할 일 한 행·D-day, 프로젝트 메뉴 전체 목록, 홈 연구원 필터, 용어 55개·6개씩 페이지 | `dce1ac5` |
 | [WEB-042](docs/04-webapp-spec/WEB-042-compact-workspace-ui.md) | 큰 버튼/여백 축소, 상세 핵심 요약, 짧은 자료 행, 긴 입력·설명 접기 | `18f0858` |

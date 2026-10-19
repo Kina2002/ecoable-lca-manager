@@ -30,7 +30,10 @@ LCA.report = (() => {
       { title: `계산에 연결한 승인 원자료 (${c.source.requests.filter((item) => item.status === '승인').length}건)`, paragraphs: c.source.requests.filter((item) => item.status === '승인').map((item) => {
         const r = item.receipt;
         const category = LCA.constants.CATEGORIES.find((entry) => entry.key === item.categoryKey)?.name || item.categoryKey;
-        return `${item.id} · ${category}\n요청 내용: ${item.detail}\n원자료: ${r.kind === 'quantity' ? `${r.value} ${r.unit}${r.density ? ` · 밀도 ${r.density} kg/m³` : ''}` : r.description}\n자료 기간: ${r.periodStart} ~ ${r.periodEnd}\n증빙 파일 이름: ${r.evidenceFileName}\n검토 메모: ${item.review.note || '없음'}`;
+        const source = r.provenance;
+        const sourceText = source ? `\n활동량 출처: ${source.activitySource || '미기록'}${source.activitySourceDetail ? ` · ${source.activitySourceDetail}` : ''}\n획득 방법: ${source.acquisitionMethod || '미기록'}${r.kind === 'quantity' ? `\n계수 출처: ${source.factorSource || '미기록'}` : ''}` : '';
+        const dataset = source?.factorSource === '2차' ? `\n계수 데이터셋: ${source.datasetDatabase} · ${source.datasetName} · ${source.datasetVersion} · ${source.datasetYear} · ${source.datasetSource}` : '';
+        return `${item.id} · ${category}\n요청 내용: ${item.detail}\n원자료: ${r.kind === 'quantity' ? `${r.value} ${r.unit}${r.density ? ` · 밀도 ${r.density} kg/m³` : ''}` : r.description}\n자료 기간: ${r.periodStart} ~ ${r.periodEnd}\n증빙 파일 이름: ${r.evidenceFileName}${sourceText}${dataset}\n검토 메모: ${item.review.note || '없음'}`;
       }) },
       { title: '외부 계산 결과', paragraphs: [`계산 결과 버전: ${c.revision}`, `계산일: ${c.calculatedOn}`, `계산 도구: ${c.tool}`, `배경 DB·버전: ${c.database}`, `평가 방법·버전: ${c.method}`, `할당 방법·적용 근거: ${c.allocation}`, `결과 파일 이름: ${c.resultFileName}`, `계산 메모: ${c.note || '없음'}`, `아래 결과는 평가 기준량 ${scope.functionalUnit.qty} ${scope.functionalUnit.unit}당 값입니다. 원자료 활동량을 자동 환산한 결과가 아닙니다.`], indicators: c.indicators },
       { title: `담당자의 결과 해석 (버전 ${interpretation.revision})`, paragraphs: Object.entries(LCA.interpretation.LABELS).map(([field, label]) => `${label}\n${interpretation[field]}`) },

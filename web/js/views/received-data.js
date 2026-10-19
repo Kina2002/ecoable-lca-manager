@@ -19,6 +19,13 @@ LCA.views.receivedData = (() => {
     } else section.append(text('p', 'receipt-document', receipt.description));
     section.append(text('p', 'receipt-meta', `자료 기간 ${receipt.periodStart} ~ ${receipt.periodEnd}`));
     section.append(text('p', 'receipt-meta', `증빙 파일 ${receipt.evidenceFileName}`));
+    const source = receipt.provenance;
+    if (!source) section.append(text('p', 'receipt-meta', '자료 출처: 아직 기록하지 않았어요.'));
+    else {
+      section.append(text('p', 'receipt-meta', `활동량 출처 ${source.activitySource || '미기록'}${source.activitySourceDetail ? ` · ${source.activitySourceDetail}` : ''} · 획득 방법 ${source.acquisitionMethod || '미기록'}`));
+      if (receipt.kind === 'quantity') section.append(text('p', 'receipt-meta', `계수 출처 ${source.factorSource || '미기록'}`));
+      if (source.factorSource === '2차') section.append(text('p', 'receipt-meta', `계수 데이터셋: ${source.datasetDatabase} · ${source.datasetName} · ${source.datasetVersion} · ${source.datasetYear} · ${source.datasetSource}`));
+    }
     return section;
   }
 
@@ -27,7 +34,9 @@ LCA.views.receivedData = (() => {
     const find = (selector) => panel.querySelector(selector);
     const dialog = find('#receipt-dialog');
     const form = find('#receipt-form');
-    const keys = ['kind', 'value', 'unit', 'density', 'description', 'periodStart', 'periodEnd', 'evidenceFileName'];
+    const coreKeys = ['kind', 'value', 'unit', 'density', 'description', 'periodStart', 'periodEnd', 'evidenceFileName'];
+    const sourceKeys = LCA.receivedData.SOURCE_FIELDS;
+    const keys = [...coreKeys, ...sourceKeys];
     const fields = Object.fromEntries(keys.map((key) => [key, find(`#receipt-${key}`)]));
     let activeId = null;
     let opener = null;
@@ -51,6 +60,15 @@ LCA.views.receivedData = (() => {
         error.hidden = !errors[key];
         fields[key].setAttribute('aria-invalid', String(Boolean(errors[key])));
       }
+      if (sourceKeys.some((key) => errors[key]) || errors.provenance) find('#receipt-source-details').open = true;
+    }
+    function showSource() {
+      const quantity = fields.kind.value === 'quantity';
+      const dataset = quantity && fields.factorSource.value === '2차';
+      find('#receipt-factor-source-field').hidden = !quantity;
+      find('#receipt-dataset-fields').hidden = !dataset;
+      fields.factorSource.disabled = !quantity;
+      for (const key of ['datasetDatabase', 'datasetName', 'datasetVersion', 'datasetYear', 'datasetSource']) fields[key].disabled = !dataset;
     }
     function showKind() {
       const quantity = fields.kind.value === 'quantity';
@@ -63,9 +81,12 @@ LCA.views.receivedData = (() => {
       fields.density.required = volume;
       fields.description.disabled = quantity;
       fields.description.required = !quantity;
+      showSource();
     }
     for (const key of keys) fields[key].addEventListener('input', () => clearError(key));
     fields.kind.addEventListener('change', () => { showErrors(); showKind(); });
+    fields.factorSource.addEventListener('change', () => { showErrors(); showSource(); });
+    fields.activitySource.addEventListener('change', () => clearError('activitySourceDetail'));
     fields.unit.addEventListener('change', () => { clearError('unit'); clearError('density'); showKind(); });
     for (const [key, prefix] of [['periodStart', 'start'], ['periodEnd', 'end']]) {
       LCA.views.dateInput.bind(fields[key], find(`#receipt-${prefix}-calendar`), find(`#receipt-${prefix}-button`), () => clearError(key), find(`#receipt-${key}-error`));
@@ -74,7 +95,8 @@ LCA.views.receivedData = (() => {
     dialog.addEventListener('close', () => { if (opener?.isConnected) opener.focus({ preventScroll: true }); });
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const draft = Object.fromEntries(keys.map((key) => [key, fields[key].value]));
+      const draft = { ...Object.fromEntries(coreKeys.map((key) => [key, fields[key].value])), provenance: Object.fromEntries(sourceKeys.map((key) => [key, fields[key].value])) };
+      if (draft.kind !== 'quantity') draft.provenance.factorSource = '';
       const result = store.recordReceipt(project.id, activeId, draft);
       showErrors(result.errors);
       const error = find('#receipt-form-error');
@@ -106,7 +128,9 @@ LCA.views.receivedData = (() => {
       find('#receipt-intro').textContent = item.review
         ? '저장하면 이전 체크·검토 메모·승인 또는 보완 결과를 초기화하고 ‘제출됨’으로 돌아가요. 바뀐 자료를 다시 검토해야 해요. 취소하면 기존 기록을 유지해요.'
         : '고객사에서 받은 자료를 보고 적어 주세요. 저장하면 ‘제출됨’이 되며, 이후 담당자가 요청한 내용에 맞는지 검토해요.';
-      for (const key of keys) fields[key].value = values[key] || '';
+      for (const key of coreKeys) fields[key].value = values[key] || '';
+      for (const key of sourceKeys) fields[key].value = values.provenance?.[key] || '';
+      find('#receipt-source-details').open = Boolean(item.receipt?.provenance);
       find('#receipt-title').textContent = item.receipt ? '받은 자료 확인·수정' : '받은 자료 기록하기';
       find('#receipt-request-context').replaceChildren(text('strong', '', `${item.id} · ${category.name}`), text('p', '', item.detail));
       showKind();

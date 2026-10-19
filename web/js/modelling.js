@@ -41,14 +41,16 @@ LCA.modelling = (() => {
     const state = sourceState(project, result);
     if (!state.ok) return state;
     if (!state.approved.length) return { ok: false, error: '내보낼 승인 자료가 없어요. 자료를 검토·승인한 뒤 내려받아 주세요.' };
-    const header = ['시연 데이터', '프로젝트 번호', '가상 회사', '제품', '평가 기준량', '기준량 단위', '시스템 경계', '평가 모듈', '프로젝트 기준기간 시작', '프로젝트 기준기간 종료', '적용 기준', '요청 번호', '자료 구분', '요청 내용', '제출 기한', '자료 형태', '제출 값', '단위', '밀도(kg/m³)', '문서 설명', '자료 기간 시작', '자료 기간 종료', '증빙 파일 이름', '검토 메모', '검토 결과 저장 시각', '내보낸 시각', '전체 요청 수', '내보낸 승인 수'];
+    const header = ['시연 데이터', '프로젝트 번호', '가상 회사', '제품', '평가 기준량', '기준량 단위', '시스템 경계', '평가 모듈', '프로젝트 기준기간 시작', '프로젝트 기준기간 종료', '적용 기준', '요청 번호', '자료 구분', '요청 내용', '제출 기한', '자료 형태', '제출 값', '단위', '밀도(kg/m³)', '문서 설명', '자료 기간 시작', '자료 기간 종료', '증빙 파일 이름', '검토 메모', '검토 결과 저장 시각', '내보낸 시각', '전체 요청 수', '내보낸 승인 수', '활동량 출처', '활동량 자료 이름·제공처', '획득 방법', '계수 출처', '계수 DB 이름', '계수 데이터셋 이름', '계수 데이터셋 버전', '계수 기준연도', '계수 제공처·출처'];
     const rows = state.approved.map((item) => {
       const r = item.receipt;
       return ['가상', project.code, project.companyName, project.productName, project.functionalUnit?.qty, project.functionalUnit?.unit,
         project.boundary, project.modules, project.refStart, project.refEnd, (project.standards || []).join(' / '), item.id,
         LCA.constants.CATEGORIES.find((category) => category.key === item.categoryKey)?.name || item.categoryKey,
         item.detail, item.dueDate, r.kind === 'quantity' ? '수치' : '문서·설명', r.value, r.unit, r.density, r.description,
-        r.periodStart, r.periodEnd, r.evidenceFileName, item.review.note, item.review.updatedAt, exportedAt, state.total, state.approved.length];
+        r.periodStart, r.periodEnd, r.evidenceFileName, item.review.note, item.review.updatedAt, exportedAt, state.total, state.approved.length,
+        r.provenance?.activitySource, r.provenance?.activitySourceDetail, r.provenance?.acquisitionMethod, r.provenance?.factorSource,
+        r.provenance?.datasetDatabase, r.provenance?.datasetName, r.provenance?.datasetVersion, r.provenance?.datasetYear, r.provenance?.datasetSource];
     });
     return { ok: true, csv: '\uFEFF' + [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n',
       filename: `가상_승인자료_${project.code.replace(/[^A-Za-z0-9_-]/g, '_')}.csv`, count: rows.length, excluded: state.excluded };
