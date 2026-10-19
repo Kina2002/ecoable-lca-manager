@@ -1,11 +1,12 @@
 window.LCA = window.LCA || {};
 LCA.tasks = (() => {
-  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
-  const ORDER = { overdue: 0, revision: 1, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, info: 8 };
-  function build({ projects, requests, comments, verifications, certifications }, today = LCA.rules.today()) {
+  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', inquiry: '자료 질의', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
+  const ORDER = { overdue: 0, revision: 1, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, inquiry: 7, info: 8 };
+  function build({ projects, requests, inquiries, comments, verifications, certifications }, today = LCA.rules.today()) {
     const items = []; const warnings = [];
     if (!requests.ok) warnings.push(requests.message || '자료 요청을 읽지 못했어요. 자료 관련 할 일은 계산하지 않았어요.');
     if (!comments.ok) warnings.push(comments.error || '고객 의견을 읽지 못했어요. 고객 의견 할 일은 계산하지 않았어요.');
+    if (inquiries && !inquiries.ok) warnings.push(inquiries.message || '자료 질의를 읽지 못했어요.');
     if (certifications && !certifications.ok) warnings.push(certifications.error || '인증 기록을 읽지 못했어요. 갱신 확인 할 일은 계산하지 않았어요.');
     function add(project, kind, key, title, description, tab, extra = {}) {
       items.push({ id: `${project.id}:${key}`, projectId: project.id, code: project.code, companyName: project.companyName,
@@ -41,6 +42,10 @@ LCA.tasks = (() => {
         add(project, 'comment', `comment:${comment.id}`, comment.status === '답변됨' ? '고객 의견 종결 확인' : '고객 의견 답변 확인',
           `${comment.id} · 보고서 v${comment.reportRevision} · ${comment.content}`, 'comments', { commentId: comment.id, status: comment.status,
             readOnly: project.stage !== 7 });
+      }
+      if (project.stage < 9 && inquiries?.ok) for (const item of inquiries.items.filter((q) => q.projectId === project.id && q.status !== '종결' && q.requestActive)) {
+        add(project, 'inquiry', `inquiry:${item.id}`, item.status === '답변됨' ? '자료 질의 종결 확인' : '자료 질의 답변 확인',
+          `${item.id} · ${item.requestId} · ${item.content}`, 'opinions', { inquiryId: item.id, status: item.status });
       }
       const verification = verifications[project.id];
       if (!verification?.ok) { warnings.push(`${project.companyName}: ${verification?.error || '검증 기록을 읽지 못했어요.'}`); continue; }

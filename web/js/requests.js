@@ -91,6 +91,7 @@ LCA.requests = (() => {
           if (!item.deletedAt) projectCategories.add(pair);
         }
         if (data.messageLog !== undefined && !LCA.messageHistory?.validLog(data.messageLog, knownProjects)) throw new Error('invalid message log');
+        if (data.inquiries !== undefined && !LCA.inquiries?.validLog(data.inquiries, data.requests, knownProjects)) throw new Error('invalid inquiries');
         if (data.templates !== undefined && (!data.templates || !Number.isSafeInteger(data.templates.revision) || data.templates.revision < 1
           || !data.templates.values || Array.isArray(data.templates.values) || typeof data.templates.values !== 'object'
           || Object.entries(data.templates.values).some(([key, value]) => !categoryByKey(key) || typeof value !== 'string' || !value.trim() || value !== value.trim() || value.length > MAX_DETAIL))) throw new Error('invalid templates');
@@ -363,6 +364,29 @@ LCA.requests = (() => {
       try { return typeof navigator !== 'undefined' && navigator.locks?.request ? await navigator.locks.request('ecoable-lca-manager.review-workflow-write', write) : write(); }
       catch { return failure('취합 정보를 저장하지 못했어요. 입력과 기존 기록은 유지했어요.'); }
     }
+    function inquiries(projectId = null) {
+      const current = read(); if (!current.ok) return current;
+      let stage = { ok: true, stage: 0 };
+      try { if (projectId !== null && getStage) stage = getStage(projectId); } catch { stage = { ok: false }; }
+      if (projectId !== null && !knownProjects.has(projectId)) return failure('프로젝트를 찾지 못했어요.');
+      const items = (current.data.inquiries?.items || []).filter((item) => projectId === null || item.projectId === projectId).map((item) => ({ ...LCA.inquiries.current(item),
+        requestActive: current.data.requests.some((r) => r.id === item.requestId && !r.deletedAt && r.status !== '해당 없음') }));
+      return { ok: true, items, canWrite: projectId !== null && stage.ok && Number.isInteger(stage.stage) && stage.stage < 9,
+        warning: stage.ok ? '' : '현재 단계를 확인하지 못해 질의를 읽기 전용으로 보여줘요.' };
+    }
+    async function recordInquiry(projectId, action, draft, id = null, revision = null) {
+      function write() {
+        const state = inquiries(projectId); if (!state.ok) return state;
+        if (!state.canWrite) return failure(state.warning || '자료 질의는 1~8단계에서 기록할 수 있어요.');
+        const current = read(); if (!current.ok) return current;
+        const applied = LCA.inquiries.apply(current.data.inquiries || { nextNumber: 1, items: [] }, current.data.requests, knownProjects, projectId, action, draft, id, revision);
+        if (!applied.ok) return failure(applied.error);
+        try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ ...current.data, inquiries: applied.log })); return { ok: true, item: applied.item }; }
+        catch { return failure('질의를 저장하지 못했어요. 기존 기록과 작성 중인 내용을 유지했어요.'); }
+      }
+      try { return typeof navigator !== 'undefined' && navigator.locks?.request ? await navigator.locks.request('ecoable-lca-manager.review-workflow-write', write) : write(); }
+      catch { return failure('질의 저장을 시작하지 못했어요. 기존 기록은 유지했어요.'); }
+    }
     function writable(action) {
       return (projectId, ...args) => {
         if (getStage) {
@@ -373,7 +397,7 @@ LCA.requests = (() => {
         return action(projectId, ...args);
       };
     }
-    return { list, listAll, templates, saveTemplate, messages, recordMessage, saveContext, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
+    return { list, listAll, templates, saveTemplate, messages, recordMessage, saveContext, inquiries, recordInquiry, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validContext, suggestedContext, validDate, formatDateInput, validate, createStore };

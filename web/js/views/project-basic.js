@@ -48,8 +48,8 @@ LCA.views.projectBasic = (() => {
     for (const [key,label] of Object.entries(LCA.projects.INFORMATION)) {
       const box = text('div', 'interpretation-field', ''); const caption = text('label','',label); caption.htmlFor = `project-information-${key}`;
       const input = document.createElement('input'); input.type = key === 'contactEmail' ? 'email' : 'text'; input.id = caption.htmlFor; input.maxLength = key.endsWith('On') ? 10 : 500;
-      if (key.endsWith('On')) { input.inputMode = 'numeric'; input.placeholder = 'YYYY-MM-DD'; input.addEventListener('input', () => { input.value = LCA.requests.formatDateInput(input.value); }); LCA.views.inputAssist.date(input); }
       box.append(caption,input); informationGroup.append(box); informationControls[key] = input;
+      if (key.endsWith('On')) { input.inputMode = 'numeric'; input.placeholder = 'YYYY-MM-DD'; input.addEventListener('input', () => { input.value = LCA.requests.formatDateInput(input.value); }); LCA.views.inputAssist.date(input); }
     }
     profileFields.append(informationGroup);
     function profileDraft() { const information = Object.fromEntries(Object.entries(informationControls).map(([key,input]) => [key,input.value.trim()])); return { industry: profileControls.industry.value, type: profileControls.type.value,

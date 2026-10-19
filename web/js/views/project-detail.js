@@ -188,7 +188,7 @@ LCA.views.projectDetail = (() => {
     const tabs = textElement('div', 'detail-tabs', '');
     tabs.setAttribute('role', 'tablist');
     tabs.setAttribute('aria-label', '프로젝트 상세 내용');
-    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과'], ['interpretation', '결과 해석'], ['report', '보고서'], ['comments', '고객 검토'], ['verification', '검토·검증'], ['certification', '인증·등록']]) {
+    for (const [key, label] of [['overview', '개요·범위'], ['requests', '자료 요청'], ['calculation', '계산 자료·결과'], ['interpretation', '결과 해석'], ['report', '보고서'], ['comments', '고객 검토'], ['opinions', '질문·의견'], ['verification', '검토·검증'], ['certification', '인증·등록']]) {
       const tab = textElement('button', 'detail-tab', label);
       tab.type = 'button';
       tab.id = `detail-${key}-tab`;
@@ -260,7 +260,9 @@ LCA.views.projectDetail = (() => {
     const certification = textElement('div', '', '');
     certification.id = 'project-certification-panel'; certification.setAttribute('role', 'tabpanel');
     certification.setAttribute('aria-labelledby', 'detail-certification-tab'); certification.tabIndex = 0; certification.hidden = true;
-    fragment.append(overview, requests, calculation, interpretation, report, comments, verification, certification);
+    const opinions = textElement('div', '', ''); opinions.id = 'project-opinions-panel'; opinions.setAttribute('role', 'tabpanel');
+    opinions.setAttribute('aria-labelledby', 'detail-opinions-tab'); opinions.tabIndex = 0; opinions.hidden = true;
+    fragment.append(overview, requests, calculation, interpretation, report, comments, opinions, verification, certification);
     document.querySelector('#project-detail-content').replaceChildren(fragment);
   }
 

@@ -207,7 +207,7 @@
     scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
     if (!scopeLoadResult.ok) return { ok: false, error: scopeLoadResult.error };
     const requests = requestStore.listAll();
-    const tasks = LCA.tasks.build({ projects, requests, comments: customerReviewStore.snapshot(), certifications: certificationStore.renewalSnapshot(),
+    const tasks = LCA.tasks.build({ projects, requests, inquiries: requestStore.inquiries(), comments: customerReviewStore.snapshot(), certifications: certificationStore.renewalSnapshot(),
       verifications: Object.fromEntries(projects.filter((p) => p.stage < 10).map((p) => [p.id, verificationStore.snapshot(p.id)])) });
     return { ok: true, projects, requests, tasks };
   }
@@ -242,7 +242,8 @@
       LCA.views.requestMessage.prepare(messageType, task.requestId);
       return { ok: true };
     }
-    if (task.requestId) LCA.views.requests.focus(task.requestId);
+    if (task.inquiryId) LCA.views.opinions.focus(task.inquiryId);
+    else if (task.requestId) LCA.views.requests.focus(task.requestId);
     else if (task.commentId) LCA.views.customerReview.focus(task.commentId);
     else if (task.issueId) LCA.views.verification.focus(task.issueId);
     else { document.querySelector('#project-detail-title').focus({ preventScroll: true }); window.scrollTo(0, 0); }
@@ -400,6 +401,20 @@
   }
 
   function bindCalculation(project) {
+    LCA.views.opinions.init(project, requestStore, () => {
+      const source = requestStore.list(project.id); if (!source.ok) return { ok: false, error: source.message };
+      const inquiries = requestStore.inquiries(project.id); if (!inquiries.ok) return { ok: false, error: inquiries.message };
+      const comments = customerReviewStore.snapshot(); const verification = verificationStore.snapshot(project.id);
+      return { ok: true, inquiries, requests: [...source.items, ...source.deletedItems],
+        comments: comments.ok ? comments.items.filter((item) => item.projectId === project.id) : [],
+        issues: verification.ok ? (verification.record?.issues || []).map(LCA.reviewWorkflow.current) : [],
+        warnings: [comments.ok ? '' : comments.error, verification.ok ? '' : verification.error].filter(Boolean) };
+    }, (tab, id) => {
+      selectDetailTab(tab, true);
+      if (tab === 'requests') LCA.views.requests.focus(id);
+      else if (tab === 'comments') LCA.views.customerReview.focus(id);
+      else LCA.views.verification.focus(id);
+    });
     LCA.views.modelling.init(project, modellingStore, () => {
       LCA.views.interpretation.refresh();
       LCA.views.report.refresh();
@@ -493,6 +508,7 @@
     if (button) showDetail(button.dataset.openProject, button);
   });
   function selectDetailTab(key, focus = false) {
+    LCA.views.opinions.refresh();
     LCA.views.collectionTransition.refresh();
     LCA.views.modelling.refresh();
     LCA.views.interpretation.refresh();
@@ -508,6 +524,8 @@
     }
   }
   detailView.addEventListener('click', (event) => {
+    const inquiry = event.target.closest('[data-open-inquiry]');
+    if (inquiry) { selectDetailTab('opinions', true); LCA.views.opinions.selectRequest(inquiry.dataset.openInquiry); return; }
     const researcher = event.target.closest('[data-open-researcher]');
     if (researcher) { openResearchers(researcher.dataset.openResearcher); return; }
     if (event.target.closest('[data-edit-scope]')) {

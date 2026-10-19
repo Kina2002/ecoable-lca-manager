@@ -1,5 +1,18 @@
 /* WEB-042: 핵심 정보는 먼저, 상세 내용은 필요할 때 */
 :root { --muted: #52675e; }
+.opinion-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.opinion-controls .interpretation-field, .opinion-card .interpretation-field { margin: 0; }
+#project-opinions-panel .form-disclosure { margin: 0; padding: 0; border: 0; }
+.opinion-list { display: grid; gap: 8px; margin-top: 12px; }
+.opinion-card { border: 1px solid #dce6dc; border-radius: 8px; padding: 12px; font-size: 13px; }
+.opinion-card > summary { color: #174c3d; font-weight: 600; cursor: pointer; }
+.opinion-card form, #project-opinions-panel .form-disclosure form { display: grid; gap: 10px; margin-top: 12px; }
+.opinion-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.opinion-events { margin: 12px 0 0; padding-left: 20px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; white-space: pre-wrap; }
+#project-opinions-panel select, #project-opinions-panel input:not([type=checkbox]), #project-opinions-panel textarea { box-sizing: border-box; width: 100%; min-height: 34px; border: 1px solid #cbd8ce; border-radius: 6px; padding: 7px 9px; background: white; color: #233b31; font: inherit; }
+#project-opinions-panel > .detail-card { margin-bottom: 12px; }
+.request-item-actions { flex-wrap: wrap; }
+@media (max-width: 760px) { .opinion-controls { grid-template-columns: 1fr; } #project-opinions-panel button, #project-opinions-panel select { min-height: 44px; } }
 .topbar { min-height: 48px; padding-inline: 24px; }
 main { padding: 20px 24px; }
 .page-heading { gap: 12px; margin-bottom: 18px; align-items: center; }

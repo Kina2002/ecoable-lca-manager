@@ -188,6 +188,10 @@ LCA.views.requests = (() => {
         if (item.notApplicable) details.append(textElement('p', 'request-item-detail', `해당 없음 사유: ${item.notApplicable.reason}`));
         if (!deleted) {
           if (item.status !== '해당 없음') {
+            const inquiry = textElement('button', 'request-action-button', '질문 등록'); inquiry.type = 'button'; inquiry.dataset.openInquiry = item.id;
+            inquiry.disabled = !result.canWrite; inquiry.setAttribute('aria-label', `${item.id} 자료 질문 등록`); actions.append(inquiry);
+          }
+          if (item.status !== '해당 없음') {
             const record = textElement('button', 'request-action-button receipt-open-button', item.receipt ? '받은 자료 보기·수정' : '받은 자료 기록');
             record.type = 'button';
             record.disabled = !result.canWrite;
