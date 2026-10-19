@@ -53,11 +53,11 @@ LCA.tasks = (() => {
     if (certifications?.ok) for (const saved of certifications.items) {
       const project = projects.find((p) => p.id === saved.projectId);
       if (!project || project.stage < 9) continue;
-      const schedule = LCA.certification.renewalSchedule(saved.details, saved.status, today);
+      const schedule = LCA.certification.renewalSchedule(saved.details, saved.status, today, saved.officialExpiryOn);
       if (!schedule?.active) continue;
-      add(project, 'renewal', 'renewal', schedule.days < 0 ? '예상 만료일 경과 · 실제 유효기간 확인' : `${schedule.scheme} ${schedule.label}`,
-        `${schedule.scheme} · 예상 만료일 ${schedule.date} · ${schedule.days < 0 ? '갱신 여부와 실제 유효기간을 확인해 주세요.' : `${schedule.label}를 시작할 시기예요.`} 발급 문서·기관 등록 기록의 실제 날짜를 먼저 확인해 주세요.`,
-        'certification', { date: schedule.date, days: schedule.days, status: saved.status, readOnly: project.stage === 10 });
+      add(project, 'renewal', 'renewal', schedule.days < 0 ? `${schedule.official ? '기록한' : '예상'} 만료일 경과 · 갱신 확인` : `${schedule.scheme} ${schedule.label}`,
+        `${schedule.scheme} · ${schedule.official ? '문서에서 확인한' : '예상'} 만료일 ${schedule.date} · ${schedule.days < 0 ? '갱신 여부와 기관의 현재 등록 상태를 확인해 주세요.' : `${schedule.label}를 시작할 시기예요.`} ${schedule.official ? '기록한 문서와 기관의 최신 등록 상태를 확인해 주세요.' : '발급 문서·기관 등록 기록의 실제 날짜를 먼저 확인해 주세요.'}`,
+        'certification', { date: schedule.date, days: schedule.days, official: !!schedule.official, status: saved.status, readOnly: project.stage === 10 });
     }
     items.sort((a, b) => {
       const priority = (task) => ['verification', 'renewal'].includes(task.kind) && task.days < 0 ? 0 : ORDER[task.kind];
@@ -70,7 +70,7 @@ LCA.tasks = (() => {
     return {
       text: !known ? '기한 미정' : item.days < 0 ? `D+${-item.days}` : item.days === 0 ? 'D-DAY' : `D-${item.days}`,
       detail: known ? `${item.date}${item.days === 0 ? ' · 오늘' : ''}` : '',
-      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.kind === 'renewal' ? '예상 만료일' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
+      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.kind === 'renewal' ? item.official ? '기록한 만료일' : '예상 만료일' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
       tone: item.kind === 'review' ? 'review' : !known ? 'unknown' : item.days < 0 ? 'elapsed' : item.days <= 3 ? 'soon' : 'upcoming'
     };
   }

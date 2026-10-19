@@ -49,6 +49,19 @@ LCA.views.certification = (() => {
     const processError = text('p', 'field-error', ''); processError.setAttribute('role', 'alert');
     processForm.append(processFields, processSave, processError);
     processCard.append(LCA.views.compact.form(processForm, '제출 정보 입력·상태 변경'), expiryInfo, text('p', 'detail-help', '제출 준비 → 제출 완료 → 보완 요청 → 재제출 또는 승인·등록/반려로 기록해요. 승인·등록과 반려 후에는 상태를 유지하며 오기 정정만 사유와 함께 남길 수 있어요. 앱 기록이 기관의 공식 결정을 대신하지 않아요.'));
+    const validityCard = text('section', 'detail-card calculation-card', '');
+    validityCard.append(text('h2', '', '인증서의 공식 만료일 기록'), text('p', 'detail-help', '발급 문서에 적힌 만료일을 확인해 기록해요. 저장하면 예상일 대신 이 날짜로 갱신 확인 시점을 계산해요. 완료 프로젝트도 입력할 수 있어요.'));
+    const validityInfo = text('p', 'detail-note', '');
+    const validityForm = document.createElement('form'); validityForm.noValidate = true;
+    const validityFields = document.createElement('fieldset'); validityFields.className = 'calculation-fields';
+    const expiryOn = dateField(validityFields, 'certification-official-expiry', '문서에 적힌 만료일 (필수)');
+    const validityDocument = field(validityFields, 'certification-validity-document', '확인한 문서 이름 (필수 · 파일 이름만 기록)', 'input', 200);
+    const validityActor = field(validityFields, 'certification-validity-actor', '확인 담당자 (필수)'); validityActor.value = project.researcherName || ''; LCA.views.inputAssist.person(validityActor, project);
+    const validityReason = field(validityFields, 'certification-validity-reason', '확인 근거·정정 사유 (필수)', 'textarea', 1000);
+    const validityCheck = checkbox(validityFields, '발급 문서의 만료일과 등록 번호를 직접 확인했어요.');
+    const validitySave = text('button', 'primary-button', '공식 만료일 기록'); validitySave.type = 'submit';
+    const validityError = text('p', 'field-error', ''); validityError.setAttribute('role', 'alert');
+    validityForm.append(validityFields, validitySave, validityError); validityCard.append(validityInfo, LCA.views.compact.form(validityForm, '문서 만료일 입력'));
     const rebase = text('button', 'request-action-button', '최신 기준 다시 확인'); rebase.type = 'button';
     const finishCard = text('section', 'detail-card calculation-card', ''); finishCard.append(text('h2', '', '프로젝트 완료 처리'));
     const finishInfo = text('div', 'verification-round-info', ''); const finishBlock = text('p', 'detail-help', '');
@@ -64,13 +77,16 @@ LCA.views.certification = (() => {
       text('p', 'detail-help', '완료하면 진행 중 집계에서 빠지고 기록은 계속 조회할 수 있어요. 예상 만료일이 가까워지면 갱신 확인 할 일은 계속 보여요. 갱신 처리 기록은 아직 지원하지 않아요.'));
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);
-    host.replaceChildren(intro, completionCard, processCard, finishCard, rebase, feedback, history);
-    let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let finishReasonAuto = '';
+    host.replaceChildren(intro, completionCard, processCard, validityCard, finishCard, rebase, feedback, history);
+    let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let validityFormRevision = -1; let finishReasonAuto = '';
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
     function updateExpiry() {
       issuedOn.parentElement.querySelector('label').textContent = kind.value === '고객 제출' ? '고객 확인일 (최종 확인 시 필수)' : '인증·등록 발급일 (승인·등록 시 필수)';
-      const schedule = LCA.certification.renewalSchedule({ kind: kind.value, scheme: scheme.value, issuedOn: issuedOn.value }, status.value);
-      expiryInfo.textContent = schedule ? `입력된 정보 기준 예상 만료일 ${schedule.date} · ${schedule.scheme} · 발급일 ${schedule.issuedOn}. ${schedule.active ? schedule.days < 0 ? `예상 만료일이 ${-schedule.days}일 지났어요. 실제 유효기간과 갱신 여부를 확인해 주세요.` : `${schedule.label} 시기예요. 예상 만료일까지 ${schedule.days}일 남았어요.` : `${schedule.label} 안내 시작 예정일은 ${schedule.startDate}이에요.`} 실제 유효기간은 발급 문서와 기관의 등록 기록을 확인해 주세요.`
+      const sameRecord = state?.process && Object.entries({ kind, scheme, issuedOn, registrationNumber }).every(([key, input]) => input.value === state.process.details[key]);
+      const schedule = LCA.certification.renewalSchedule({ kind: kind.value, scheme: scheme.value, issuedOn: issuedOn.value }, status.value,
+        sameRecord ? state.validity?.expiryOn || '' : '');
+      const dateLabel = schedule?.official ? '문서에서 확인한 만료일' : '입력된 정보 기준 예상 만료일';
+      expiryInfo.textContent = schedule ? `${dateLabel} ${schedule.date} · ${schedule.scheme} · 발급일 ${schedule.issuedOn}. ${schedule.active ? schedule.days < 0 ? `${schedule.official ? '기록한' : '예상'} 만료일이 ${-schedule.days}일 지났어요. 현재 등록 상태와 갱신 여부를 확인해 주세요.` : `${schedule.label} 시기예요. 만료일까지 ${schedule.days}일 남았어요.` : `${schedule.label} 안내 시작 예정일은 ${schedule.startDate}이에요.`} ${schedule.official ? '기관의 최신 등록 상태도 확인해 주세요.' : '실제 유효기간은 발급 문서와 기관의 등록 기록을 확인해 주세요.'}`
         : kind.value === '고객 제출' ? '고객 제출의 확인일은 인증 만료일이 아니므로 계산하지 않아요.'
           : status.value !== '승인·등록' ? '인증·등록이 승인되고 발급일을 기록하면 예상 만료일을 볼 수 있어요.'
             : '예상 만료일을 계산하려면 진행 유형과 제도 이름(추천 목록의 정확한 이름), 올바른 발급일을 확인해 주세요.';
@@ -82,7 +98,7 @@ LCA.views.certification = (() => {
     }
     function refresh() {
       state = store.load(project.id);
-      if (!state.ok) { notice.textContent = state.error; completionFields.disabled = true; completionSave.disabled = true; processFields.disabled = true; processSave.disabled = true; finishFields.disabled = true; finishSave.disabled = true; LCA.views.inputAssist.sync(host); return; }
+      if (!state.ok) { notice.textContent = state.error; completionFields.disabled = true; completionSave.disabled = true; processFields.disabled = true; processSave.disabled = true; validityFields.disabled = true; validitySave.disabled = true; finishFields.disabled = true; finishSave.disabled = true; LCA.views.inputAssist.sync(host); return; }
       if (!dirty) adopt(state);
       if (!dirty && state.record.revision !== formRevision) {
         if (state.process) {
@@ -117,6 +133,14 @@ LCA.views.certification = (() => {
       processTitle.textContent = state.process ? `제출 진행 관리 · ${state.process.status}` : '인증·등록 또는 고객 제출 시작';
       processFields.disabled = busy || !(state.process ? state.canWrite : state.canStart); processSave.disabled = processFields.disabled;
       processSave.textContent = busy ? '저장 중…' : state.process ? '진행 정보·이력 저장' : '인증·등록 준비 시작 · 9단계로'; startLabel.hidden = !!state.process;
+      validityCard.hidden = !state.process || state.project.stage < 9;
+      validityFields.disabled = validitySave.disabled = busy || !state.canRecordValidity;
+      validityInfo.textContent = state.validity ? `기록한 공식 만료일 ${state.validity.expiryOn} · 확인 문서 ${state.validity.documentName} · 확인자 ${state.validity.actor}`
+        : state.canRecordValidity ? '공식 만료일을 아직 기록하지 않았어요. 발급 문서를 확인하면 입력해 주세요.' : '승인된 인증·등록만 공식 만료일을 기록할 수 있어요.';
+      if (!dirty && state.record.revision !== validityFormRevision) {
+        expiryOn.value = state.validity?.expiryOn || ''; validityDocument.value = state.validity?.documentName || '';
+        validityReason.value = ''; validityCheck.checked = false; validityFormRevision = state.record.revision;
+      }
       rebase.disabled = busy;
       finishCard.hidden = state.project.stage < 9;
       finishForm.hidden = !!state.finished || state.project.stage !== 9;
@@ -139,9 +163,11 @@ LCA.views.certification = (() => {
       }
       historyList.replaceChildren();
       for (const event of state.record.events.slice().reverse()) {
-        const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
+        const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'validity' ? '공식 만료일 확인' : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
         if (event.type === 'completed') {
           item.append(text('p', 'detail-help', `완료일 ${event.completedOn} · 보고서 v${event.report.revision} · ${event.reviewMethod === 'internal' ? '내부 검토 완료' : `외부 검증 ${event.verification.rounds.length}차까지 보관`} · 결과 기록 ${event.documentName}`));
+        } else if (event.type === 'validity') {
+          item.append(text('p', 'detail-help', `공식 만료일 ${event.expiryOn} · 확인 문서 ${event.documentName} · 인증·등록 번호 ${event.registrationNumber}`));
         } else if (event.type === 'finished') {
           item.append(text('p', 'detail-help', `프로젝트 완료일 ${event.finishedOn} · 최종 보고서 v${event.reportRevision} · ${event.details.kind} · ${event.details.organization} · 확인 번호 ${event.details.registrationNumber} · 발급·확인일 ${event.details.issuedOn}`));
         } else {
@@ -155,7 +181,7 @@ LCA.views.certification = (() => {
       updateExpiry();
       LCA.views.inputAssist.sync(host);
     }
-    for (const form of [completionForm, processForm, finishForm]) {
+    for (const form of [completionForm, processForm, validityForm, finishForm]) {
       form.addEventListener('input', () => { dirty = true; }); form.addEventListener('change', () => { dirty = true; });
     }
     processForm.addEventListener('input', updateExpiry);
@@ -168,7 +194,7 @@ LCA.views.certification = (() => {
       busy = false; error.textContent = result.error || '';
       if (result.ok) {
         dirty = false; completionCheck.checked = false; startCheck.checked = false; finishCheck.checked = false;
-        feedback.textContent = action === 'completed' ? '선택한 검토 경로의 완료 근거와 최종 보고서 사본을 보관했어요. 아직 8단계예요.' : action === 'started' ? '9단계로 이동하고 제출 준비 기록을 보관했어요.' : '진행 정보와 변경 사유를 이력에 추가했어요.';
+        feedback.textContent = action === 'completed' ? '선택한 검토 경로의 완료 근거와 최종 보고서 사본을 보관했어요. 아직 8단계예요.' : action === 'started' ? '9단계로 이동하고 제출 준비 기록을 보관했어요.' : action === 'validity' ? '문서의 만료일과 확인 근거를 이력에 보관했어요. 갱신 확인 시점에 반영돼요.' : '진행 정보와 변경 사유를 이력에 추가했어요.';
         onChanged();
         if (action === 'finished') feedback.textContent = '프로젝트를 완료·사후관리(10) 단계로 옮겼어요. 기록은 보관하고 진행 중 집계와 할 일에서는 제외해요.';
       }
@@ -178,6 +204,8 @@ LCA.views.certification = (() => {
     processForm.addEventListener('submit', (event) => {
       event.preventDefault(); run(state.process ? 'updated' : 'started', { ...Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value])), status: status.value, actor: actor.value, reason: reason.value, confirmed: startCheck.checked }, processError);
     });
+    validityForm.addEventListener('submit', (event) => { event.preventDefault(); run('validity', { expiryOn: expiryOn.value,
+      documentName: validityDocument.value, actor: validityActor.value, reason: validityReason.value, confirmed: validityCheck.checked }, validityError); });
     rebase.addEventListener('click', () => {
       const latest = store.load(project.id); if (!latest.ok) { refresh(); return; }
       adopt(latest); dirty = true; completionCheck.checked = false; startCheck.checked = false; finishCheck.checked = false; completionError.textContent = ''; processError.textContent = ''; finishError.textContent = '';

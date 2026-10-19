@@ -52,3 +52,11 @@ test('월말의 6개월 전 시작일은 해당 달 마지막 날짜로 맞춘�
   assert.equal(schedule.startDate, '2029-02-28');
   assert.equal(schedule.active, false);
 });
+
+test('계산 규칙이 없는 제도도 문서 만료일을 확인했다면 그 날짜로 안내한다', () => {
+  const direct = renewal(details({ scheme: '별도 인증 제도' }), '승인·등록', '2029-07-31', '2030-01-31');
+  assert.equal(direct.official, true);
+  assert.equal(direct.startDate, '2029-07-31');
+  assert.equal(direct.active, true);
+  assert.equal(renewal(details({ scheme: '별도 인증 제도' }), '승인·등록', '2029-07-31'), null);
+});
