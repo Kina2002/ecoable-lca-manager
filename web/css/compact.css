@@ -275,3 +275,21 @@ h1 { font-size: 25px; }
   .dashboard-controls select, .glossary-pagination select, .glossary-pagination button { min-height: 44px; }
   .glossary-grid { grid-template-columns: 1fr; }
 }
+
+/* WEB-048: 설정의 공개 자료 출처 안내 */
+.source-guide { margin-bottom: 16px; }
+.source-guide > .detail-help { max-width: 78ch; }
+.source-guide-checked { margin: 10px 0 14px; color: #52675e; font-size: 12px; line-height: 1.6; }
+.source-guide-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.source-guide-item { min-width: 0; padding: 14px; border: 1px solid #dce6dc; border-radius: 8px; background: #fff; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.source-guide-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 7px; }
+.source-guide-heading h3 { margin: 0; color: #174c3d; font-size: 14px; line-height: 1.5; }
+.source-guide-tag { display: inline-block; padding: 2px 7px; border-radius: 6px; background: #e7f2e9; color: #20593d; font-size: 11px; font-weight: 650; }
+.source-guide-tag-check { background: #fff3da; color: #795013; }
+.source-guide-item p { margin: 8px 0; }
+.source-guide-item dl { margin: 10px 0; border-top: 1px solid #e5ebe5; }
+.source-guide-item dl > div { padding: 6px 0; border-bottom: 1px solid #e5ebe5; }
+.source-guide-item dt { color: #52675e; font-size: 11px; font-weight: 650; }
+.source-guide-item dd { margin: 2px 0 0; }
+.source-guide-item a { display: inline-block; margin-top: 8px; color: #174c3d; font-weight: 650; text-underline-offset: 3px; }
+@media (max-width: 980px) { .source-guide-list { grid-template-columns: 1fr; } }
