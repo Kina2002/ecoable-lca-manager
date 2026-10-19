@@ -2,6 +2,7 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.projectBasic = (() => {
   const LABELS = { companyName: '회사명', productName: '제품명', purpose: '업무 목적', targetDate: '목표 완료일' };
+  const PROFILE_LABELS = { industry: '고객사 업종', type: '프로젝트 유형', drivers: '세부 동인', uses: '결과 활용처' };
   function text(tag, className, value) { const node = document.createElement(tag); node.className = className; node.textContent = value; return node; }
   function init(store, onChanged) {
     const dialog = document.querySelector('#project-basic-dialog'); const form = document.querySelector('#project-basic-form');
@@ -22,6 +23,29 @@ LCA.views.projectBasic = (() => {
         input.addEventListener('input', () => { input.value = LCA.requests.formatDateInput(input.value); }); LCA.views.inputAssist.date(input);
       }
     }
+    const profileFields = document.createElement('fieldset'); profileFields.className = 'project-profile-fields'; profileFields.append(text('legend', '', '프로젝트 추가정보'));
+    profileFields.append(text('p', 'detail-help', '업종은 고객사의 분야, 유형은 수행할 업무, 동인은 의뢰한 계기, 활용처는 결과를 쓸 곳이에요. 활용처에 인증을 골라도 인증을 받았다는 뜻은 아니에요.'));
+    fields.append(profileFields);
+    const profileControls = {}; const multi = {};
+    for (const key of ['industry', 'type']) {
+      const box = text('div', 'interpretation-field', ''); const caption = text('label', '', PROFILE_LABELS[key]); caption.htmlFor = `project-profile-${key}`;
+      const select = document.createElement('select'); select.id = caption.htmlFor;
+      for (const value of ['', ...LCA.projects.PROFILE_OPTIONS[key]]) { const option = text('option', '', value || '미정'); option.value = value; select.append(option); }
+      box.append(caption, select); profileFields.append(box); profileControls[key] = select;
+    }
+    for (const key of ['drivers', 'uses']) {
+      const group = text('details', 'project-profile-group', ''); const summary = text('summary', '', PROFILE_LABELS[key]); const options = text('div', 'project-profile-options', '');
+      const inputs = new Map();
+      for (const value of LCA.projects.PROFILE_OPTIONS[key]) {
+        const label = text('label', 'request-message-check', ''); const input = document.createElement('input'); input.type = 'checkbox'; input.value = value;
+        label.append(input, document.createTextNode(value === '국내 환경성적표지' ? `${value} (기존 표현)` : value)); options.append(label); inputs.set(value, input);
+      }
+      group.append(summary, options); profileFields.append(group); multi[key] = { summary, inputs };
+    }
+    function profileDraft() { return { industry: profileControls.industry.value, type: profileControls.type.value,
+      drivers: [...multi.drivers.inputs.values()].filter((input) => input.checked).map((input) => input.value),
+      uses: [...multi.uses.inputs.values()].filter((input) => input.checked).map((input) => input.value) }; }
+    function updateCounts() { for (const key of ['drivers', 'uses']) multi[key].summary.textContent = `${PROFILE_LABELS[key]} 선택 · ${[...multi[key].inputs.values()].filter((input) => input.checked).length}개`; }
     const reasonBox = text('div', 'interpretation-field', ''); const reasonLabel = text('label', '', '변경 사유 (선택 · 최대 1,000자)');
     reasonLabel.htmlFor = 'project-basic-reason'; const reason = document.createElement('textarea'); reason.id = reasonLabel.htmlFor; reason.maxLength = 1000; reason.rows = 2; reasonBox.append(reasonLabel, reason); fields.append(reasonBox);
     let state = null; let opener = null; let busy = false; let saved = null;
@@ -32,8 +56,9 @@ LCA.views.projectBasic = (() => {
       for (const event of items.slice().reverse()) {
         const item = text('details', 'customer-review-event', '');
         const at = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Seoul' }).format(new Date(event.at));
-        item.append(text('summary', '', `${at} (한국 시간) · ${event.stage}단계에서 변경`));
-        for (const [key, label] of Object.entries(LABELS)) if (event.before[key] !== event.after[key]) item.append(text('p', 'detail-help', `${label}: ${event.before[key]} → ${event.after[key]}`));
+        item.append(text('summary', '', `${at} (한국 시간) · ${event.stage}단계에서 ${event.profile ? '추가정보' : '기본정보'} 변경`));
+        const display = (value) => (Array.isArray(value) ? value.join(' / ') : value) || '미정';
+        for (const [key, label] of Object.entries({ ...LABELS, ...PROFILE_LABELS })) if (JSON.stringify(event.before[key]) !== JSON.stringify(event.after[key])) item.append(text('p', 'detail-help', `${label}: ${display(event.before[key])} → ${display(event.after[key])}`));
         if (event.reason) item.append(text('p', 'interpretation-text', `변경 사유: ${event.reason}`)); history.append(item);
       }
     }
@@ -41,6 +66,7 @@ LCA.views.projectBasic = (() => {
       fields.disabled = busy || !state || state.stage >= 10; save.disabled = fields.disabled;
       save.hidden = !!state && state.stage >= 10; cancel.disabled = busy;
       for (const [key, input] of Object.entries(controls)) input.disabled = fields.disabled || (key !== 'targetDate' && state.stage !== 1);
+      profileFields.disabled = fields.disabled || state.stage >= 9;
       LCA.views.inputAssist.sync(fields);
     }
     function open(id, button) {
@@ -49,10 +75,14 @@ LCA.views.projectBasic = (() => {
       if (loaded.ok) {
         state = loaded; heading.textContent = `${loaded.project.code} · 기본정보와 변경 이력`;
         for (const key of Object.keys(controls)) controls[key].value = loaded.project[key];
-        notice.textContent = loaded.stage === 1 ? '회사명·제품명·업무 목적·목표일을 수정할 수 있어요. 바뀐 내용과 저장 시각은 이력에 남아요.'
+        for (const key of ['industry', 'type']) profileControls[key].value = loaded.project[key] || '';
+        for (const key of ['drivers', 'uses']) for (const [value, input] of multi[key].inputs) { input.checked = loaded.project[key]?.includes(value) || false; input.parentElement.hidden = value === '국내 환경성적표지' && !input.checked; }
+        updateCounts();
+        notice.textContent = loaded.stage === 1 ? '기본정보와 추가정보를 수정할 수 있어요. 바뀐 내용과 저장 시각은 이력에 남아요.'
           : loaded.stage >= 10 ? '완료한 프로젝트는 읽기 전용이에요. 기존 정보와 변경 이력을 볼 수 있어요.'
-            : '범위 정의 이후 회사명·제품명·업무 목적은 고정하고 목표일만 수정할 수 있어요. 개별 자료 제출 기한·자료 수집 마감일은 별도예요.';
-        renderHistory(loaded.history);
+            : loaded.stage >= 9 ? '인증·등록을 시작한 뒤에는 목표일만 수정할 수 있어요. 제출 근거를 보호하기 위해 추가정보는 읽기 전용이에요.'
+              : '회사명·제품명·업무 목적은 고정하고 목표일·추가정보를 수정할 수 있어요. 보고서에 반영한 정보가 달라지면 보고서 기준을 다시 확인해 주세요.';
+        renderHistory([...loaded.history, ...loaded.profileHistory.map((event) => ({ ...event, profile: true }))].sort((a, b) => a.at.localeCompare(b.at)));
       } else { heading.textContent = '기본정보와 변경 이력'; notice.textContent = ''; feedback.textContent = loaded.error; }
       sync(); dialog.showModal();
       if (!state || state.stage >= 10) cancel.focus(); else (state.stage === 1 ? controls.companyName : controls.targetDate).focus();
@@ -63,12 +93,13 @@ LCA.views.projectBasic = (() => {
       state = null; if (opener?.isConnected) opener.focus({ preventScroll: true });
       if (saved) { const outcome = saved; saved = null; onChanged(outcome.id, outcome.result); }
     });
-    form.addEventListener('input', clearError); form.addEventListener('change', clearError);
+    form.addEventListener('input', clearError); form.addEventListener('change', () => { clearError(); updateCounts(); });
     form.addEventListener('submit', async (event) => {
       event.preventDefault(); if (busy || !state || state.stage >= 10) return;
       clearError(); const id = state.project.id;
-      const expected = { revision: state.revision, basic: LCA.projects.basicSnapshot(state.project), stage: state.stage };
-      const draft = { ...Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value])), reason: reason.value };
+      const expected = { revision: state.revision, basic: LCA.projects.basicSnapshot(state.project), stage: state.stage,
+        profileRevision: state.profileRevision, profile: LCA.projects.profileSnapshot(state.project) };
+      const draft = { ...Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value])), profile: profileDraft(), reason: reason.value };
       busy = true; sync(); let result;
       try { result = await store.updateBasic(id, draft, expected); }
       catch { result = { ok: false, error: '기본정보를 저장하지 못했어요. 입력은 유지했으니 다시 시도해 주세요.' }; }

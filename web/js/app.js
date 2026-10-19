@@ -147,7 +147,8 @@
       const latest = new Map(result.items.map((project) => [project.id, project]));
       projects.forEach((project) => {
         const saved = latest.get(project.id);
-        if (saved) Object.assign(project, LCA.projects.basicSnapshot(saved), { collectionDueDate: saved.collectionDueDate, basicRevision: saved.basicRevision });
+        if (saved) Object.assign(project, LCA.projects.basicSnapshot(saved), LCA.projects.profileSnapshot(saved),
+          { collectionDueDate: saved.collectionDueDate, basicRevision: saved.basicRevision, profileRevision: saved.profileRevision });
       });
     }
     projectNotice.hidden = result.ok;
@@ -300,12 +301,13 @@
 
   const basicPage = LCA.views.projectBasic.init(projectStore, (id, result) => {
     const project = projects.find((p) => p.id === id); if (!project) return;
-    Object.assign(project, result.basic, { basicRevision: result.revision });
+    Object.assign(project, result.basic, result.profile, { basicRevision: result.revision, profileRevision: result.profileRevision });
     scopeLoadResult = scopeStore.load(); showScopeStorageStatus(); renderProjectList();
     if (openedProjectId === id) {
       LCA.views.projectDetail.refreshBasics(project);
       const intro = detailView.querySelector('.request-intro'); if (intro) intro.textContent = `${project.companyName}의 ${project.productName} 평가에 필요한 자료를 적어 두는 목록이에요.`;
       LCA.views.report.refreshBasics();
+      LCA.views.requests.refresh(); LCA.views.verification.refresh(); LCA.views.certification.refresh();
       projectPageTitle = `${project.companyName} 상세 | LCA 프로젝트 관리`;
       if (!detailView.hidden) setPage('프로젝트 상세', projectPageTitle, 'project');
     }

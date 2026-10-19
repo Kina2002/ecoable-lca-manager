@@ -14,6 +14,7 @@ LCA.projectDeletion = (() => {
     data.projects = data.projects.filter((p) => p.id !== id);
     if (data.collectionDueDates) delete data.collectionDueDates[id];
     if (data.basicHistory) delete data.basicHistory[id];
+    if (data.profileHistory) delete data.profileHistory[id];
     values[LCA.projects.STORAGE_KEY] = JSON.stringify(data);
     for (const [module, field, count] of [[LCA.requests, 'requests', 'requests'], [LCA.customerReview, 'items', 'comments']]) {
       if (values[module.STORAGE_KEY] === null) continue;

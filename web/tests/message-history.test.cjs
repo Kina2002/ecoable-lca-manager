@@ -51,6 +51,12 @@ test('기존 백업 키로 발송 기록을 검증하고 프로젝트 삭제 계
   const date = '2026-10-19'; const samples = LCA.data.createSampleProjects(date);
   const projects = LCA.projects.createStore(samples, date, () => storage);
   const created = await projects.add({ companyName: '가상 신규', productName: '가상 제품', purpose: '고객사 요구 대응', targetDate: '2026-12-01' });
+  for (const id of [created.item.id, samples[0].id]) {
+    const state = projects.basic(id);
+    const changed = await projects.updateBasic(id, { ...LCA.projects.basicSnapshot(state.project), profile: { industry: '기타', type: 'PCF 산정', drivers: [], uses: ['고객사 제출'] }, reason: '추가정보 입력' },
+      { revision: state.revision, stage: state.stage, basic: LCA.projects.basicSnapshot(state.project), profileRevision: state.profileRevision, profile: LCA.projects.profileSnapshot(state.project) });
+    assert.equal(changed.ok, true, changed.error);
+  }
   const ids = created.items.map((item) => item.id); const store = LCA.requests.createStore(ids, () => storage);
   store.add(created.item.id, { categoryKey: 'energy', detail: '전력', dueDate: '2026-10-23' });
   await store.recordMessage(created.item.id, message({ projectId: created.item.id }), 1);
@@ -60,5 +66,7 @@ test('기존 백업 키로 발송 기록을 검증하고 프로젝트 삭제 계
   const plan = LCA.projectDeletion.prepare(created.item.id, date); assert.equal(plan.counts.messages, 1);
   const after = JSON.parse(plan.values[LCA.requests.STORAGE_KEY]);
   assert.equal(after.messageLog.items.length, 1); assert.equal(after.messageLog.items[0].projectId, samples[0].id);
+  const profileHistory = JSON.parse(plan.values[LCA.projects.STORAGE_KEY]).profileHistory;
+  assert.equal(profileHistory[created.item.id], undefined); assert.equal(profileHistory[samples[0].id].length, 1);
   assert.equal(store.messages(created.item.id).items.length, 1);
 });

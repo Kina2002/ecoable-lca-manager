@@ -138,11 +138,14 @@ LCA.views.projectDetail = (() => {
       field('결과 활용처', project.uses, '결과를 쓰려는 곳이에요. 여기에 인증 이름이 있어도 이미 인증을 받았다는 뜻은 아니에요.')
     ]); result.id = 'project-purpose-summary'; return result;
   }
+  function classificationField(key, label, value) { const item = field(label, value); item.id = `project-${key}-summary`; return item; }
   function refreshBasics(project) {
     const title = document.querySelector('#project-detail-title'); title.replaceChildren(document.createTextNode(project.companyName));
     if (project.isFictional) title.append(textElement('span', 'fictional-tag', '가상'));
     document.querySelector('#project-detail-description').textContent = `${project.productName} · ${project.code}`;
     document.querySelector('#project-target-date').replaceWith(targetField(project));
+    document.querySelector('#project-industry-summary').replaceWith(classificationField('industry', '고객사 업종', project.industry));
+    document.querySelector('#project-type-summary').replaceWith(classificationField('type', '프로젝트 유형', project.type));
     const previousPurpose = document.querySelector('#project-purpose-summary'); const nextPurpose = purposeCard(project);
     nextPurpose.querySelector('.card-field-guide').open = previousPurpose.querySelector('.card-field-guide')?.open || false;
     previousPurpose.replaceWith(nextPurpose); refreshScope(project); refreshStage(project);
@@ -172,8 +175,8 @@ LCA.views.projectDetail = (() => {
     summary.append(
       stageField(project),
       targetField(project),
-      field('고객사 업종', project.industry),
-      field('프로젝트 유형', project.type)
+      classificationField('industry', '고객사 업종', project.industry),
+      classificationField('type', '프로젝트 유형', project.type)
     );
     fragment.append(summary);
     const transition = document.createElement('div');
