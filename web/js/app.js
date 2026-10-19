@@ -200,7 +200,7 @@
     scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
     if (!scopeLoadResult.ok) return { ok: false, error: scopeLoadResult.error };
     const requests = requestStore.listAll();
-    const tasks = LCA.tasks.build({ projects, requests, comments: customerReviewStore.snapshot(),
+    const tasks = LCA.tasks.build({ projects, requests, comments: customerReviewStore.snapshot(), certifications: certificationStore.renewalSnapshot(),
       verifications: Object.fromEntries(projects.filter((p) => p.stage < 10).map((p) => [p.id, verificationStore.snapshot(p.id)])) });
     return { ok: true, projects, requests, tasks };
   }

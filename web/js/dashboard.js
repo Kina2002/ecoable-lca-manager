@@ -1,22 +1,24 @@
 window.LCA = window.LCA || {};
 LCA.dashboard = (() => {
-  const RANK = { overdue: 0, revision: 1, soon: 2, verification: 3, comment: 4, info: 5, review: 6 };
+  const RANK = { overdue: 0, revision: 1, renewal: 2, soon: 3, verification: 4, comment: 5, info: 6, review: 7 };
   function build({ projects, requests, tasks, researchers }, today = LCA.rules.today(), researcher = '') {
     const options = new Map(LCA.projectFilter.researcherOptions(projects).map((person) => [person.id, person.label]));
     if (researchers?.ok) for (const person of researchers.items) options.set(person.id, `${person.name} · ${LCA.projectFilter.researcherCode(person.id)}`);
     const researcherOptions = [['', '담당 연구원 전체'], ...options, ['unassigned', '담당 연구원 미정'], ['legacy', '기존 이름 기록']];
-    const active = LCA.projectFilter.select(projects, null, { researcher }).filter((p) => p.stage < 10);
+    const selected = LCA.projectFilter.select(projects, null, { researcher });
+    const active = selected.filter((p) => p.stage < 10);
     const ids = new Set(active.map((p) => p.id));
-    const taskItems = tasks.items.filter((item) => ids.has(item.projectId));
+    const selectedIds = new Set(selected.map((p) => p.id));
+    const taskItems = tasks.items.filter((item) => selectedIds.has(item.projectId) && (item.stage < 10 || item.kind === 'renewal'));
     const own = requests.ok ? requests.items.filter((r) => ids.has(r.projectId) && !r.deletedAt) : [];
     const applicable = own.filter((r) => r.status !== '해당 없음');
     const received = applicable.filter((r) => !!r.receipt && r.status !== '요청');
     const approved = received.filter((r) => r.status === '승인');
     const attention = [];
-    for (const project of active) {
+    for (const project of selected.filter((p) => p.stage < 10 || taskItems.some((task) => task.projectId === p.id && task.kind === 'renewal'))) {
       const mine = taskItems.filter((task) => task.projectId === project.id);
       const reasons = []; let rank = Infinity; let days = Infinity;
-      const target = LCA.deadlines.project(project, today);
+      const target = project.stage < 10 ? LCA.deadlines.project(project, today) : { days: null };
       if (target.days !== null && target.days <= 3) {
         reasons.push(`프로젝트 목표 ${target.text}`); rank = target.days < 0 ? 0 : 2; days = target.days;
       }

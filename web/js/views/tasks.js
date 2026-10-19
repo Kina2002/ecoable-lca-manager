@@ -6,6 +6,7 @@ LCA.views.tasks = (() => {
     overdue: '기한 초과: 받기로 한 날이 지났는데 아직 제출되지 않은 자료예요.',
     soon: '마감 임박: 오늘부터 3일 안에 자료를 받기로 해서 제출 일정을 확인해야 해요.',
     revision: '보완 요청: 받은 자료에 부족한 부분이 있어 보충해서 다시 받아야 해요.',
+    renewal: '갱신 확인: 예상 만료일이 가까운 인증·등록이에요. 발급 문서의 실제 만료일을 먼저 확인해요.',
     review: '자료 검토: 받은 자료의 내용·기간·증빙을 우리가 확인해야 해요.',
     comment: '고객 의견: 보고서에 남긴 고객 의견에 답변하거나 반영 여부를 확인해야 해요.',
     verification: '검증 지적: 외부 검증자가 남긴 지적에 답변하거나 보완 결과를 확인해야 해요.',
@@ -39,7 +40,7 @@ LCA.views.tasks = (() => {
       const query = search.value.trim().toLocaleLowerCase('ko-KR');
       const visible = state.items.filter((item) => (!kind || kind === item.kind) && (!people.value || people.value === personKey(item))
         && (!query || [item.code, item.companyName, item.productName, item.title, item.description, item.researcherName].join(' ').toLocaleLowerCase('ko-KR').includes(query)));
-      summary.textContent = `${state.today} 기준 · ${state.warnings.length ? '확인 가능한 기록의 ' : ''}전체 ${state.items.length}건 중 ${visible.length}건 표시 · 기한 초과·보완·마감 임박 순`;
+      summary.textContent = `${state.today} 기준 · ${state.warnings.length ? '확인 가능한 기록의 ' : ''}전체 ${state.items.length}건 중 ${visible.length}건 표시 · 기한 초과·보완·갱신 확인 순`;
       for (const item of visible) {
         const card = text('li', 'task-card', ''); card.dataset.taskId = item.id;
         const badge = text('span', `task-kind task-kind-${item.kind}`, LCA.tasks.KINDS[item.kind]);

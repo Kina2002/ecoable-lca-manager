@@ -293,3 +293,6 @@ h1 { font-size: 25px; }
 .source-guide-item dd { margin: 2px 0 0; }
 .source-guide-item a { display: inline-block; margin-top: 8px; color: #174c3d; font-weight: 650; text-underline-offset: 3px; }
 @media (max-width: 980px) { .source-guide-list { grid-template-columns: 1fr; } }
+
+/* WEB-050: 인증 예상 만료일을 확인하는 할 일 */
+.task-kind-renewal { color: #805111; background: #fff2d4; }

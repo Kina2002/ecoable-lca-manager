@@ -61,7 +61,7 @@ LCA.views.certification = (() => {
     const finishSave = text('button', 'primary-button', '프로젝트 완료 · 10단계로'); finishSave.type = 'submit';
     const finishError = text('p', 'field-error', ''); finishError.setAttribute('role', 'alert');
     finishForm.append(finishFields, finishSave, finishError); finishCard.append(finishInfo, finishBlock, LCA.views.compact.form(finishForm, '프로젝트 최종 완료 확인'),
-      text('p', 'detail-help', '완료하면 진행 중 집계와 할 일에서 빠지고 기록은 계속 조회할 수 있어요. 만료일은 위에서 예상만 확인할 수 있고, 갱신 관리는 아직 지원하지 않아요.'));
+      text('p', 'detail-help', '완료하면 진행 중 집계에서 빠지고 기록은 계속 조회할 수 있어요. 예상 만료일이 가까워지면 갱신 확인 할 일은 계속 보여요. 갱신 처리 기록은 아직 지원하지 않아요.'));
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);
     host.replaceChildren(intro, completionCard, processCard, finishCard, rebase, feedback, history);
@@ -69,8 +69,8 @@ LCA.views.certification = (() => {
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
     function updateExpiry() {
       issuedOn.parentElement.querySelector('label').textContent = kind.value === '고객 제출' ? '고객 확인일 (최종 확인 시 필수)' : '인증·등록 발급일 (승인·등록 시 필수)';
-      const expected = LCA.certification.expectedExpiry({ kind: kind.value, scheme: scheme.value, issuedOn: issuedOn.value }, status.value);
-      expiryInfo.textContent = expected ? `입력된 정보 기준 예상 만료일 ${expected.date} · ${expected.scheme} · 발급일 ${expected.issuedOn}. 실제 유효기간은 발급 문서와 기관의 등록 기록을 확인해 주세요.`
+      const schedule = LCA.certification.renewalSchedule({ kind: kind.value, scheme: scheme.value, issuedOn: issuedOn.value }, status.value);
+      expiryInfo.textContent = schedule ? `입력된 정보 기준 예상 만료일 ${schedule.date} · ${schedule.scheme} · 발급일 ${schedule.issuedOn}. ${schedule.active ? schedule.days < 0 ? `예상 만료일이 ${-schedule.days}일 지났어요. 실제 유효기간과 갱신 여부를 확인해 주세요.` : `${schedule.label} 시기예요. 예상 만료일까지 ${schedule.days}일 남았어요.` : `${schedule.label} 안내 시작 예정일은 ${schedule.startDate}이에요.`} 실제 유효기간은 발급 문서와 기관의 등록 기록을 확인해 주세요.`
         : kind.value === '고객 제출' ? '고객 제출의 확인일은 인증 만료일이 아니므로 계산하지 않아요.'
           : status.value !== '승인·등록' ? '인증·등록이 승인되고 발급일을 기록하면 예상 만료일을 볼 수 있어요.'
             : '예상 만료일을 계산하려면 진행 유형과 제도 이름(추천 목록의 정확한 이름), 올바른 발급일을 확인해 주세요.';

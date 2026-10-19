@@ -51,8 +51,8 @@ LCA.views.dashboard = (() => {
           state.requestsOk ? collection.total ? `등록 요청 ${collection.total}건 중 ${collection.received}건 받음 · 보완 자료 포함` : '등록된 자료 요청이 없어요.' : '자료 요청 기록을 읽지 못했어요.', collection.percent),
         metric('자료 승인률', state.requestsOk ? approval.percent === null ? '—' : `${approval.percent}%` : '확인 필요',
           state.requestsOk ? approval.total ? `받은 자료 ${approval.total}건 중 ${approval.approved}건 승인` : '받은 자료가 없어요.' : '자료 요청 기록을 읽지 못했어요.', approval.percent),
-        metric('확인 필요 프로젝트', `${state.attentionCount}개`, state.warnings.length ? '확인 가능한 기록 기준 · 아래 안내 확인' : '기한·자료·의견·정보 확인 필요'));
-      basis.textContent = `${state.today} 기준 · ${state.researcherLabel}의 진행 프로젝트 기준 · 프로젝트·할 일 탭의 필터와 별개예요. 비율은 프로젝트 전체 진행률이 아니에요.${state.requestsOk ? ` 자료 요청이 등록된 프로젝트 ${state.registeredProjects}/${state.activeCount}개.` : ''}`;
+        metric('확인 필요 프로젝트', `${state.attentionCount}개`, state.warnings.length ? '확인 가능한 기록 기준 · 아래 안내 확인' : '기한·자료·의견·갱신 확인 필요'));
+      basis.textContent = `${state.today} 기준 · ${state.researcherLabel}의 진행 프로젝트 지표예요. 갱신 확인은 완료 프로젝트도 포함해요. 프로젝트·할 일 탭의 필터와 별개예요. 비율은 프로젝트 전체 진행률이 아니에요.${state.requestsOk ? ` 자료 요청이 등록된 프로젝트 ${state.registeredProjects}/${state.activeCount}개.` : ''}`;
       attentionCount.textContent = `${state.warnings.length ? '확인 가능한 기록에서 ' : ''}${state.attentionCount}개 중 우선 ${state.attention.length}개 · 목표일·수집 마감과 할 일 기록 기준`;
       for (const item of state.attention) {
         const row = document.createElement('li'); const button = text('button', 'dashboard-project', `${item.companyName} (가상) · ${item.code}`);

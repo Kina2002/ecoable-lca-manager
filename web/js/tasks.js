@@ -1,11 +1,12 @@
 window.LCA = window.LCA || {};
 LCA.tasks = (() => {
-  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', review: '자료 검토', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
-  const ORDER = { overdue: 0, revision: 1, soon: 2, review: 3, verification: 4, comment: 5, info: 6 };
-  function build({ projects, requests, comments, verifications }, today = LCA.rules.today()) {
+  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', renewal: '갱신 확인', review: '자료 검토', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
+  const ORDER = { overdue: 0, revision: 1, renewal: 2, soon: 3, review: 4, verification: 5, comment: 6, info: 7 };
+  function build({ projects, requests, comments, verifications, certifications }, today = LCA.rules.today()) {
     const items = []; const warnings = [];
     if (!requests.ok) warnings.push(requests.message || '자료 요청을 읽지 못했어요. 자료 관련 할 일은 계산하지 않았어요.');
     if (!comments.ok) warnings.push(comments.error || '고객 의견을 읽지 못했어요. 고객 의견 할 일은 계산하지 않았어요.');
+    if (certifications && !certifications.ok) warnings.push(certifications.error || '인증 기록을 읽지 못했어요. 갱신 확인 할 일은 계산하지 않았어요.');
     function add(project, kind, key, title, description, tab, extra = {}) {
       items.push({ id: `${project.id}:${key}`, projectId: project.id, code: project.code, companyName: project.companyName,
         productName: project.productName, researcherName: project.researcherName || '', researcherId: project.researcherId || '',
@@ -49,8 +50,17 @@ LCA.tasks = (() => {
             days: deadline.days, status: issue.status, readOnly: project.stage !== 8 });
       }
     }
+    if (certifications?.ok) for (const saved of certifications.items) {
+      const project = projects.find((p) => p.id === saved.projectId);
+      if (!project || project.stage < 9) continue;
+      const schedule = LCA.certification.renewalSchedule(saved.details, saved.status, today);
+      if (!schedule?.active) continue;
+      add(project, 'renewal', 'renewal', schedule.days < 0 ? '예상 만료일 경과 · 실제 유효기간 확인' : `${schedule.scheme} ${schedule.label}`,
+        `${schedule.scheme} · 예상 만료일 ${schedule.date} · ${schedule.days < 0 ? '갱신 여부와 실제 유효기간을 확인해 주세요.' : `${schedule.label}를 시작할 시기예요.`} 발급 문서·기관 등록 기록의 실제 날짜를 먼저 확인해 주세요.`,
+        'certification', { date: schedule.date, days: schedule.days, status: saved.status, readOnly: project.stage === 10 });
+    }
     items.sort((a, b) => {
-      const priority = (task) => task.kind === 'verification' && task.days < 0 ? 0 : ORDER[task.kind];
+      const priority = (task) => ['verification', 'renewal'].includes(task.kind) && task.days < 0 ? 0 : ORDER[task.kind];
       return priority(a) - priority(b) || (a.days ?? Infinity) - (b.days ?? Infinity) || a.code.localeCompare(b.code) || a.id.localeCompare(b.id);
     });
     return { ok: true, items, warnings: [...new Set(warnings)], today };
@@ -60,7 +70,7 @@ LCA.tasks = (() => {
     return {
       text: !known ? '기한 미정' : item.days < 0 ? `D+${-item.days}` : item.days === 0 ? 'D-DAY' : `D-${item.days}`,
       detail: known ? `${item.date}${item.days === 0 ? ' · 오늘' : ''}` : '',
-      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
+      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.kind === 'renewal' ? '예상 만료일' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
       tone: item.kind === 'review' ? 'review' : !known ? 'unknown' : item.days < 0 ? 'elapsed' : item.days <= 3 ? 'soon' : 'upcoming'
     };
   }

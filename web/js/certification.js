@@ -20,6 +20,22 @@ LCA.certification = (() => {
     if (scheme.minusOne) anniversary.setUTCDate(anniversary.getUTCDate() - 1);
     return { date: anniversary.toISOString().slice(0, 10), scheme: details.scheme.trim(), issuedOn: details.issuedOn };
   }
+  function renewalSchedule(details, status, today = LCA.rules.today()) {
+    const expiry = expectedExpiry(details, status);
+    if (!expiry || !LCA.requests.validDate(today)) return null;
+    const start = new Date(0);
+    const [year, month, day] = expiry.date.split('-').map(Number);
+    start.setUTCFullYear(year, month - 1, day);
+    if (expiry.scheme === 'UL EPD') start.setUTCDate(start.getUTCDate() - 60);
+    else {
+      start.setUTCFullYear(year, month - 7, 1);
+      const lastDay = new Date(0); lastDay.setUTCFullYear(start.getUTCFullYear(), start.getUTCMonth() + 1, 0);
+      start.setUTCDate(Math.min(day, lastDay.getUTCDate()));
+    }
+    const days = LCA.rules.daysBetween(today, expiry.date);
+    return { ...expiry, startDate: start.toISOString().slice(0, 10), days, active: today >= start.toISOString().slice(0, 10),
+      label: expiry.scheme === 'UL EPD' ? '갱신 요청 확인' : '갱신 준비' };
+  }
   function validDetails(value, status) {
     if (!value || !['인증', '등록', '고객 제출'].includes(value.kind) || !text(value.organization, 200) || !text(value.scheme, 200)
       || !text(value.registrationNumber, 200, false) || !text(value.note, 2000, false)
@@ -84,6 +100,13 @@ LCA.certification = (() => {
     function currentStage(id) {
       const data = read();
       return data.ok ? { ok: true, stage: data.records[id]?.events.some((event) => event.type === 'finished') ? 10 : data.records[id]?.events.some((event) => event.type === 'started') ? 9 : null } : data;
+    }
+    function renewalSnapshot() {
+      const data = read(); if (!data.ok) return data;
+      return { ok: true, items: Object.entries(data.records).map(([projectId, record]) => {
+        const process = record.events.filter((event) => ['started', 'updated'].includes(event.type)).at(-1);
+        return process ? { projectId, status: process.status, details: clone(process.details) } : null;
+      }).filter(Boolean) };
     }
     function load(id) {
       const data = read(); if (!data.ok) return data;
@@ -163,7 +186,7 @@ LCA.certification = (() => {
         return mutate(...args);
       } catch { return { ok: false, error: '인증·등록 저장을 시작하지 못했어요. 입력과 기존 기록은 유지했어요.' }; }
     }
-    return { load, currentStage, save };
+    return { load, currentStage, renewalSnapshot, save };
   }
-  return { STORAGE_KEY, STATUSES, TRANSITIONS, EXPIRY_SCHEMES, expectedExpiry, validRecord, createStore };
+  return { STORAGE_KEY, STATUSES, TRANSITIONS, EXPIRY_SCHEMES, expectedExpiry, renewalSchedule, validRecord, createStore };
 })();
