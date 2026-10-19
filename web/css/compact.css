@@ -304,3 +304,6 @@ h1 { font-size: 25px; }
 .project-profile-options input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; padding: 0; flex-shrink: 0; margin-top: 2px; }
 .project-profile-group { margin-top: 8px; }
 @media (max-width: 600px) { .project-profile-options { grid-template-columns: 1fr; } }
+
+.project-attention-control { display: flex; align-items: center; gap: .4rem; align-self: end; padding: .45rem 0; }
+.project-list-controls .project-attention-control input { width: auto; min-height: auto; }

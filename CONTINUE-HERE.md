@@ -1,5 +1,7 @@
 # 다른 노트북에서 바로 이어가기
 
+**최신 WEB-057:** 홈 전체 펼침·완료 건수와 프로젝트 정렬·확인 필요 필터를 같은 기준으로 연결했다. 저장 자료와 단계는 유지한다. 자동검사 259개 통과. 실제 브라우저 조작은 미확인이다. [SPEC](docs/04-webapp-spec/WEB-057-home-list-completion.md). 아래 이전 기록과 구분한다.
+
 최종 정리: **2026-10-19 (한국 시간)** · 구현 기준 **WEB-056** · 브랜치 **main**
 
 **이번 승인 순서 구현 완료:** [WEB-054 발송 기록](docs/04-webapp-spec/WEB-054-sent-request-history.md) → [WEB-055 정보 확인 안내문](docs/04-webapp-spec/WEB-055-project-information-message.md) → [WEB-056 추가정보 편집](docs/04-webapp-spec/WEB-056-project-profile-edit.md)을 완료했다. 추가정보는 1~8단계에서 편집하며 전후 이력·새 보고서 사본을 보관하고 과거 보고서는 유지한다. 기존 requests/projects 키로 백업·삭제를 연결했다. 전체 자동검사 257개와 구문·정적 파일 응답을 확인했다. 실제 브라우저 입력·클릭·작은 화면 조작은 미확인이다. 아래 WEB-055 이하 요약은 이전 기록이다. 사용자의 기획 기본 기능 연속 구현 지시와 전체 기능 뒤 역할극 계획은 유지한다.

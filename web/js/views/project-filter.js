@@ -6,7 +6,9 @@ LCA.views.projectFilter = (() => {
     const researcher = document.querySelector('#project-researcher-filter');
     const purpose = document.querySelector('#project-purpose-filter');
     const clear = document.querySelector('#project-filter-clear');
-    const state = { query: '', researcher: '', purpose: '' };
+    const sort = document.querySelector('#project-sort');
+    const attention = document.querySelector('#project-attention-only');
+    const state = { query: '', researcher: '', purpose: '', sort: 'registered', attentionOnly: false };
     const option = (value, label) => {
       const node = document.createElement('option'); node.value = value; node.textContent = label; return node;
     };
@@ -24,14 +26,16 @@ LCA.views.projectFilter = (() => {
       state.query = query.value;
       state.researcher = researcher.value;
       state.purpose = purpose.value;
+      state.sort = sort.value; state.attentionOnly = attention.checked;
       clear.disabled = !LCA.projectFilter.active(state);
       onChanged();
     }
     query.addEventListener('input', changed);
     researcher.addEventListener('change', changed);
     purpose.addEventListener('change', changed);
+    sort.addEventListener('change', changed); attention.addEventListener('change', changed);
     function reset() {
-      query.value = ''; researcher.value = ''; purpose.value = '';
+      query.value = ''; researcher.value = ''; purpose.value = ''; sort.value = 'registered'; attention.checked = false;
       changed();
     }
     clear.addEventListener('click', () => { reset(); query.focus(); });

@@ -158,7 +158,12 @@
   function renderProjectList() {
     const collectionDates = refreshCollectionDates();
     projectFilters.refreshOptions();
-    const visible = LCA.projectFilter.select(projects, selectedStage, projectFilters.state);
+    const state = projectFilters.state.attentionOnly ? getWorkflowState() : null;
+    const home = state?.ok ? LCA.dashboard.build(state) : null;
+    const warning = document.querySelector('#project-attention-warning');
+    warning.textContent = state && !state.ok ? state.error : home?.warnings.join(' ') || '';
+    warning.hidden = !warning.textContent;
+    const visible = LCA.projectFilter.select(projects, selectedStage, projectFilters.state, home?.allAttention.map((p) => p.id));
     LCA.views.projectList.render(visible, selectedStage, projects.length, LCA.projectFilter.active(projectFilters.state), { requests: requestStore.listAll(), collectionDates });
   }
   function getRequestMessageState(id) {

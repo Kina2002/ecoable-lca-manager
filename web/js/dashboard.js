@@ -45,7 +45,9 @@ LCA.dashboard = (() => {
       collection: { total: applicable.length, received: received.length, percent: requests.ok ? percent(received.length, applicable.length) : null },
       approval: { total: received.length, approved: approved.length, percent: requests.ok ? percent(approved.length, received.length) : null },
       registeredProjects: new Set(own.map((r) => r.projectId)).size,
-      attentionCount: attention.length, attention: attention.slice(0, 3), taskCount: taskItems.length, tasks: taskItems.slice(0, 3),
+      projectCount: selected.length, completedCount: selected.filter((p) => p.stage === 10).length,
+      attentionCount: attention.length, attention: attention.slice(0, 3), allAttention: attention,
+      taskCount: taskItems.length, tasks: taskItems.slice(0, 3), allTasks: taskItems,
       warnings: [...tasks.warnings, ...(researchers && !researchers.ok ? ['연구원 명단을 읽지 못해 프로젝트에 연결된 연구원만 선택할 수 있어요.'] : [])] };
   }
   return { build };
