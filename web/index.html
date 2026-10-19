@@ -41,11 +41,11 @@
     <script src="./js/views/researchers.js?v=web-041" defer></script>
     <script src="./js/projects.js?v=web-056" defer></script>
     <script src="./js/scope.js?v=web-037" defer></script>
-    <script src="./js/backup.js?v=web-054" defer></script>
+    <script src="./js/backup.js?v=web-059" defer></script>
     <script src="./js/project-deletion.js?v=web-056" defer></script>
     <script src="./js/views/project-basic.js?v=web-056" defer></script>
     <script src="./js/views/project-deletion.js?v=web-054" defer></script>
-    <script src="./js/views/backup.js?v=web-054" defer></script>
+    <script src="./js/views/backup.js?v=web-059" defer></script>
     <script src="./js/tasks.js?v=web-055" defer></script>
     <script src="./js/dashboard.js?v=web-057" defer></script>
     <script src="./js/views/dashboard.js?v=web-057" defer></script>
@@ -541,6 +541,12 @@
               </section>
             </div>
             <p id="backup-feedback" class="request-feedback" role="status" aria-live="polite"></p>
+            <details class="detail-card"><summary>새 연습 시작 · 기본 샘플로 초기화</summary>
+              <p id="sample-reset-help" class="detail-help"></p>
+              <p class="detail-help">먼저 위의 ‘백업 내려받기’를 누르고 파일이 저장됐는지 확인해 주세요. 백업 뒤 기록을 바꾸면 다시 백업해야 해요.</p>
+              <label class="backup-confirm"><input id="sample-reset-confirm" type="checkbox"><span>현재 기록의 백업 파일과 저장 전 입력을 보관했고 다른 창을 닫았어요. 현재 업무 기록 전체를 지우고 기본 샘플로 새로 시작할게요.</span></label>
+              <button id="sample-reset" type="button" class="request-action-button project-delete-button" disabled>현재 기록 지우고 기본 샘플로 초기화</button>
+            </details>
           </section>
 
           <section id="glossary-view" aria-labelledby="glossary-title" hidden>

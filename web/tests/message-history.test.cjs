@@ -73,3 +73,26 @@ test('기존 백업 키로 발송 기록을 검증하고 프로젝트 삭제 계
   assert.equal(profileHistory[created.item.id], undefined); assert.equal(profileHistory[samples[0].id].length, 1);
   assert.equal(store.messages(created.item.id).items.length, 1);
 });
+
+test('샘플 초기화 계획은 기록을 바꾸지 않고 실제 교체 뒤에는 백업으로 복원할 수 있다', async () => {
+  const storage = memory(); context.localStorage = storage; await LCA.storage.bootstrap();
+  const date = '2026-10-19'; const samples = LCA.data.createSampleProjects(date);
+  const projects = LCA.projects.createStore(samples, date); await projects.add({ companyName:'가상 연습', productName:'제품', purpose:'고객사 요구 대응', targetDate:'2026-12-01' });
+  const before = LCA.backup.create(date); const plan = LCA.backup.resetPlan(date);
+  assert.equal(plan.summary.projects.length, 7); assert.equal(LCA.backup.create(date).summary.projects.length, 8);
+  assert.equal(plan.summary.requests, 0);
+  const reset = await LCA.backup.reset(date, before.expected); assert.equal(reset.ok,true); assert.equal(LCA.storage.changed(),true);
+  await LCA.storage.bootstrap(); assert.equal(LCA.backup.create(date).summary.projects.length,7);
+  const restored = await LCA.backup.restore(LCA.backup.parse(before.content), JSON.stringify(LCA.storage.capture())); assert.equal(restored.ok,true);
+  await LCA.storage.bootstrap(); assert.equal(LCA.backup.create(date).summary.projects.length,8);
+});
+test('백업 뒤 바뀐 기록과 초기화 중 저장 실패는 기존 데이터를 보존한다', async () => {
+  const storage = memory(); context.localStorage = storage; await LCA.storage.bootstrap();
+  const date = '2026-10-19'; const before = LCA.backup.create(date);
+  storage.setItem(LCA.storage.SAMPLE_KEY,'2026-10-18');
+  assert.equal((await LCA.backup.reset(date,before.expected)).ok,false);
+  const expected = JSON.stringify(LCA.storage.capture()); const originalSet = storage.setItem; let failed = false;
+  storage.setItem = (key,value) => { if (key === LCA.storage.SAMPLE_KEY && value === date && !failed) { failed=true; throw Error('full'); } originalSet(key,value); };
+  assert.equal((await LCA.backup.reset(date,expected)).ok,false); assert.equal(storage.getItem(LCA.storage.SAMPLE_KEY),'2026-10-18');
+  assert.equal(JSON.stringify(LCA.storage.capture()),expected); assert.equal(storage.getItem(LCA.storage.JOURNAL_KEY),null);
+});

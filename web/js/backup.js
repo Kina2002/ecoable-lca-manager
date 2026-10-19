@@ -97,5 +97,12 @@ LCA.backup = (() => {
     const values = { ...parsed.data.records, [LCA.storage.SAMPLE_KEY]: parsed.data.sampleDate };
     return LCA.storage.replace(values, expected);
   }
-  return { MAX_BYTES, create, parse, save, restore, inspect };
+  function resetPlan(sampleDate) {
+    const records = Object.fromEntries(LCA.storage.DATA_KEYS.map((key) => [key, null]));
+    return { summary: inspect(records, sampleDate), values: { ...records, [LCA.storage.SAMPLE_KEY]: sampleDate } };
+  }
+  async function reset(sampleDate, expected) {
+    return LCA.storage.replace(resetPlan(sampleDate).values, expected);
+  }
+  return { MAX_BYTES, create, parse, save, restore, inspect, resetPlan, reset };
 })();

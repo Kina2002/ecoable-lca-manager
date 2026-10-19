@@ -8,6 +8,10 @@ LCA.views.backup = (() => {
     const previewBody = view.querySelector('#backup-preview-body'); const confirmation = view.querySelector('#backup-confirm');
     const restoreButton = view.querySelector('#backup-restore'); const feedback = view.querySelector('#backup-feedback');
     const safety = view.querySelector('#backup-safety');
+    const resetButton = view.querySelector('#sample-reset'); const resetConfirm = view.querySelector('#sample-reset-confirm');
+    const resetHelp = view.querySelector('#sample-reset-help');
+    const resetInfo = LCA.backup.resetPlan(LCA.rules.today()).summary;
+    resetHelp.textContent = `기본 가상 프로젝트 ${resetInfo.projects.length}개와 연구원 ${resetInfo.researchers}명으로 돌아가요. 직접 등록한 프로젝트·자료·검토·보고서·인증·발송 기록과 저장한 기본 요청 문장은 모두 지워져요. 일정은 초기화 실행일 기준으로 다시 만들어요.`;
     let selected = null; let savedExpected = null; let busy = false; let readNumber = 0;
     if (typeof window.showSaveFilePicker !== 'function' || !window.isSecureContext) {
       mode.querySelector('[value="location"]').disabled = true; mode.value = 'download';
@@ -17,6 +21,7 @@ LCA.views.backup = (() => {
     function update() {
       exportButton.disabled = busy; input.disabled = busy; mode.disabled = busy; confirmation.disabled = busy;
       restoreButton.disabled = busy || !selected || !savedExpected || !confirmation.checked;
+      resetConfirm.disabled = busy; resetButton.disabled = busy || !savedExpected || !resetConfirm.checked;
     }
     function paragraph(value) { const p = document.createElement('p'); p.textContent = value; return p; }
     exportButton.addEventListener('click', async () => {
@@ -24,7 +29,7 @@ LCA.views.backup = (() => {
       try {
         const snapshot = LCA.backup.create(sampleDate);
         const result = await LCA.backup.save(snapshot, mode.value);
-        savedExpected = snapshot.expected; confirmation.checked = false;
+        savedExpected = snapshot.expected; confirmation.checked = false; resetConfirm.checked = false;
         safety.textContent = `현재 기록 백업: ${result.fileName}. ${result.saved ? '파일 저장을 완료했어요.' : '다운로드를 요청했어요. 브라우저에서 파일 저장이 끝났는지 확인해 주세요.'}`;
         message(result.saved ? '선택한 위치에 백업 파일을 저장했어요.' : '백업 다운로드를 요청했어요. 다운로드 목록에서 완료 여부와 저장 위치를 확인해 주세요.');
       } catch (error) {
@@ -56,6 +61,19 @@ LCA.views.backup = (() => {
       finally { if (serial === readNumber) { busy = false; update(); } }
     });
     confirmation.addEventListener('change', update);
+    resetConfirm.addEventListener('change', update);
+    resetButton.addEventListener('click', async () => {
+      if (busy || !savedExpected || !resetConfirm.checked) return;
+      busy = true; update(); message('기본 가상 샘플로 교체하고 있어요. 이 창을 닫지 말아 주세요.');
+      try {
+        const result = await LCA.backup.reset(LCA.rules.today(), savedExpected);
+        if (result.ok) { onRestored('기본 가상 샘플로 초기화했어요. 새로고침하면 새 연습을 시작할 수 있어요. 이전 기록은 내려받은 백업 파일에서 복원할 수 있어요.'); return; }
+        if (result.fatal) { onRestored(result.error); return; }
+        savedExpected = null; resetConfirm.checked = false; confirmation.checked = false;
+        message(result.error, true); safety.textContent = '현재 기록을 다시 백업한 뒤 진행해 주세요.';
+      } catch (error) { message(error.message || '초기화하지 못했어요. 기존 기록을 확인해 주세요.', true); }
+      finally { busy = false; update(); }
+    });
     restoreButton.addEventListener('click', async () => {
       if (busy || !selected || !savedExpected || !confirmation.checked) return;
       busy = true; update(); message('백업 파일의 기록으로 교체하고 있어요. 이 창을 닫지 말아 주세요.');
@@ -69,7 +87,7 @@ LCA.views.backup = (() => {
     });
     window.addEventListener('storage', (event) => {
       if (LCA.storage.DATA_KEYS.includes(event.key) || event.key === null) {
-        savedExpected = null; confirmation.checked = false; safety.textContent = '다른 창에서 기록이 바뀌었어요. 현재 기록을 다시 백업해 주세요.'; update();
+        savedExpected = null; confirmation.checked = false; resetConfirm.checked = false; safety.textContent = '다른 창에서 기록이 바뀌었어요. 현재 기록을 다시 백업해 주세요.'; update();
       }
     });
     update();
