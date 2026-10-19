@@ -1,5 +1,23 @@
 # 웹앱 기능별 SPEC
 
+**최신 구현 WEB-061 · 전체 자동검사 267개 통과.** 최근 SPEC은 아래와 같으며 그 아래 예전 최신 표시는 과거 기록이다.
+
+- [WEB-061 보충 정보와 누락 안내 확대](WEB-061-project-information.md)
+- [WEB-060 기한별 안내문 추천과 종합 안내](WEB-060-message-recommendation.md)
+- [WEB-059 기본 샘플 초기화](WEB-059-sample-reset.md)
+- [WEB-058 기본 요청 문장 설정](WEB-058-request-template-settings.md)
+- [WEB-057 홈 전체 조회와 프로젝트 정렬](WEB-057-home-list-completion.md)
+- [WEB-056 프로젝트 추가정보 편집](WEB-056-project-profile-edit.md)
+- [WEB-055 정보 확인 안내문](WEB-055-project-information-message.md)
+- [WEB-054 요청문 발송 기록](WEB-054-sent-request-history.md)
+- [WEB-053 인증·등록 갱신 처리 이력](WEB-053-certification-renewal-history.md)
+- [WEB-052 International EPD 연간 점검](WEB-052-epd-annual-inspection.md)
+- [WEB-051 인증서의 공식 만료일 기록](WEB-051-official-certification-expiry.md)
+- [WEB-050 인증 갱신 준비 안내](WEB-050-renewal-preparation-alert.md)
+- [WEB-049 인증·등록 예상 만료일](WEB-049-certification-expected-expiry.md)
+- [WEB-048 자료 출처 안내](WEB-048-public-source-guide.md)
+- [WEB-047 계수 출처 표시 바로잡기](WEB-047-factor-source-labels.md)
+
 최신: [WEB-046 받은 자료의 출처 기록](WEB-046-received-data-source.md) — 활동량·계수 1차/2차, 획득 방법, 2차 계수 DB·데이터셋·버전·연도·출처와 CSV/보고서 연결.
 
 최신: [WEB-045 자료 요청의 해당 없음과 사유](WEB-045-not-applicable-request.md) — 사유 필수·다시 요청하기·두 상태 필터·기한/단계/계산/보고서 집계.
