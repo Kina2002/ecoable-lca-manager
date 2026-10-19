@@ -1,7 +1,7 @@
 window.LCA = window.LCA || {};
 LCA.tasks = (() => {
-  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', certification: '인증 상태 확인', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', inquiry: '자료 질의', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
-  const ORDER = { overdue: 0, revision: 1, certification: 2, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, inquiry: 7, info: 8 };
+  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', resubmission: '보고서 보완', certification: '인증 상태 확인', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', inquiry: '자료 질의', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
+  const ORDER = { overdue: 0, revision: 1, resubmission: 1, certification: 2, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, inquiry: 7, info: 8 };
   function build({ projects, requests, inquiries, comments, verifications, certifications }, today = LCA.rules.today()) {
     const items = []; const warnings = [];
     if (!requests.ok) warnings.push(requests.message || '자료 요청을 읽지 못했어요. 자료 관련 할 일은 계산하지 않았어요.');
@@ -59,7 +59,12 @@ LCA.tasks = (() => {
     }
     if (certifications?.ok) for (const saved of certifications.items) {
       const project = projects.find((p) => p.id === saved.projectId);
-      if (!project || project.stage < 9) continue;
+      if (project && saved.amendment) {
+        add(project, 'resubmission', 'resubmission', `${saved.amendment.number}차 제출 보완 이어가기`,
+          `이전 제출 보고서 v${saved.amendment.reportRevision} · 수정 보고서 작성, 재검토와 완료 근거를 확인한 뒤 재제출을 기록해 주세요.`, 'certification');
+        if (saved.status !== '승인·등록') continue;
+      }
+      if (!project || project.stage < 9 && !saved.amendment) continue;
       const certificationStatus = LCA.certification.currentStatus({ status: saved.status, details: saved.details },
         { validity: saved.officialExpiryOn ? { expiryOn: saved.officialExpiryOn } : null, statusChecks: saved.statusChecks || [], cancelled: saved.cancelled }, today);
       if (saved.status === '승인·등록' && saved.details.kind !== '고객 제출' && certificationStatus.label === '확인 필요') {

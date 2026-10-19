@@ -39,12 +39,14 @@ LCA.views.certificationStatus = (() => {
     function refresh() {
       loaded = store.load(project.id);
       if (!loaded.ok) { summary.textContent = loaded.error; fields.disabled = save.disabled = rebase.disabled = true; return; }
-      const d = loaded.process?.details; const latest = loaded.statusChecks.at(-1);
-      heading.textContent = `현재 인증 상태 · ${loaded.currentStatus.label}`;
+      const care = loaded.issuedCare || loaded;
+      const d = loaded.issuedProcess?.details || loaded.process?.details; const latest = care.statusChecks.at(-1);
+      heading.textContent = `${loaded.issuedProcess && loaded.process?.status !== '승인·등록' ? '기존 발급 인증 상태' : '현재 인증 상태'} · ${loaded.currentStatus.label}`;
       summary.textContent = loaded.currentStatus.detail;
+      if (loaded.issuedProcess && loaded.process?.status !== '승인·등록') summary.textContent += ' 수정 보고서의 보완·재제출 진행과 별도로 보관한 기존 인증서의 상태예요. 현재는 이 인증서의 확인 이력을 조회해요.';
       evidence.textContent = latest ? `최근 상태 확인 ${latest.checkedOn} · ${latest.status} · ${latest.documentName} · ${latest.actor}`
-        : loaded.validity ? `공식 만료일 근거: ${loaded.validity.documentName} · ${loaded.validity.actor}. 별도 상태 확인 이력은 없어요.` : '아직 보관한 상태 확인 이력이 없어요.';
-      target.textContent = d ? `저장 대상: ${d.organization} · ${d.scheme} · 번호 ${d.registrationNumber || '미정'} · 발급일 ${d.issuedOn || '미정'}` : '승인된 인증·등록부터 상태 확인을 기록할 수 있어요.';
+        : care.validity ? `공식 만료일 근거: ${care.validity.documentName} · ${care.validity.actor}. 별도 상태 확인 이력은 없어요.` : '아직 보관한 상태 확인 이력이 없어요.';
+      target.textContent = d ? `확인 대상: ${d.organization} · ${d.scheme} · 번호 ${d.registrationNumber || '미정'} · 발급일 ${d.issuedOn || '미정'}` : '승인된 인증·등록부터 상태 확인을 기록할 수 있어요.';
       form.parentElement.hidden = !d || d.kind === '고객 제출';
       fields.disabled = save.disabled = busy || !loaded.canRecordValidity; rebase.disabled = busy;
       if (!dirty) { revision = loaded.record.revision; status.value = '확인 필요'; checkedOn.value = LCA.rules.today(); documentName.value = ''; reason.value = ''; confirmed.checked = false; }

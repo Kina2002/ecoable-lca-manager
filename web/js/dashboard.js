@@ -1,6 +1,6 @@
 window.LCA = window.LCA || {};
 LCA.dashboard = (() => {
-  const RANK = { overdue: 0, revision: 1, certification: 2, renewal: 2, inspection: 3, soon: 4, verification: 5, comment: 6, inquiry: 6, info: 7, review: 8 };
+  const RANK = { overdue: 0, revision: 1, resubmission: 1, certification: 2, renewal: 2, inspection: 3, soon: 4, verification: 5, comment: 6, inquiry: 6, info: 7, review: 8 };
   function build({ projects, requests, tasks, researchers }, today = LCA.rules.today(), researcher = '') {
     const options = new Map(LCA.projectFilter.researcherOptions(projects).map((person) => [person.id, person.label]));
     if (researchers?.ok) for (const person of researchers.items) options.set(person.id, `${person.name} · ${LCA.projectFilter.researcherCode(person.id)}`);

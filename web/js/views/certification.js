@@ -3,7 +3,7 @@ LCA.views = LCA.views || {};
 LCA.views.certification = (() => {
   let refreshCurrent = () => {};
   const { text, field, option, date } = LCA.views.verificationIssue;
-  function init(project, store, onChanged, onOpenReport, onOpenVerification) {
+  function init(project, store, onChanged, onOpenReport, onOpenVerification, onOpenTab) {
     const host = document.querySelector('#project-certification-panel');
     const intro = text('section', 'detail-card calculation-card', '');
     intro.append(text('h2', '', '검토·검증 완료와 후속 제출'), text('p', 'detail-help', '선택한 내부 검토 또는 외부 검토의 최종 보고서와 완료 근거를 보관하고, 프로젝트 목적에 맞는 인증·등록 또는 고객 제출을 기록해요. 내부 검토를 완료했다고 외부 검증이나 인증을 받은 것은 아니에요.'));
@@ -80,7 +80,8 @@ LCA.views.certification = (() => {
     const inspectionHost = document.createElement('div');
     const renewalHost = document.createElement('div');
     const statusHost = document.createElement('div');
-    host.replaceChildren(intro, statusHost, completionCard, processCard, validityCard, renewalHost, inspectionHost, finishCard, rebase, feedback, history);
+    const resubmissionHost = document.createElement('div');
+    host.replaceChildren(intro, resubmissionHost, statusHost, completionCard, processCard, validityCard, renewalHost, inspectionHost, finishCard, rebase, feedback, history);
     let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let validityFormRevision = -1; let finishReasonAuto = '';
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
     function updateExpiry() {
@@ -135,6 +136,8 @@ LCA.views.certification = (() => {
       completionFields.disabled = busy || !state.canComplete; completionSave.disabled = busy || !state.canComplete;
       completionSave.textContent = state.completion ? '검토·검증 완료 근거 새로 보관' : '검토·검증 완료 기록 보관';
       processTitle.textContent = state.process ? `제출 진행 관리 · ${state.process.status}` : '인증·등록 또는 고객 제출 시작';
+      processCard.hidden = state.amendmentActive;
+      if (state.amendmentActive) completionSave.textContent = '수정 보고서 검토 완료 근거 보관';
       processFields.disabled = busy || !(state.process ? state.canWrite : state.canStart); processSave.disabled = processFields.disabled;
       processSave.textContent = busy ? '저장 중…' : state.process ? '진행 정보·이력 저장' : '인증·등록 준비 시작 · 9단계로'; startLabel.hidden = !!state.process;
       validityCard.hidden = !state.process || state.project.stage < 9;
@@ -168,7 +171,12 @@ LCA.views.certification = (() => {
       historyList.replaceChildren();
       for (const event of state.record.events.slice().reverse()) {
         const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'validity' ? '공식 만료일 확인' : event.type === 'renewed' ? '갱신 완료' : event.type === 'inspection-plan' ? 'EPD 점검 기준 기록' : event.type === 'inspection' ? `연간 ${event.status}` : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
-        if (event.type === 'status-check') {
+        if (event.type === 'amendment-started' || event.type === 'resubmitted') {
+          item.querySelector('summary').textContent = `${date(event.at)} · ${event.number}차 ${event.type === 'amendment-started' ? '제출 보완 시작' : '재제출'} · ${event.actor}`;
+          item.append(text('p', 'detail-help', event.type === 'amendment-started'
+            ? `보완 시작 ${event.startedOn} · 요청자 ${event.requestedBy} · 요청 문서 ${event.documentName} · 이전 제출 보고서 v${event.report.revision} · 이전 단계 ${event.fromStage}`
+            : `재제출일 ${event.details.submittedOn} · 받는 기관 ${event.details.organization} · 보고서 v${event.report.revision} · 제출 문서 ${event.documentName}`));
+        } else if (event.type === 'status-check') {
           item.querySelector('summary').textContent = `${date(event.at)} · 상태 확인: ${event.status} · ${event.actor}`;
           item.append(text('p', 'detail-help', `확인일 ${event.checkedOn} · 확인 문서 ${event.documentName} · ${event.organization} · ${event.scheme} · 번호 ${event.registrationNumber} · 발급일 ${event.issuedOn} · 당시 공식 만료일 ${event.expiryOn || '미정'}`));
         } else if (event.type === 'completed') {
@@ -230,6 +238,7 @@ LCA.views.certification = (() => {
     LCA.views.certificationInspection.init(inspectionHost, project, store, onChanged);
     LCA.views.certificationRenewal.init(renewalHost, project, store, onChanged);
     LCA.views.certificationStatus.init(statusHost, project, store, onChanged);
+    LCA.views.resubmission.init(resubmissionHost, project, store, onChanged, onOpenReport, onOpenTab);
     refreshCurrent = refresh; refresh();
   }
   function dateField(parent, id, label) {
@@ -240,5 +249,5 @@ LCA.views.certification = (() => {
   function checkbox(parent, label) {
     const wrapper = text('label', 'calculation-confirmation', ''); const input = document.createElement('input'); input.type = 'checkbox'; wrapper.append(input, document.createTextNode(label)); parent.append(wrapper); return input;
   }
-  return { init, refresh: () => { refreshCurrent(); LCA.views.certificationInspection.refresh(); LCA.views.certificationRenewal.refresh(); LCA.views.certificationStatus.refresh(); } };
+  return { init, refresh: () => { refreshCurrent(); LCA.views.certificationInspection.refresh(); LCA.views.certificationRenewal.refresh(); LCA.views.certificationStatus.refresh(); LCA.views.resubmission.refresh(); } };
 })();

@@ -93,9 +93,13 @@ LCA.scope = (() => {
         const current = data.records[project.id] || JSON.parse(JSON.stringify(originals.get(project.id)));
         const verification = getVerificationStage ? getVerificationStage(project.id) : { ok: true, stage: null };
         if (!verification.ok) return verification;
-        effective.push({ project, current: { ...current, stage: Math.max(current.stage, verification.stage || 0) } });
+        effective.push({ project, current: { ...current, stage: verification.override ? verification.stage : Math.max(current.stage, verification.stage || 0) },
+          amendment: verification.amendment });
       }
-      for (const { project, current } of effective) Object.assign(project, current);
+      for (const { project, current, amendment } of effective) {
+        Object.assign(project, current);
+        if (amendment) project.amendment = amendment; else delete project.amendment;
+      }
       return data;
     }
     function currentStage(id) {
@@ -104,7 +108,7 @@ LCA.scope = (() => {
       const current = data.records[id] || originals.get(id);
       if (!current) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
       const verification = getVerificationStage ? getVerificationStage(id) : { ok: true, stage: null };
-      return verification.ok ? { ok: true, stage: Math.max(current.stage, verification.stage || 0) } : verification;
+      return verification.ok ? { ...verification, ok: true, stage: verification.override ? verification.stage : Math.max(current.stage, verification.stage || 0) } : verification;
     }
     function collectionStatus(id) {
       try { return collectionReadiness(id, getRequests?.(id)); }

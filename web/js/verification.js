@@ -42,8 +42,9 @@ LCA.verification = (() => {
       } catch { return failure(); }
     }
     // 저장된 검증 기록만 읽는다. scope→검증→scope 순환 조회를 만들지 않는다.
-    function currentStage(id) {
-      const data = read(); return data.ok ? { ok: true, stage: data.records[id] ? 8 : null } : data;
+    function currentStage(id, withEvidence = false) {
+      const data = read(); const round = data.ok ? data.records[id]?.rounds.at(-1) : null;
+      return data.ok ? { ok: true, stage: round ? 8 : null, ...(withEvidence ? { reportRevision: round?.reportRevision || 0, reviewedAt: round?.createdAt || '' } : {}) } : data;
     }
     function snapshot(id) {
       const data = read(); return data.ok ? { ok: true, record: data.records[id] ? clone(data.records[id]) : null } : data;
@@ -66,11 +67,13 @@ LCA.verification = (() => {
       const unresolved = issues.filter((item) => item.round === round?.number && item.status !== '종결');
       const routeBlock = getReviewRoute && route?.ok ? route.method !== 'external' ? '검토 방식을 외부 검토(제3자 검증)로 정한 뒤 시작해 주세요.' : route.completionBlock : '';
       const startBlock = warning || routeBlock || (!comments?.ok ? comments?.error || '고객 검토 기록을 확인하지 못했어요.' : comments.warning || '')
+        || (project.amendment && (!reports?.record || reports.record.revision <= project.amendment.latestReportRevision) ? '보완 시작 이후 새 보고서 버전을 저장한 뒤 새 검증 차수를 시작해 주세요.' : '')
         || (unresolvedCustomers.length ? `미종결 고객 의견 ${unresolvedCustomers.length}건을 먼저 처리해 주세요.` : '')
         || (!reports?.record || !reports.ready || reports.stale || reports.currentError ? '현재 자료·계산·해석과 일치하는 최신 보고서를 먼저 저장해 주세요.' : '')
         || (unresolved.length ? `현재 ${round.number}차의 미종결 지적 ${unresolved.length}건을 먼저 처리해 주세요.` : '');
       return { ok: true, project, record, issues, round, reports: versions, latest: reports?.record || null, sourceKey: reports?.sourceKey || '',
-        warning, startBlock, canStart: !startBlock && [7, 8].includes(project.stage), canWrite: !warning && project.stage === 8 && !!round,
+        warning, startBlock, canStart: !startBlock && [7, 8].includes(project.stage), canWrite: !warning && project.stage === 8 && !!round
+          && (!project.amendment || (round.reportRevision > project.amendment.latestReportRevision && Date.parse(round.createdAt) >= Date.parse(project.amendment.at))),
         unresolvedCustomers, unresolved, route };
     }
     function mutate(id, action, draft, expectedRevision, expectedReport) {

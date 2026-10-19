@@ -119,14 +119,14 @@ LCA.views.projectDetail = (() => {
   }
   function stageField(project) {
     const stage = LCA.constants.stageByNo(project.stage);
-    const element = field('현재 단계', stage ? `${stage.name} · ${stage.no}/${LCA.constants.STAGES.length}` : '단계 확인 필요', stage ? '번호는 업무 순서이며 완료율이 아니에요.' : '');
+    const element = field('현재 단계', stage ? `${stage.name} · ${stage.no}/${LCA.constants.STAGES.length}${project.amendment ? ` · ${project.amendment.number}차 제출 보완 중` : ''}` : '단계 확인 필요', stage ? '번호는 업무 순서이며 완료율이 아니에요.' : '');
     element.id = 'project-current-stage';
     return element;
   }
   function refreshStage(project) {
     document.querySelector('#project-current-stage').replaceWith(stageField(project));
     const edit = document.querySelector('[data-edit-project-basic]');
-    if (edit) edit.textContent = project.stage >= 10 ? '기본정보·변경 이력' : '기본정보 수정';
+    if (edit) edit.textContent = (project.amendment?.fromStage || project.stage) >= 10 ? '기본정보·변경 이력' : '기본정보 수정';
   }
 
   function targetField(project) {
@@ -166,7 +166,7 @@ LCA.views.projectDetail = (() => {
     const description = textElement('p', 'page-description', `${project.productName} · ${project.code}`); description.id = 'project-detail-description'; identity.append(title, description);
     const back = document.querySelector('#back-to-projects');
     heading.append(back, identity, textElement('span', 'demo-pill', project.origin === 'user' ? '직접 등록한 프로젝트' : '기본 샘플 · 삭제 대상 아님'));
-    const edit = textElement('button', 'request-action-button', project.stage >= 10 ? '기본정보·변경 이력' : '기본정보 수정'); edit.type = 'button'; edit.dataset.editProjectBasic = project.id;
+    const edit = textElement('button', 'request-action-button', (project.amendment?.fromStage || project.stage) >= 10 ? '기본정보·변경 이력' : '기본정보 수정'); edit.type = 'button'; edit.dataset.editProjectBasic = project.id;
     edit.setAttribute('aria-haspopup', 'dialog'); edit.setAttribute('aria-controls', 'project-basic-dialog'); heading.append(edit);
     if (project.origin === 'user') {
       const remove = textElement('button', 'request-action-button project-delete-button', '프로젝트 삭제'); remove.type = 'button'; remove.dataset.deleteProject = project.id;

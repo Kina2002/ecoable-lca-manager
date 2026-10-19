@@ -43,7 +43,10 @@
   updateReferenceDate(referenceDate);
 
   const samples = LCA.data.createSampleProjects(sampleDate);
-  const projectStore = LCA.projects.createStore(samples, referenceDate, undefined, (id) => scopeStore.currentStage(id));
+  const projectStore = LCA.projects.createStore(samples, referenceDate, undefined, (id) => {
+    const current = scopeStore.currentStage(id);
+    return current.ok && current.override ? { ...current, stage: current.baseStage } : current;
+  });
   const projectLoadResult = projectStore.list();
   const projectNotice = document.querySelector('#project-storage-status');
   projectNotice.hidden = projectLoadResult.ok;
@@ -56,12 +59,12 @@
   let certificationStore = null;
   let reviewRouteStore = null;
   const verificationStage = (id) => {
-    const verification = verificationStore ? verificationStore.currentStage(id) : { ok: true, stage: null };
+    const verification = verificationStore ? verificationStore.currentStage(id, true) : { ok: true, stage: null };
     if (!verification.ok) return verification;
     const certification = certificationStore ? certificationStore.currentStage(id) : { ok: true, stage: null };
     if (!certification.ok) return certification;
-    const route = reviewRouteStore ? reviewRouteStore.currentStage(id) : { ok: true, stage: null };
-    return route.ok ? { ok: true, stage: Math.max(verification.stage || 0, certification.stage || 0, route.stage || 0) || null } : route;
+    const route = reviewRouteStore ? reviewRouteStore.currentStage(id, true) : { ok: true, stage: null };
+    return LCA.certification.combineStage(verification, certification, route);
   };
   let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
   let scopeLoadResult = scopeStore.load();
@@ -421,6 +424,7 @@
       LCA.views.verification.refresh(); LCA.views.certification.refresh();
     });
     function refreshLaterStage() {
+      scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
       LCA.views.deadlines.refresh();
       LCA.views.projectDetail.refreshStage(project);
       LCA.views.requests.refresh();
@@ -448,7 +452,7 @@
     });
     LCA.views.certification.init(project, certificationStore, refreshLaterStage, (revision) => {
       selectDetailTab('report', true); LCA.views.report.selectVersion(revision);
-    }, () => selectDetailTab('verification', true));
+    }, () => selectDetailTab('verification', true), (tab) => selectDetailTab(tab, true));
   }
   function refreshRequestViews(result) {
     LCA.views.collectionTransition.refresh(result);

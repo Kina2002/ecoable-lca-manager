@@ -26,6 +26,11 @@ LCA.backup = (() => {
     const verification = LCA.verification.createStore(projects, project, (id) => reports.load(id), (id) => comments.list(id), getStorage);
     const route = LCA.reviewRoute.createStore(projects, project, (id) => reports.load(id), (id) => comments.list(id), (id) => verification.snapshot(id), getStorage);
     const certification = LCA.certification.createStore(projects, project, (id) => reports.load(id), (id) => verification.load(id), getStorage, (id) => route.load(id));
+    for (const p of projects) {
+      const progress = checked(LCA.certification.combineStage(verification.currentStage(p.id, true), certification.currentStage(p.id), route.currentStage(p.id, true)), '제출·보완 단계');
+      p.stage = progress.override ? progress.stage : Math.max(p.stage, progress.stage || 0);
+      if (progress.amendment) p.amendment = progress.amendment;
+    }
     checked(comments.snapshot(), '고객 의견');
     let reportCount = 0; let issueCount = 0;
     for (const p of projects) {
@@ -46,6 +51,7 @@ LCA.backup = (() => {
         const data = records[module.STORAGE_KEY] === null ? null : JSON.parse(records[module.STORAGE_KEY]);
         for (const event of data?.records[p.id]?.events || []) {
           if (event.report && !report.versions.some((r) => JSON.stringify(r) === JSON.stringify(event.report))) throw Error('검토·인증 근거에 연결한 보고서 보관본이 없거나 내용이 달라요.');
+          if (event.type === 'amendment-started' && !report.versions.some((r) => r.revision === event.latestReportRevision)) throw Error('보완을 시작할 때의 최신 보고서 버전이 없어요.');
         }
       }
       for (const version of report.versions) for (const link of version.change?.commentLinks || []) {

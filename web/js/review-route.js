@@ -52,8 +52,9 @@ LCA.reviewRoute = (() => {
         return { ok: true, records: data.records };
       } catch { return failure(); }
     }
-    function currentStage(id) {
-      const data = read(); return data.ok ? { ok: true, stage: data.records[id]?.events.some((event) => event.type === 'reviewed') ? 8 : null } : data;
+    function currentStage(id, withEvidence = false) {
+      const data = read(); const review = data.ok ? data.records[id]?.events.filter((event) => event.type === 'reviewed').at(-1) : null;
+      return data.ok ? { ok: true, stage: review ? 8 : null, ...(withEvidence ? { reportRevision: review?.report.revision || 0, reviewedAt: review?.at || '' } : {}) } : data;
     }
     function load(id) {
       const data = read(); if (!data.ok) return data;
@@ -70,6 +71,7 @@ LCA.reviewRoute = (() => {
         || (externalStarted && method !== 'external' ? '외부 검증 기록과 검토 방식이 달라요. 기존 기록을 보호하기 위해 저장을 중단했어요.' : '');
       const customerPending = comments?.ok ? comments.items.filter((item) => item.status !== '종결').length : 0;
       const reviewBlock = warning || (method === 'undecided' ? '검토 방식을 내부 검토 또는 외부 검토로 정해 저장해 주세요.' : '')
+        || (project.amendment && (!reports?.record || reports.record.revision <= project.amendment.latestReportRevision) ? '보완 시작 이후 새 보고서 버전을 먼저 저장해 주세요.' : '')
         || (customerPending ? `미종결 고객 의견 ${customerPending}건을 먼저 처리해 주세요.` : '')
         || (!reports?.record || !reports.ready || reports.stale || reports.currentError ? '현재 자료·계산·해석과 일치하는 최신 보고서를 먼저 보관해 주세요.' : '');
       const reviewReady = !reviewBlock && !!state.review && state.review.method === method && JSON.stringify(state.review.report) === JSON.stringify(reports.record);
@@ -97,6 +99,7 @@ LCA.reviewRoute = (() => {
         if (!expectedReport || state.latest.revision !== expectedReport.revision || state.latest.sourceKey !== expectedReport.sourceKey || JSON.stringify(state.latest) !== expectedReport.key) return { ok: false, error: '검토할 보고서가 바뀌었어요. 입력을 유지했으니 최신 보고서와 기준을 다시 확인해 주세요.' };
         if (!text(draft.reviewer, 100) || !text(draft.note, 3000) || !LCA.requests.validDate(draft.reviewedOn) || draft.confirmed !== true
           || Object.keys(CHECKS).some((key) => draft.checks?.[key] !== true)) return { ok: false, error: '내부 검토자·검토일·검토 내용을 적고 세 확인 항목과 보고서 확인에 체크해 주세요.' };
+        if (state.project.amendment && (draft.reviewedOn < state.project.amendment.startedOn || draft.reviewedOn > LCA.rules.today())) return { ok: false, error: '보완 보고서의 검토일은 보완 시작일부터 오늘까지로 적어 주세요.' };
         if (state.legacyExternal) record.events.push({ type: 'selected', method: 'external', actor: draft.actor.trim(), reason: '기존 외부 검증 기록에 따라 외부 검토로 연결함', at });
         Object.assign(event, { method: state.method, reviewer: draft.reviewer.trim(), reviewedOn: draft.reviewedOn, note: draft.note.trim(), checks: clone(draft.checks), confirmed: true, report: clone(state.latest) });
       } else return { ok: false, error: '검토 저장 동작을 확인해 주세요.' };
