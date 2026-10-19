@@ -75,6 +75,14 @@ test('International EPD 버전 기준으로 점검 중·완료를 보관하고 �
     const tasks = LCA.tasks.build({ projects: [project], requests: { ok: true, items: [] }, comments: { ok: true, items: [] }, verifications: {}, certifications: snapshot }, '2028-09-01');
     assert.equal(tasks.items.find((item) => item.kind === 'inspection').date, '2028-10-01');
     assert.equal(store.currentStage('p').stage, 10);
+    result = await store.save('p', 'renewed', { actor: '연구원', reason: '갱신 문서 확인', actionOn: '2028-10-01', documentName: '새EPD.pdf',
+      submittedOn: '2028-09-01', issuedOn: '2028-10-01', registrationNumber: 'EPD-NEW', expiryOn: '2033-10-01', confirmed: true }, 8);
+    assert.equal(result.ok, true, result.error);
+    loaded = store.load('p'); assert.equal(loaded.inspectionPlan, null); assert.equal(loaded.inspections.length, 0);
+    assert.equal(loaded.record.events.filter((event) => event.type === 'inspection').length, 2);
+    const renewedTasks = LCA.tasks.build({ projects: [project], requests: { ok: true, items: [] }, comments: { ok: true, items: [] }, verifications: {}, certifications: store.renewalSnapshot() }, '2028-10-01');
+    assert.equal(renewedTasks.items.filter((item) => item.kind === 'renewal').length, 0);
+    assert.match(renewedTasks.items.find((item) => item.kind === 'inspection').title, /기준일/);
   } finally { LCA.rules.today = originalToday; }
 });
 
@@ -89,6 +97,45 @@ test('점검 기록은 미래 날짜·다른 버전·없는 점검 차례를 거
       assert.equal((await store.save('p', 'inspection', { ...draft, ...changes }, 6)).ok, false);
       assert.equal(values.get(LCA.certification.STORAGE_KEY), original);
     }
+  } finally { LCA.rules.today = originalToday; }
+});
+
+test('갱신 준비·요청은 할 일을 유지하고 공식 갱신 완료 뒤 새 만료일로 전환한다', async () => {
+  const originalToday = LCA.rules.today; LCA.rules.today = () => '2029-10-20';
+  try {
+    const { store } = setup();
+    const before = store.load('p');
+    const draft = { actor: '연구원', reason: '갱신 자료 신청', actionOn: '2029-10-20', documentName: '갱신접수.pdf', status: '갱신 요청' };
+    let result = await store.save('p', 'renewal-progress', draft, 5); assert.equal(result.ok, true, result.error);
+    const input = () => ({ projects: [project], requests: { ok: true, items: [] }, comments: { ok: true, items: [] }, verifications: {}, certifications: store.renewalSnapshot() });
+    assert.equal(LCA.tasks.build(input(), '2029-10-20').items[0].status, '갱신 요청');
+    result = await store.save('p', 'renewed', { ...draft, reason: '새 인증서 발급 확인', submittedOn: '2029-09-01', issuedOn: '2029-10-19',
+      registrationNumber: '2029-0002', expiryOn: '2032-10-18', confirmed: true }, 6);
+    assert.equal(result.ok, true, result.error);
+    const loaded = store.load('p');
+    assert.equal(loaded.process.details.registrationNumber, '2029-0002');
+    assert.equal(loaded.validity.expiryOn, '2032-10-18');
+    assert.equal(loaded.renewalProgress, null);
+    assert.equal(JSON.stringify(loaded.finished), JSON.stringify(before.finished));
+    assert.equal(store.currentStage('p').stage, 10);
+    assert.equal(LCA.tasks.build(input(), '2029-10-20').items.filter((item) => item.kind === 'renewal').length, 0);
+    assert.equal(LCA.tasks.build(input(), '2032-04-18').items.find((item) => item.kind === 'renewal').date, '2032-10-18');
+  } finally { LCA.rules.today = originalToday; }
+});
+
+test('새 발급일·만료일·기관 확인이 없는 갱신 완료는 기존 인증을 바꾸지 않는다', async () => {
+  const originalToday = LCA.rules.today; LCA.rules.today = () => '2029-10-20';
+  try {
+    const { store, values } = setup();
+    const original = values.get(LCA.certification.STORAGE_KEY);
+    const draft = { actor: '연구원', reason: '갱신 확인', actionOn: '2029-10-20', documentName: '새인증서.pdf', submittedOn: '2029-09-01',
+      issuedOn: '2029-10-19', registrationNumber: '2029-0002', expiryOn: '2032-10-18', confirmed: true };
+    for (const changes of [{ issuedOn: '2026-10-19' }, { expiryOn: '2029-10-18' }, { confirmed: false }, { registrationNumber: '' }]) {
+      assert.equal((await store.save('p', 'renewed', { ...draft, ...changes }, 5)).ok, false);
+      assert.equal(values.get(LCA.certification.STORAGE_KEY), original);
+    }
+    const customer = setup({ kind: '고객 제출' });
+    assert.equal((await customer.store.save('p', 'renewed', draft, 5)).ok, false);
   } finally { LCA.rules.today = originalToday; }
 });
 

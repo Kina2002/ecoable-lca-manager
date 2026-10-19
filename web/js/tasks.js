@@ -65,9 +65,9 @@ LCA.tasks = (() => {
       }
       const schedule = LCA.certification.renewalSchedule(saved.details, saved.status, today, saved.officialExpiryOn);
       if (!schedule?.active) continue;
-      add(project, 'renewal', 'renewal', schedule.days < 0 ? `${schedule.official ? '기록한' : '예상'} 만료일 경과 · 갱신 확인` : `${schedule.scheme} ${schedule.label}`,
-        `${schedule.scheme} · ${schedule.official ? '문서에서 확인한' : '예상'} 만료일 ${schedule.date} · ${schedule.days < 0 ? '갱신 여부와 기관의 현재 등록 상태를 확인해 주세요.' : `${schedule.label}를 시작할 시기예요.`} ${schedule.official ? '기록한 문서와 기관의 최신 등록 상태를 확인해 주세요.' : '발급 문서·기관 등록 기록의 실제 날짜를 먼저 확인해 주세요.'}`,
-        'certification', { date: schedule.date, days: schedule.days, official: !!schedule.official, status: saved.status });
+      add(project, 'renewal', 'renewal', schedule.days < 0 ? `${schedule.official ? '기록한' : '예상'} 만료일 경과 · 갱신 확인` : `${schedule.scheme} ${saved.renewalProgress?.status || schedule.label}`,
+        `${schedule.scheme} · ${schedule.official ? '문서에서 확인한' : '예상'} 만료일 ${schedule.date} · ${saved.renewalProgress ? `${saved.renewalProgress.status} (${saved.renewalProgress.actionOn}) · ` : ''}${schedule.days < 0 ? '갱신 여부와 기관의 현재 등록 상태를 확인해 주세요.' : `${schedule.label}를 시작할 시기예요.`} ${schedule.official ? '기록한 문서와 기관의 최신 등록 상태를 확인해 주세요.' : '발급 문서·기관 등록 기록의 실제 날짜를 먼저 확인해 주세요.'}`,
+        'certification', { date: schedule.date, days: schedule.days, official: !!schedule.official, status: saved.renewalProgress?.status || saved.status });
     }
     items.sort((a, b) => {
       const priority = (task) => ['verification', 'renewal', 'inspection'].includes(task.kind) && task.days < 0 ? 0 : ORDER[task.kind];
