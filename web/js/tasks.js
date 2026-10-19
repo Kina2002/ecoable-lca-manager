@@ -33,7 +33,8 @@ LCA.tasks = (() => {
         missing.push(...LCA.scope.missing(project));
         if (project.scopeStatus !== '확정') missing.push('평가 범위 합의·확정');
       }
-      if (project.stage < 9 && missing.length) add(project, 'info', 'missing', '프로젝트 정보 확인', [...new Set(missing)].join(' · '), 'overview');
+      if (project.stage < 9 && missing.length) add(project, 'info', 'missing', '프로젝트 정보 확인', [...new Set(missing)].join(' · '), 'overview',
+        { infoKeys: LCA.requestMessage?.infoTargets(project).map((item) => item.id) || [] });
       if (requests.ok && project.stage >= 3 && project.stage < 9 && !own.length) add(project, 'info', 'requests-empty', '필요한 자료 요청 확인', '현재 등록한 자료 요청이 없어요. 필요한 자료 구분과 내용을 확인해 주세요.', 'requests');
       if (comments.ok) for (const comment of comments.items.filter((c) => c.projectId === project.id && c.status !== '종결')) {
         add(project, 'comment', `comment:${comment.id}`, comment.status === '답변됨' ? '고객 의견 종결 확인' : '고객 의견 답변 확인',

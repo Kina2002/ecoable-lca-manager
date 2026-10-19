@@ -214,7 +214,9 @@
     if (compose) {
       messageType = LCA.requestMessage.typeForTask(task);
       if (!messageType) return { ok: false, error: '이 할 일의 상태가 바뀌어 자료 요청문 대상이 아니에요. 최신 목록을 확인해 주세요.' };
-      const ready = LCA.requestMessage.build(getRequestMessageState(task.projectId), messageType, [task.requestId]);
+      const source = getRequestMessageState(task.projectId);
+      const targets = messageType === 'info' ? LCA.requestMessage.candidates(source, messageType).items?.map((item) => item.id) || [] : [task.requestId];
+      const ready = LCA.requestMessage.build(source, messageType, targets);
       if (!ready.ok) return ready;
     }
     const back = { id, scrollY: window.scrollY, action: compose ? 'message' : 'open' }; const savedListScroll = listScrollY;
@@ -228,7 +230,7 @@
     } else {
       homeReturn = null; taskReturn = back; document.querySelector('#back-to-projects').textContent = '← 할 일로';
     }
-    selectDetailTab(task.tab, true);
+    selectDetailTab(compose ? 'requests' : task.tab, true);
     if (compose) {
       LCA.views.requestMessage.prepare(messageType, task.requestId);
       return { ok: true };

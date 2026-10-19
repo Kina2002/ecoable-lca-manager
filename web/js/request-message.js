@@ -1,15 +1,29 @@
 /* 저장된 정보로 요청문을 만든다. 저장·발송·자료 상태 변경은 하지 않는다. */
 window.LCA = window.LCA || {};
 LCA.requestMessage = (() => {
-  const TYPES = { initial: '처음 요청', reminder: '미제출 재요청', upcoming: '마감 임박 안내', revision: '보완 요청' };
+  const TYPES = { initial: '처음 요청', reminder: '미제출 재요청', upcoming: '마감 임박 안내', revision: '보완 요청', info: '정보 확인' };
   const clean = (value) => typeof value === 'string' ? value.trim() : '';
   const line = (value) => clean(value).replace(/[\r\n]+/g, ' ');
   const category = (item) => LCA.constants.CATEGORIES.find((c) => c.key === item.categoryKey)?.name;
+  function infoTargets(project) {
+    const items = []; const add = (id, name, detail) => items.push({ id, projectId: project.id, name, detail });
+    if (!project.customerContactName?.trim()) add('customerContactName', '고객 자료 담당자', '자료 준비와 일정 협의를 담당하실 분의 성함·부서·연락처를 알려 주세요.');
+    if (!LCA.requests.validDate(project.targetDate)) add('targetDate', '희망 완료 일정', '결과가 필요한 희망 날짜와 그 일정의 배경을 알려 주세요.');
+    if (!project.productName?.trim()) add('productName', '평가 대상 제품', '평가할 제품의 정확한 이름·모델과 대상 사업장을 알려 주세요.');
+    if (!project.uses?.length) add('uses', '결과 활용처', '결과를 제출할 거래처·인증 제도 또는 내부 활용 목적과 받은 요구 문서가 있다면 공유해 주세요.');
+    if (!(Number.isFinite(Number(project.functionalUnit?.qty)) && Number(project.functionalUnit.qty) > 0 && project.functionalUnit.unit?.trim())) add('functionalUnit', '평가 기준량·단위', '거래처나 적용 제도가 요구하는 제품 기준량·단위가 있다면 알려 주세요. 함께 적절한 기준을 협의하겠습니다.');
+    if (!project.boundary?.trim()) add('boundary', '평가할 범위', '제조까지 또는 사용·폐기까지 등 거래처나 인증 제도에서 요청한 범위가 있다면 공유해 주세요. 적용 기준을 확인해 함께 협의하겠습니다.');
+    else if (project.scopeStatus !== '확정' && project.stage <= 2) add('scopeAgreement', '협의 중인 평가 범위', `현재 기록한 범위안은 ‘${line(project.boundary)}’입니다. 요청하신 목적에 맞는지 의견과 추가 요구를 확인 부탁드립니다.`);
+    if (!LCA.requests.validDate(project.refStart) || !LCA.requests.validDate(project.refEnd) || project.refStart > project.refEnd) add('period', '자료 기준기간', '생산량·투입량 등 자료를 제공할 수 있는 기간과 최근 자료의 확보 여부를 알려 주세요.');
+    if (!project.standards?.length) add('standards', '요구받은 평가 기준', '거래처나 인증기관에서 지정한 평가 기준·작성지침·양식이 있다면 공유해 주세요. 적용 기준은 확인 후 협의하겠습니다.');
+    return items;
+  }
   function candidates(state, type) {
     if (!Object.hasOwn(TYPES, type)) return { ok: false, error: '요청문 종류를 선택해 주세요.' };
     if (!state?.ok || !state.project || !Array.isArray(state.items)) return { ok: false, error: state?.error || '최신 프로젝트·자료 기록을 읽지 못했어요.' };
     if (state.items.some((item) => !item || typeof item.id !== 'string' || typeof item.projectId !== 'string')) return { ok: false, error: '자료 기록의 형식을 확인하지 못했어요.' };
     if (!Number.isInteger(state.project.stage) || state.project.stage < 1 || state.project.stage >= 9 || state.canGenerate === false) return { ok: false, error: state.reason || '요청문은 인증·등록 준비 전(1~8단계)에 만들 수 있어요.' };
+    if (type === 'info') return { ok: true, items: infoTargets(state.project) };
     const today = type === 'upcoming' ? LCA.rules.today() : null;
     const items = state.items.filter((item) => {
       if (item.projectId !== state.project.id || item.deletedAt) return false;
@@ -24,9 +38,10 @@ LCA.requestMessage = (() => {
   }
   function build(state, type, ids) {
     const available = candidates(state, type); if (!available.ok) return available;
-    if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length) return { ok: false, error: '요청문에 넣을 자료를 한 건 이상 선택해 주세요.' };
+    if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length) return { ok: false, error: `요청문에 넣을 ${type === 'info' ? '정보' : '자료'}를 한 건 이상 선택해 주세요.` };
     const chosen = new Set(ids); const items = available.items.filter((item) => chosen.has(item.id));
-    if (items.length !== ids.length) return { ok: false, error: '선택한 자료의 제출 여부·상태·기한이 바뀌었거나 삭제되었어요. 최신 자료를 확인해 주세요.' };
+    if (items.length !== ids.length) return { ok: false, error: type === 'info' ? '선택한 정보가 채워졌거나 협의 상태가 바뀌었어요. 최신 정보를 확인해 주세요.' : '선택한 자료의 제출 여부·상태·기한이 바뀌었거나 삭제되었어요. 최신 자료를 확인해 주세요.' };
+    if (type === 'info') return buildInfo(state, items);
     const missing = new Set();
     function value(raw, label, singleLine = true) {
       const result = singleLine ? line(raw) : clean(raw);
@@ -67,6 +82,21 @@ LCA.requestMessage = (() => {
       items: items.map((item) => [item.id, item.categoryKey, item.status, item.detail, item.dueDate, type === 'revision' ? item.review?.note ?? null : null]) });
     return { ok: true, title, body: body.join('\n'), fingerprint, ids: items.map((item) => item.id), warnings: [...missing].map((label) => `${label} 입력이 필요해요.`) };
   }
+  function buildInfo(state, items) {
+    const p = state.project; const sender = state.sender?.id === p.researcherId ? state.sender : null; const warnings = [];
+    function senderValue(value, label) { if (clean(value)) return line(value); warnings.push(`${label} 입력이 필요해요.`); return `[입력 필요: ${label}]`; }
+    const company = line(p.companyName) || '고객사'; const product = line(p.productName) || '평가 대상 제품 확인 중';
+    const name = senderValue(sender?.name || p.researcherName, '담당 연구원');
+    const companyName = senderValue(sender?.company, '연구원 회사'); const department = senderValue(sender?.department, '연구원 부서');
+    const title = `[프로젝트 정보 확인] ${company} 평가 준비`;
+    const body = [`안녕하세요, ${line(p.customerContactName) || `${company} 담당자`}님.`, `${companyName} ${department} ${name}입니다.`, '',
+      `${product}의 평가 준비를 위해 아래 정보를 확인 부탁드립니다.`, '범위와 적용 기준은 보내주신 요구 내용을 검토한 뒤 함께 협의하겠습니다.', '',
+      ...items.flatMap((item, index) => [`${index + 1}. ${item.name}`, `   ${item.detail}`, '']),
+      '아직 정해지지 않았거나 확인이 어려운 항목은 현재 상황을 알려 주시면 협의하겠습니다.', '', '감사합니다.', `담당 연구원 ${name}`].join('\n');
+    const fingerprint = JSON.stringify({ type: 'info', project: Object.fromEntries(['id', 'stage', 'companyName', 'productName', 'customerContactName', 'researcherId', 'researcherName', 'targetDate', 'uses', 'functionalUnit', 'boundary', 'scopeStatus', 'refStart', 'refEnd', 'standards'].map((key) => [key, p[key] ?? null])),
+      sender: [sender?.id, sender?.name, sender?.company, sender?.department].map((value) => value ?? null), items });
+    return { ok: true, title, body, fingerprint, ids: items.map((item) => item.id), warnings };
+  }
   function check(state, type, ids, fingerprint) {
     const current = build(state, type, ids);
     return !current.ok ? current : current.fingerprint !== fingerprint ? { ok: false, error: '요청문을 만든 뒤 프로젝트·자료·연구원 정보가 바뀌었어요. 수정한 글은 유지했으니 최신 기록을 확인하고 다시 만들어 주세요.' } : { ok: true };
@@ -80,8 +110,10 @@ LCA.requestMessage = (() => {
     catch { return { ok: false, error: '브라우저가 자동 복사를 허용하지 않았어요.' }; }
   }
   function typeForTask(task) {
-    if (!task?.requestId || task.readOnly || !Number.isInteger(task.stage) || task.stage < 1 || task.stage >= 9) return null;
+    if (!task || task.readOnly || !Number.isInteger(task.stage) || task.stage < 1 || task.stage >= 9) return null;
+    if (task.kind === 'info' && task.infoKeys?.length) return 'info';
+    if (!task.requestId) return null;
     return { overdue: 'reminder', soon: 'upcoming', revision: 'revision' }[task.kind] || null;
   }
-  return { TYPES, candidates, build, check, copy, typeForTask };
+  return { TYPES, infoTargets, candidates, build, check, copy, typeForTask };
 })();

@@ -54,18 +54,20 @@ LCA.views.requestMessage = (() => {
     function render(reset) {
       const focused = choices.contains(document.activeElement) ? document.activeElement.dataset.messageRequest : null;
       state = read(); const list = LCA.requestMessage.candidates(state, kind.value); available = list.ok ? list.items : [];
+      choose.querySelector('legend').textContent = kind.value === 'info' ? '확인할 정보 선택' : '넣을 자료 선택';
+      generate.textContent = kind.value === 'info' ? '선택한 정보로 안내문 만들기' : '선택한 자료로 요청문 만들기';
       selected = reset ? new Set(available.map((item) => item.id)) : new Set([...selected].filter((id) => available.some((item) => item.id === id)));
       choices.replaceChildren();
       for (const item of available) {
         const label = text('label', 'request-message-check', ''); const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(item.id); checkbox.dataset.messageRequest = item.id;
         const name = LCA.constants.CATEGORIES.find((c) => c.key === item.categoryKey)?.name || '구분 확인 필요';
-        label.append(checkbox, text('span', '', `${item.id} · ${name} · ${item.status} · 기존 제출 기한 ${item.dueDate}`));
+        label.append(checkbox, text('span', '', kind.value === 'info' ? `${item.name} · ${item.detail}` : `${item.id} · ${name} · ${item.status} · 기존 제출 기한 ${item.dueDate}`));
         checkbox.addEventListener('change', () => { if (checkbox.checked) selected.add(item.id); else selected.delete(item.id); manual.hidden = true; sync(); }); choices.append(label);
       }
       if (!list.ok) feedback.textContent = list.error;
-      else if (!available.length) choices.append(text('p', 'detail-help', kind.value === 'revision' ? '보완 요청 상태의 자료가 없어요.'
+      else if (!available.length) choices.append(text('p', 'detail-help', kind.value === 'info' ? '현재 입력 항목에서 고객에게 확인할 누락 정보가 없어요.' : kind.value === 'revision' ? '보완 요청 상태의 자료가 없어요.'
         : kind.value === 'upcoming' ? '오늘부터 3일 안에 제출할 미제출 요청 자료가 없어요.' : '아직 제출되지 않은 요청 자료가 없어요.'));
-      typeHelp.textContent = kind.value === 'revision' ? '보완 요청 상태만 골라 저장된 보완 사유를 넣어요. 보완 기한은 새로 확정하지 않고 별도 협의로 안내해요.'
+      typeHelp.textContent = kind.value === 'info' ? '고객 담당자·희망 일정·활용처·협의할 범위 등 빈 정보만 확인해요. 우리 연구원 배정은 고객에게 묻지 않고 내부에서 정해요. 자료 요청이 0건이어도 만들 수 있어요.' : kind.value === 'revision' ? '보완 요청 상태만 골라 저장된 보완 사유를 넣어요. 보완 기한은 새로 확정하지 않고 별도 협의로 안내해요.'
         : kind.value === 'upcoming' ? '오늘부터 3일 안에 제출할 요청 상태의 미제출 자료만 보여줘요. 오늘 마감도 포함하며, 이미 기한이 지난 자료는 미제출 재요청에서 확인해요.'
           : '요청 상태이며 아직 받은 자료가 없는 항목만 보여줘요. 제출됨·검토 중·보완 요청·승인·삭제 자료는 제외해요.';
       sync();
@@ -97,16 +99,17 @@ LCA.views.requestMessage = (() => {
         return { ok: false, error };
       }
       if (copying) return fail('복사가 끝난 뒤 다시 요청문을 만들어 주세요. 작성 중인 글은 유지했어요.');
-      const before = LCA.requestMessage.build(read(), type, [requestId]);
+      const initialState = read(); const targetIds = type === 'info' ? LCA.requestMessage.candidates(initialState, type).items?.map((item) => item.id) || [] : [requestId];
+      const before = LCA.requestMessage.build(initialState, type, targetIds);
       if (!before.ok) return fail(before.error);
       kind.value = type; overwrite.checked = false; manual.hidden = true;
-      render(false); selected = new Set([requestId]);
+      render(false); selected = new Set(targetIds);
       for (const checkbox of choices.querySelectorAll('input')) checkbox.checked = selected.has(checkbox.dataset.messageRequest);
       sync();
-      const current = read(); const result = LCA.requestMessage.build(current, type, [requestId]);
+      const current = read(); const result = LCA.requestMessage.build(current, type, targetIds);
       if (!result.ok) return fail(result.error);
       if (touched) {
-        feedback.textContent = `${requestId} 한 건과 ‘${LCA.requestMessage.TYPES[type]}’를 선택했어요. 직접 수정한 글은 유지했어요. 새 글로 바꾸려면 교체 확인에 체크한 뒤 요청문 만들기를 눌러 주세요.`;
+        feedback.textContent = `${type === 'info' ? `확인할 정보 ${targetIds.length}건` : `${requestId} 한 건`}과 ‘${LCA.requestMessage.TYPES[type]}’를 선택했어요. 직접 수정한 글은 유지했어요. 새 글로 바꾸려면 교체 확인에 체크한 뒤 요청문 만들기를 눌러 주세요.`;
         overwrite.focus({ preventScroll: true });
       } else fill(current, result);
       section.scrollIntoView({ block: 'start' }); return { ok: true };
