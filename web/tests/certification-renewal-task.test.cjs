@@ -24,7 +24,7 @@ test('완료 프로젝트도 6개월 전부터 갱신 확인 할 일과 홈 요�
   assert.equal(tasks.items[0].kind, 'renewal');
   assert.equal(tasks.items[0].tab, 'certification');
   assert.equal(tasks.items[0].date, '2029-10-18');
-  assert.equal(tasks.items[0].readOnly, true);
+  assert.notEqual(tasks.items[0].readOnly, true);
   assert.equal(LCA.tasks.deadline(tasks.items[0]).label, '예상 만료일');
   const home = LCA.dashboard.build({ projects: [project], requests, tasks, researchers: { ok: true, items: [] } }, '2029-04-18');
   assert.equal(home.activeCount, 0);
@@ -38,4 +38,17 @@ test('고객 제출과 읽기 실패는 갱신 알림을 만들지 않고 실패
   const failure = LCA.tasks.build(input({ ok: false, error: '인증 기록 손상' }), '2029-10-18');
   assert.equal(failure.items.length, 0);
   assert.match(failure.warnings.join(' '), /인증 기록 손상/);
+});
+
+test('완료된 International EPD의 점검 기준일 확인과 점검 예정일도 홈에 포함한다', () => {
+  const epd = { ...details, kind: '등록', scheme: 'International EPD' };
+  const saved = { projectId: 'p', status: '승인·등록', details: epd };
+  const missing = LCA.tasks.build(input({ ok: true, items: [saved] }), '2026-10-19');
+  assert.equal(missing.items[0].kind, 'inspection');
+  assert.equal(missing.items[0].date, undefined);
+  const tasks = LCA.tasks.build(input({ ok: true, items: [{ ...saved, inspectionPlan: { version: ':001', versionOn: '2026-10-01' }, inspections: [] }] }), '2027-09-01');
+  assert.equal(tasks.items[0].date, '2027-10-01');
+  assert.equal(LCA.tasks.deadline(tasks.items[0]).label, '점검 예정일');
+  const home = LCA.dashboard.build({ projects: [project], requests, tasks, researchers: { ok: true, items: [] } }, '2027-09-01');
+  assert.equal(home.activeCount, 0); assert.equal(home.taskCount, 1); assert.equal(home.attentionCount, 1);
 });

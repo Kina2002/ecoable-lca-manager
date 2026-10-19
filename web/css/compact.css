@@ -296,3 +296,4 @@ h1 { font-size: 25px; }
 
 /* WEB-050: 인증 예상 만료일을 확인하는 할 일 */
 .task-kind-renewal { color: #805111; background: #fff2d4; }
+.task-kind-inspection { color: #365389; background: #eaf0ff; }

@@ -1,6 +1,6 @@
 # LCA 프로젝트 관리 — 기능 체크리스트
 
-최종 갱신: **2026-10-19** · 구현 기준: **WEB-051까지**
+최종 갱신: **2026-10-19** · 구현 기준: **WEB-052까지**
 
 기획한 기능, 대화 중 추가한 기능, 나중에 검토하기로 한 확장을 모았다. **앞으로 기능을 구현하면 이 문서의 체크와 근거도 함께 갱신한다.**
 
@@ -111,7 +111,8 @@
 - [x] 자료 관련 할 일에서 상황에 맞는 요청문 바로 만들기.
 - [x] 예상 만료일 기준 갱신 확인 할 일과 홈 연결. 완료 프로젝트도 포함. 근거: [WEB-050](docs/04-webapp-spec/WEB-050-renewal-preparation-alert.md).
 - [x] 확인 문서의 공식 만료일이 있으면 예상일 대신 갱신 확인에 사용. 근거: [WEB-051](docs/04-webapp-spec/WEB-051-official-certification-expiry.md).
-- [ ] 정기 점검·갱신 완료 처리와 알림 해제.
+- [x] International EPD 최신 버전일·연간 점검 30일 전 안내와 완료 후 다음 미완료 연도 이동. 근거: [WEB-052](docs/04-webapp-spec/WEB-052-epd-annual-inspection.md).
+- [ ] 갱신 완료 처리와 갱신 알림 해제.
 
 근거: [WEB-033](docs/04-webapp-spec/WEB-033-tasks-tab.md), [WEB-034](docs/04-webapp-spec/WEB-034-task-kind-help.md).
 
@@ -194,7 +195,8 @@
 - [x] 예상일 6개월 전(UL EPD는 60일 전) 갱신 확인 안내. 실제 유효일 확인을 요구하고 완료 프로젝트에서도 할 일로 조회. 근거: [WEB-050](docs/04-webapp-spec/WEB-050-renewal-preparation-alert.md).
 - [x] 인증서의 공식 만료일·확인 문서·담당자·근거 기록과 정정 이력. 완료 프로젝트에서도 입력. 근거: [WEB-051](docs/04-webapp-spec/WEB-051-official-certification-expiry.md).
 - [ ] 공식 만료일에 따른 실제 기관 등록 상태 확인·반영.
-- [ ] 정기 점검일·점검 기록·갱신 처리 이력과 알림 해제.
+- [x] International EPD 최신 버전·버전일, 연간 점검일·점검 중/완료·결과·문서 이름·이력. 완료 프로젝트에서도 입력. 근거: [WEB-052](docs/04-webapp-spec/WEB-052-epd-annual-inspection.md).
+- [ ] 갱신 처리 이력과 갱신 알림 해제.
 - [ ] 제출 이후 보고서 재작성용 단계 재개·수정 보고서 재제출 차수.
 
 근거: [WEB-028](docs/04-webapp-spec/WEB-028-certification-registration.md), [WEB-038](docs/04-webapp-spec/WEB-038-project-finish-delete.md).
@@ -290,7 +292,7 @@
 - [ ] 요청문을 외부 편집기에 붙여 넣은 최종 내용 확인과 실제 복사 권한 거부 UI 확인.
 - [ ] Word 파일의 실제 열기/시각적 배치와 주요 화면의 모바일·키보드 사용 확인.
 
-마지막 전체 자동검사는 WEB-051 시점 **239개 통과**다. 실제 화면 조작 검증과 자동검사는 구분한다. 상세 확인 범위는 각 SPEC의 검증/제한 절을 따른다.
+마지막 전체 자동검사는 WEB-052 시점 **243개 통과**다. 실제 화면 조작 검증과 자동검사는 구분한다. 상세 확인 범위는 각 SPEC의 검증/제한 절을 따른다.
 
 ## 이 문서를 갱신하는 방법
 

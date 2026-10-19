@@ -23,8 +23,10 @@ const events = [
   { type: 'finished', actor: '연구원', reason: '완료', at: '2026-10-20T00:00:00.000Z', finishedOn: '2026-10-20', confirmed: true, reportRevision: 1, details }
 ];
 const project = { id: 'p', stage: 10 };
-function setup() {
-  const values = new Map([[LCA.certification.STORAGE_KEY, JSON.stringify({ version: 1, records: { p: { revision: events.length, events } } })]]);
+function setup(changes = {}) {
+  const savedEvents = JSON.parse(JSON.stringify(events));
+  for (const event of savedEvents) if (event.details) Object.assign(event.details, changes);
+  const values = new Map([[LCA.certification.STORAGE_KEY, JSON.stringify({ version: 1, records: { p: { revision: savedEvents.length, events: savedEvents } } })]]);
   const storage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
   const store = LCA.certification.createStore([project], () => ({ ok: true, project }), () => ({ ok: true, record: report, ready: true }),
     () => ({ ok: true, warning: '', record: null }), () => storage);
@@ -48,6 +50,46 @@ test('완료 프로젝트에서 문서 만료일을 기록하면 갱신 안내�
   const tasks = LCA.tasks.build({ projects: [project], requests: { ok: true, items: [] }, comments: { ok: true, items: [] }, verifications: {}, certifications: snapshot }, '2029-07-31');
   assert.equal(tasks.items[0].date, '2030-01-31');
   assert.equal(LCA.tasks.deadline(tasks.items[0]).label, '기록한 만료일');
+});
+
+test('International EPD 버전 기준으로 점검 중·완료를 보관하고 다음 미완료 연도로 이동한다', async () => {
+  const originalToday = LCA.rules.today; LCA.rules.today = () => '2028-10-01';
+  try {
+    const { store } = setup({ kind: '등록', scheme: 'International EPD' });
+    let result = await store.save('p', 'inspection-plan', { actor: '연구원', reason: '최신 EPD 확인', version: ':001', versionOn: '2026-10-01', documentName: 'EPD.pdf' }, 5);
+    assert.equal(result.ok, true, result.error);
+    let loaded = store.load('p');
+    let schedule = LCA.certification.inspectionSchedule(loaded.process.details, loaded.process.status, loaded.inspectionPlan, loaded.inspections, '2027-08-31');
+    assert.equal(schedule.active, false);
+    schedule = LCA.certification.inspectionSchedule(loaded.process.details, loaded.process.status, loaded.inspectionPlan, loaded.inspections, '2027-09-01');
+    assert.equal(schedule.date, '2027-10-01'); assert.equal(schedule.active, true);
+    const draft = { actor: '연구원', reason: '생산 조건 변경 여부를 검토 중', dueOn: '2027-10-01', checkedOn: '2027-10-01', documentName: '점검.xlsx', status: '점검 중', version: ':001', versionOn: '2026-10-01' };
+    result = await store.save('p', 'inspection', draft, 6); assert.equal(result.ok, true, result.error);
+    loaded = store.load('p'); assert.equal(loaded.inspections.at(-1).status, '점검 중');
+    assert.equal((await store.save('p', 'inspection', { ...draft, status: '점검 완료' }, 7)).ok, false);
+    result = await store.save('p', 'inspection', { ...draft, status: '점검 완료', confirmed: true, reason: '변경 없음. 기존 정보의 유효성을 확인함' }, 7);
+    assert.equal(result.ok, true, result.error);
+    const snapshot = store.renewalSnapshot();
+    schedule = LCA.certification.inspectionSchedule(snapshot.items[0].details, snapshot.items[0].status, snapshot.items[0].inspectionPlan, snapshot.items[0].inspections, '2028-09-01');
+    assert.equal(schedule.date, '2028-10-01');
+    const tasks = LCA.tasks.build({ projects: [project], requests: { ok: true, items: [] }, comments: { ok: true, items: [] }, verifications: {}, certifications: snapshot }, '2028-09-01');
+    assert.equal(tasks.items.find((item) => item.kind === 'inspection').date, '2028-10-01');
+    assert.equal(store.currentStage('p').stage, 10);
+  } finally { LCA.rules.today = originalToday; }
+});
+
+test('점검 기록은 미래 날짜·다른 버전·없는 점검 차례를 거절한다', async () => {
+  const originalToday = LCA.rules.today; LCA.rules.today = () => '2028-10-01';
+  try {
+    const { store, values } = setup({ kind: '등록', scheme: 'International EPD' });
+    await store.save('p', 'inspection-plan', { actor: '연구원', reason: '확인', version: ':001', versionOn: '2026-10-01', documentName: 'EPD.pdf' }, 5);
+    const original = values.get(LCA.certification.STORAGE_KEY);
+    const draft = { actor: '연구원', reason: '확인', dueOn: '2027-10-01', checkedOn: '2027-10-01', documentName: '점검.xlsx', status: '점검 완료', confirmed: true, version: ':001', versionOn: '2026-10-01' };
+    for (const changes of [{ checkedOn: '2028-10-02' }, { version: ':002' }, { dueOn: '2027-11-01' }, { checkedOn: '2027-08-31' }]) {
+      assert.equal((await store.save('p', 'inspection', { ...draft, ...changes }, 6)).ok, false);
+      assert.equal(values.get(LCA.certification.STORAGE_KEY), original);
+    }
+  } finally { LCA.rules.today = originalToday; }
 });
 
 test('잘못된 만료일·미확인 문서·오래된 화면은 기존 기록을 바꾸지 않는다', async () => {

@@ -74,10 +74,11 @@ LCA.views.certification = (() => {
     const finishSave = text('button', 'primary-button', '프로젝트 완료 · 10단계로'); finishSave.type = 'submit';
     const finishError = text('p', 'field-error', ''); finishError.setAttribute('role', 'alert');
     finishForm.append(finishFields, finishSave, finishError); finishCard.append(finishInfo, finishBlock, LCA.views.compact.form(finishForm, '프로젝트 최종 완료 확인'),
-      text('p', 'detail-help', '완료하면 진행 중 집계에서 빠지고 기록은 계속 조회할 수 있어요. 예상 만료일이 가까워지면 갱신 확인 할 일은 계속 보여요. 갱신 처리 기록은 아직 지원하지 않아요.'));
+      text('p', 'detail-help', '완료하면 진행 중 집계에서 빠지고 기록은 계속 조회할 수 있어요. 필요한 갱신 확인과 연간 점검 할 일은 계속 보여요. 갱신 처리 기록은 아직 지원하지 않아요.'));
     const feedback = text('p', '', ''); feedback.setAttribute('role', 'status');
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);
-    host.replaceChildren(intro, completionCard, processCard, validityCard, finishCard, rebase, feedback, history);
+    const inspectionHost = document.createElement('div');
+    host.replaceChildren(intro, completionCard, processCard, validityCard, inspectionHost, finishCard, rebase, feedback, history);
     let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let validityFormRevision = -1; let finishReasonAuto = '';
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
     function updateExpiry() {
@@ -163,11 +164,15 @@ LCA.views.certification = (() => {
       }
       historyList.replaceChildren();
       for (const event of state.record.events.slice().reverse()) {
-        const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'validity' ? '공식 만료일 확인' : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
+        const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'validity' ? '공식 만료일 확인' : event.type === 'inspection-plan' ? 'EPD 점검 기준 기록' : event.type === 'inspection' ? `연간 ${event.status}` : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
         if (event.type === 'completed') {
           item.append(text('p', 'detail-help', `완료일 ${event.completedOn} · 보고서 v${event.report.revision} · ${event.reviewMethod === 'internal' ? '내부 검토 완료' : `외부 검증 ${event.verification.rounds.length}차까지 보관`} · 결과 기록 ${event.documentName}`));
         } else if (event.type === 'validity') {
           item.append(text('p', 'detail-help', `공식 만료일 ${event.expiryOn} · 확인 문서 ${event.documentName} · 인증·등록 번호 ${event.registrationNumber}`));
+        } else if (event.type === 'inspection-plan') {
+          item.append(text('p', 'detail-help', `EPD 버전 ${event.version} · 버전일 ${event.versionOn} · 확인 문서 ${event.documentName}`));
+        } else if (event.type === 'inspection') {
+          item.append(text('p', 'detail-help', `점검 대상일 ${event.dueOn} · 점검일 ${event.checkedOn} · EPD 버전 ${event.version} · 확인 문서 ${event.documentName}`));
         } else if (event.type === 'finished') {
           item.append(text('p', 'detail-help', `프로젝트 완료일 ${event.finishedOn} · 최종 보고서 v${event.reportRevision} · ${event.details.kind} · ${event.details.organization} · 확인 번호 ${event.details.registrationNumber} · 발급·확인일 ${event.details.issuedOn}`));
         } else {
@@ -196,7 +201,7 @@ LCA.views.certification = (() => {
         dirty = false; completionCheck.checked = false; startCheck.checked = false; finishCheck.checked = false;
         feedback.textContent = action === 'completed' ? '선택한 검토 경로의 완료 근거와 최종 보고서 사본을 보관했어요. 아직 8단계예요.' : action === 'started' ? '9단계로 이동하고 제출 준비 기록을 보관했어요.' : action === 'validity' ? '문서의 만료일과 확인 근거를 이력에 보관했어요. 갱신 확인 시점에 반영돼요.' : '진행 정보와 변경 사유를 이력에 추가했어요.';
         onChanged();
-        if (action === 'finished') feedback.textContent = '프로젝트를 완료·사후관리(10) 단계로 옮겼어요. 기록은 보관하고 진행 중 집계와 할 일에서는 제외해요.';
+        if (action === 'finished') feedback.textContent = '프로젝트를 완료·사후관리(10) 단계로 옮겼어요. 진행 중 집계에서 빠지고 필요한 갱신·점검 할 일은 계속 보여요.';
       }
       refresh(); const target = result.ok ? feedback : error; target.tabIndex = -1; target.focus();
     }
@@ -212,6 +217,7 @@ LCA.views.certification = (() => {
       feedback.textContent = '입력은 유지하고 최신 보고서·검증·제출 기록으로 기준을 맞췄어요. 저장 전에 내용과 확인 체크를 다시 검토해 주세요.'; refresh();
     });
     finishForm.addEventListener('submit', (event) => { event.preventDefault(); run('finished', { finishedOn: finishedOn.value, actor: finishActor.value, reason: finishReason.value, confirmed: finishCheck.checked }, finishError); });
+    LCA.views.certificationInspection.init(inspectionHost, project, store, onChanged);
     refreshCurrent = refresh; refresh();
   }
   function dateField(parent, id, label) {
@@ -222,5 +228,5 @@ LCA.views.certification = (() => {
   function checkbox(parent, label) {
     const wrapper = text('label', 'calculation-confirmation', ''); const input = document.createElement('input'); input.type = 'checkbox'; wrapper.append(input, document.createTextNode(label)); parent.append(wrapper); return input;
   }
-  return { init, refresh: () => refreshCurrent() };
+  return { init, refresh: () => { refreshCurrent(); LCA.views.certificationInspection.refresh(); } };
 })();

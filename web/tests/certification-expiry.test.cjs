@@ -60,3 +60,14 @@ test('계산 규칙이 없는 제도도 문서 만료일을 확인했다면 그 
   assert.equal(direct.active, true);
   assert.equal(renewal(details({ scheme: '별도 인증 제도' }), '승인·등록', '2029-07-31'), null);
 });
+
+test('연간 점검은 버전일의 기념일이며 윤년을 보정하고 미완료 과거 연도를 건너뛰지 않는다', () => {
+  const epd = details({ kind: '등록', scheme: 'International EPD', issuedOn: '2024-03-01' });
+  const plan = { version: ':001', versionOn: '2024-02-29' };
+  const cycles = context.LCA.certification.inspectionCycles(epd, '승인·등록', plan);
+  assert.equal(cycles[0].date, '2025-02-28');
+  assert.equal(cycles[3].date, '2028-02-29');
+  assert.equal(context.LCA.certification.inspectionSchedule(epd, '승인·등록', plan, [], '2028-03-01').date, '2025-02-28');
+  assert.equal(context.LCA.certification.inspectionSchedule(epd, '승인·등록', null), null);
+  assert.equal(context.LCA.certification.inspectionCycles(epd, '승인·등록', plan, [], '2025-02-28').length, 0);
+});

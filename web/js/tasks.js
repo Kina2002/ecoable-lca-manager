@@ -1,7 +1,7 @@
 window.LCA = window.LCA || {};
 LCA.tasks = (() => {
-  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', renewal: '갱신 확인', review: '자료 검토', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
-  const ORDER = { overdue: 0, revision: 1, renewal: 2, soon: 3, review: 4, verification: 5, comment: 6, info: 7 };
+  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
+  const ORDER = { overdue: 0, revision: 1, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, info: 8 };
   function build({ projects, requests, comments, verifications, certifications }, today = LCA.rules.today()) {
     const items = []; const warnings = [];
     if (!requests.ok) warnings.push(requests.message || '자료 요청을 읽지 못했어요. 자료 관련 할 일은 계산하지 않았어요.');
@@ -53,14 +53,24 @@ LCA.tasks = (() => {
     if (certifications?.ok) for (const saved of certifications.items) {
       const project = projects.find((p) => p.id === saved.projectId);
       if (!project || project.stage < 9) continue;
+      if (saved.status === '승인·등록' && saved.details.kind === '등록' && saved.details.scheme.trim() === 'International EPD') {
+        if (!saved.inspectionPlan) add(project, 'inspection', 'inspection-plan', 'International EPD 점검 기준일 확인',
+          'EPD 문서의 최신 버전과 버전일을 기록하면 연간 점검 예정일과 30일 전 안내를 계산해요.', 'certification');
+        else {
+          const check = LCA.certification.inspectionSchedule(saved.details, saved.status, saved.inspectionPlan, saved.inspections || [], today, saved.officialExpiryOn);
+          if (check?.active) add(project, 'inspection', `inspection:${check.date}`, `International EPD 연간 점검 ${check.latest?.status === '점검 중' ? '이어가기' : '확인'}`,
+            `EPD 버전 ${saved.inspectionPlan.version} · 기준 버전일 ${saved.inspectionPlan.versionOn} · 점검 예정일 ${check.date}. 제품·생산 조건·자료 변경 여부와 확인 결과를 기록해 주세요.`,
+            'certification', { date: check.date, days: check.days, status: check.latest?.status || '점검 전' });
+        }
+      }
       const schedule = LCA.certification.renewalSchedule(saved.details, saved.status, today, saved.officialExpiryOn);
       if (!schedule?.active) continue;
       add(project, 'renewal', 'renewal', schedule.days < 0 ? `${schedule.official ? '기록한' : '예상'} 만료일 경과 · 갱신 확인` : `${schedule.scheme} ${schedule.label}`,
         `${schedule.scheme} · ${schedule.official ? '문서에서 확인한' : '예상'} 만료일 ${schedule.date} · ${schedule.days < 0 ? '갱신 여부와 기관의 현재 등록 상태를 확인해 주세요.' : `${schedule.label}를 시작할 시기예요.`} ${schedule.official ? '기록한 문서와 기관의 최신 등록 상태를 확인해 주세요.' : '발급 문서·기관 등록 기록의 실제 날짜를 먼저 확인해 주세요.'}`,
-        'certification', { date: schedule.date, days: schedule.days, official: !!schedule.official, status: saved.status, readOnly: project.stage === 10 });
+        'certification', { date: schedule.date, days: schedule.days, official: !!schedule.official, status: saved.status });
     }
     items.sort((a, b) => {
-      const priority = (task) => ['verification', 'renewal'].includes(task.kind) && task.days < 0 ? 0 : ORDER[task.kind];
+      const priority = (task) => ['verification', 'renewal', 'inspection'].includes(task.kind) && task.days < 0 ? 0 : ORDER[task.kind];
       return priority(a) - priority(b) || (a.days ?? Infinity) - (b.days ?? Infinity) || a.code.localeCompare(b.code) || a.id.localeCompare(b.id);
     });
     return { ok: true, items, warnings: [...new Set(warnings)], today };
@@ -70,7 +80,7 @@ LCA.tasks = (() => {
     return {
       text: !known ? '기한 미정' : item.days < 0 ? `D+${-item.days}` : item.days === 0 ? 'D-DAY' : `D-${item.days}`,
       detail: known ? `${item.date}${item.days === 0 ? ' · 오늘' : ''}` : '',
-      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.kind === 'renewal' ? item.official ? '기록한 만료일' : '예상 만료일' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
+      label: item.kind === 'review' ? '제출 기한 · 제출 완료' : item.kind === 'renewal' ? item.official ? '기록한 만료일' : '예상 만료일' : item.kind === 'inspection' ? '점검 예정일' : item.requestId ? '제출 기한' : item.issueId ? '지적 처리 기한' : '처리 기한',
       tone: item.kind === 'review' ? 'review' : !known ? 'unknown' : item.days < 0 ? 'elapsed' : item.days <= 3 ? 'soon' : 'upcoming'
     };
   }

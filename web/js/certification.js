@@ -39,6 +39,34 @@ LCA.certification = (() => {
     return { ...expiry, startDate: start.toISOString().slice(0, 10), days, active: today >= start.toISOString().slice(0, 10),
       label: expiry.scheme === 'UL EPD' ? '갱신 요청 확인' : '갱신 준비' };
   }
+  const matchesIssue = (event, details) => !!details && ['kind', 'scheme', 'issuedOn', 'registrationNumber'].every((key) => event[key] === details[key]);
+  function inspectionCycles(details, status, plan, inspections = [], officialExpiryOn = '') {
+    if (details?.kind !== '등록' || details.scheme?.trim() !== 'International EPD' || status !== '승인·등록'
+      || !plan || !LCA.requests.validDate(plan.versionOn) || !text(plan.version, 80)) return [];
+    const expiry = renewalSchedule(details, status, LCA.rules.today(), officialExpiryOn); if (!expiry) return [];
+    const [year, month, day] = plan.versionOn.split('-').map(Number); const cycles = [];
+    for (let nextYear = year + 1; nextYear <= 9999; nextYear++) {
+      const due = new Date(0); due.setUTCFullYear(nextYear, month, 0);
+      due.setUTCDate(Math.min(day, due.getUTCDate()));
+      const dueOn = due.toISOString().slice(0, 10); if (dueOn >= expiry.date) break;
+      const latest = inspections.filter((event) => event.dueOn === dueOn && event.versionOn === plan.versionOn && event.version === plan.version).at(-1) || null;
+      const start = new Date(due); start.setUTCDate(start.getUTCDate() - 30);
+      cycles.push({ date: dueOn, startDate: start.toISOString().slice(0, 10), latest, completed: latest?.status === '점검 완료' });
+    }
+    return cycles;
+  }
+  function inspectionSchedule(details, status, plan, inspections = [], today = LCA.rules.today(), officialExpiryOn = '') {
+    if (!LCA.requests.validDate(today)) return null;
+    const cycle = inspectionCycles(details, status, plan, inspections, officialExpiryOn).find((item) => !item.completed);
+    return cycle ? { ...cycle, days: LCA.rules.daysBetween(today, cycle.date), active: today >= cycle.startDate } : null;
+  }
+  function aftercare(record, process) {
+    const events = record.events.filter((event) => matchesIssue(event, process?.details));
+    const validity = events.filter((event) => event.type === 'validity').at(-1) || null;
+    const inspectionPlan = events.filter((event) => event.type === 'inspection-plan').at(-1) || null;
+    const inspections = events.filter((event) => event.type === 'inspection' && event.version === inspectionPlan?.version && event.versionOn === inspectionPlan?.versionOn);
+    return { validity, inspectionPlan, inspections };
+  }
   function validDetails(value, status) {
     if (!value || !['인증', '등록', '고객 제출'].includes(value.kind) || !text(value.organization, 200) || !text(value.scheme, 200)
       || !text(value.registrationNumber, 200, false) || !text(value.note, 2000, false)
@@ -50,6 +78,7 @@ LCA.certification = (() => {
   function validRecord(record, id) {
     if (!record || !Array.isArray(record.events) || !record.events.length || record.revision !== record.events.length) return false;
     let started = false; let status = ''; let lastDate = ''; let completion = null; let process = null; let finished = false;
+    let validity = null; let inspectionPlan = null;
     for (const event of record.events) {
       if (!event || !date(event.at) || !text(event.actor, 100) || (lastDate && Date.parse(event.at) < Date.parse(lastDate))) return false;
       lastDate = event.at;
@@ -59,6 +88,27 @@ LCA.certification = (() => {
           || event.kind !== process.details.kind || event.issuedOn !== process.details.issuedOn || event.scheme !== process.details.scheme
           || event.registrationNumber !== process.details.registrationNumber
           || !text(event.documentName, 200) || !text(event.reason, 1000)) return false;
+        validity = event;
+        continue;
+      }
+      if (event.type === 'inspection-plan') {
+        const official = validity && matchesIssue(validity, process?.details) ? validity.expiryOn : '';
+        const expiry = renewalSchedule(process?.details, status, LCA.rules.today(), official);
+        if (!process || status !== '승인·등록' || process.details.kind !== '등록' || process.details.scheme.trim() !== 'International EPD'
+          || !matchesIssue(event, process.details) || !LCA.requests.validDate(event.versionOn) || !text(event.version, 80)
+          || !expiry || event.versionOn >= expiry.date
+          || !text(event.documentName, 200) || !text(event.reason, 1000)) return false;
+        inspectionPlan = event;
+        continue;
+      }
+      if (event.type === 'inspection') {
+        const official = validity && matchesIssue(validity, process?.details) ? validity.expiryOn : '';
+        const cycles = inspectionCycles(process?.details, status, inspectionPlan, [], official);
+        const cycle = cycles.find((item) => item.date === event.dueOn);
+        if (!process || !matchesIssue(event, process.details) || !inspectionPlan || !matchesIssue(inspectionPlan, process.details)
+          || event.version !== inspectionPlan.version || event.versionOn !== inspectionPlan.versionOn || !cycle
+          || !['점검 중', '점검 완료'].includes(event.status) || !LCA.requests.validDate(event.checkedOn) || event.checkedOn < cycle.startDate
+          || !text(event.documentName, 200) || !text(event.reason, 1000) || (event.status === '점검 완료' && event.confirmed !== true)) return false;
         continue;
       }
       if (finished) return false;
@@ -117,9 +167,9 @@ LCA.certification = (() => {
       const data = read(); if (!data.ok) return data;
       return { ok: true, items: Object.entries(data.records).map(([projectId, record]) => {
         const process = record.events.filter((event) => ['started', 'updated'].includes(event.type)).at(-1);
-        const validity = record.events.filter((event) => event.type === 'validity' && event.kind === process?.details.kind && event.issuedOn === process?.details.issuedOn
-          && event.scheme === process?.details.scheme && event.registrationNumber === process?.details.registrationNumber).at(-1);
-        return process ? { projectId, status: process.status, details: clone(process.details), officialExpiryOn: validity?.expiryOn || '' } : null;
+        const care = aftercare(record, process);
+        return process ? { projectId, status: process.status, details: clone(process.details), officialExpiryOn: care.validity?.expiryOn || '',
+          inspectionPlan: clone(care.inspectionPlan), inspections: clone(care.inspections) } : null;
       }).filter(Boolean) };
     }
     function load(id) {
@@ -131,8 +181,7 @@ LCA.certification = (() => {
       const completion = record.events.filter((event) => event.type === 'completed').at(-1) || null;
       const process = record.events.filter((event) => ['started', 'updated'].includes(event.type)).at(-1) || null;
       const finished = record.events.find((event) => event.type === 'finished') || null;
-      const validity = record.events.filter((event) => event.type === 'validity' && event.kind === process?.details.kind && event.issuedOn === process?.details.issuedOn
-        && event.scheme === process?.details.scheme && event.registrationNumber === process?.details.registrationNumber).at(-1) || null;
+      const care = aftercare(record, process);
       const project = scope?.ok ? scope.project : fallback;
       const method = getReviewRoute ? route?.method || 'undecided' : 'external';
       const warning = !scope?.ok ? scope?.error || '현재 프로젝트를 확인하지 못했어요.' : !reports?.ok ? reports?.error || '보고서를 확인하지 못했어요.'
@@ -149,7 +198,7 @@ LCA.certification = (() => {
         || (completion.reviewMethod !== undefined ? JSON.stringify(completion.reviewRoute) !== JSON.stringify(route?.record) : !!route?.record.events.length));
       const startBlock = completeBlock || (!completion ? '선택한 검토 경로의 완료 근거를 먼저 보관해 주세요.' : stale ? '완료 기록 이후 보고서·검토 방식·확인 기록이 바뀌었어요. 완료 근거를 다시 기록해 주세요.' : '');
       const finishBlock = startBlock || (!process || process.status !== '승인·등록' ? '진행 상태를 승인·등록으로 저장해 주세요. 고객 제출도 고객의 접수·최종 확인 번호와 확인일이 필요해요.' : '');
-      return { ok: true, project, record, completion, process, finished, validity, warning, completeBlock, startBlock, finishBlock, stale,
+      return { ok: true, project, record, completion, process, finished, ...care, warning, completeBlock, startBlock, finishBlock, stale,
         latest: reports?.record || null, verification: verification?.record || null, reviewMethod: method, reviewRoute: route?.record || null,
         canComplete: project.stage === 8 && !process && !completeBlock,
         canStart: project.stage === 8 && !process && !startBlock, canWrite: project.stage === 9 && !!process && !finished && !warning,
@@ -165,7 +214,25 @@ LCA.certification = (() => {
       const record = clone(state.record);
       const at = new Date(Math.max(Date.now(), ...record.events.map((event) => Date.parse(event.at)))).toISOString();
       const event = { type: action, actor: draft.actor.trim(), reason: draft.reason.trim(), at };
-      if (action === 'validity') {
+      if (['inspection-plan', 'inspection'].includes(action)) {
+        if (!state.canRecordValidity || state.process.details.kind !== '등록' || state.process.details.scheme.trim() !== 'International EPD') return { ok: false, error: state.warning || '승인된 International EPD 등록의 연간 점검만 기록할 수 있어요.' };
+        Object.assign(event, Object.fromEntries(['kind', 'scheme', 'issuedOn', 'registrationNumber'].map((key) => [key, state.process.details[key]])));
+        if (action === 'inspection-plan') {
+          if (!LCA.requests.validDate(draft.versionOn) || draft.versionOn > LCA.rules.today() || !text(draft.version, 80)
+            || !text(draft.documentName, 200)) return { ok: false, error: 'EPD의 최신 버전·버전일·확인 문서 이름을 적어 주세요. 버전일은 오늘까지의 날짜여야 해요.' };
+          Object.assign(event, { version: draft.version.trim(), versionOn: draft.versionOn, documentName: draft.documentName.trim() });
+          const expiry = renewalSchedule(state.process.details, state.process.status, LCA.rules.today(), state.validity?.expiryOn);
+          if (!expiry || draft.versionOn >= expiry.date) return { ok: false, error: '버전일은 만료일 이전이어야 해요. 발급 문서의 버전일과 만료일을 확인해 주세요.' };
+        } else {
+          const cycle = inspectionCycles(state.process.details, state.process.status, state.inspectionPlan, state.inspections, state.validity?.expiryOn).find((item) => item.date === draft.dueOn);
+          if (!cycle || draft.version !== state.inspectionPlan.version || draft.versionOn !== state.inspectionPlan.versionOn
+            || !['점검 중', '점검 완료'].includes(draft.status) || !LCA.requests.validDate(draft.checkedOn)
+            || draft.checkedOn < cycle.startDate || draft.checkedOn > LCA.rules.today() || !text(draft.documentName, 200)
+            || (draft.status === '점검 완료' && draft.confirmed !== true)) return { ok: false, error: '점검 대상일·점검일·확인 문서를 확인해 주세요. 예정일 30일 전부터 오늘까지의 점검을 기록하며 완료할 때는 결과 확인에 체크해 주세요.' };
+          Object.assign(event, { dueOn: draft.dueOn, checkedOn: draft.checkedOn, documentName: draft.documentName.trim(), status: draft.status,
+            confirmed: draft.confirmed === true, version: state.inspectionPlan.version, versionOn: state.inspectionPlan.versionOn });
+        }
+      } else if (action === 'validity') {
         if (!state.canRecordValidity) return { ok: false, error: state.warning || '승인된 인증·등록의 공식 만료일만 기록할 수 있어요.' };
         if (!LCA.requests.validDate(draft.expiryOn) || draft.expiryOn < state.process.details.issuedOn || !text(draft.documentName, 200)
           || draft.confirmed !== true) return { ok: false, error: '인증서의 만료일·확인 문서 이름을 적고 발급일 이후 날짜인지 확인해 주세요.' };
@@ -211,5 +278,5 @@ LCA.certification = (() => {
     }
     return { load, currentStage, renewalSnapshot, save };
   }
-  return { STORAGE_KEY, STATUSES, TRANSITIONS, EXPIRY_SCHEMES, expectedExpiry, renewalSchedule, validRecord, createStore };
+  return { STORAGE_KEY, STATUSES, TRANSITIONS, EXPIRY_SCHEMES, expectedExpiry, renewalSchedule, inspectionCycles, inspectionSchedule, validRecord, createStore };
 })();
