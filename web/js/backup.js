@@ -56,7 +56,8 @@ LCA.backup = (() => {
     const requestData = records[LCA.requests.STORAGE_KEY] === null ? [] : JSON.parse(records[LCA.requests.STORAGE_KEY]).requests;
     return { projects: projects.map((p) => ({ code: p.code, companyName: p.companyName, productName: p.productName })),
       researchers: researchers.length, requests: requestData.length, deletedRequests: requestData.filter((r) => r.deletedAt).length,
-      reportVersions: reportCount, comments: checked(comments.snapshot(), '고객 의견').items.length, issues: issueCount };
+      reportVersions: reportCount, comments: checked(comments.snapshot(), '고객 의견').items.length, issues: issueCount,
+      messages: records[LCA.requests.STORAGE_KEY] === null ? 0 : JSON.parse(records[LCA.requests.STORAGE_KEY]).messageLog?.items.length || 0 };
   }
   function create(sampleDate) {
     const values = LCA.storage.capture();

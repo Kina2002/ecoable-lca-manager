@@ -10,7 +10,7 @@ LCA.projectDeletion = (() => {
     if (!project) throw Error('직접 생성한 프로젝트만 삭제할 수 있어요. 기본 가상 샘플은 삭제하지 않아요.');
     const current = LCA.projects.createStore(LCA.data.createSampleProjects(sampleDate), sampleDate, () => ({ getItem: (key) => before[key] ?? null })).list().items.find((p) => p.id === id);
     const values = { ...before };
-    const counts = { requests: 0, reportVersions: 0, comments: 0, issues: 0 };
+    const counts = { requests: 0, reportVersions: 0, comments: 0, issues: 0, messages: 0 };
     data.projects = data.projects.filter((p) => p.id !== id);
     if (data.collectionDueDates) delete data.collectionDueDates[id];
     if (data.basicHistory) delete data.basicHistory[id];
@@ -18,8 +18,12 @@ LCA.projectDeletion = (() => {
     for (const [module, field, count] of [[LCA.requests, 'requests', 'requests'], [LCA.customerReview, 'items', 'comments']]) {
       if (values[module.STORAGE_KEY] === null) continue;
       const record = JSON.parse(values[module.STORAGE_KEY]);
+      if (module === LCA.requests && record.messageLog) {
+        counts.messages = record.messageLog.items.filter((item) => item.projectId === id).length;
+        record.messageLog.items = record.messageLog.items.filter((item) => item.projectId !== id);
+      }
       counts[count] = record[field].filter((item) => item.projectId === id).length;
-      if (counts[count]) { record[field] = record[field].filter((item) => item.projectId !== id); values[module.STORAGE_KEY] = JSON.stringify(record); }
+      if (counts[count] || (module === LCA.requests && counts.messages)) { record[field] = record[field].filter((item) => item.projectId !== id); values[module.STORAGE_KEY] = JSON.stringify(record); }
     }
     for (const module of [LCA.scope, LCA.modelling, LCA.interpretation, LCA.report, LCA.verification, LCA.reviewRoute, LCA.certification]) {
       if (values[module.STORAGE_KEY] === null) continue;

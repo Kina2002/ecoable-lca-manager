@@ -297,3 +297,4 @@ h1 { font-size: 25px; }
 /* WEB-050: 인증 예상 만료일을 확인하는 할 일 */
 .task-kind-renewal { color: #805111; background: #fff2d4; }
 .task-kind-inspection { color: #365389; background: #eaf0ff; }
+.message-history-body { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; max-height: 360px; overflow: auto; padding: 10px; background: #f7f9f7; }

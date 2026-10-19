@@ -4,7 +4,7 @@ LCA.views.requestMessage = (() => {
   let refreshCurrent = () => {};
   let prepareCurrent = () => ({ ok: false, error: '자료 요청 화면을 먼저 열어 주세요.' });
   const text = (tag, cls, value) => { const node = document.createElement(tag); node.className = cls; node.textContent = value; return node; };
-  function init(host, getState) {
+  function init(host, getState, store, projectId) {
     const section = text('details', 'request-message', ''); section.id = 'request-message';
     section.append(text('summary', '', '요청문 만들기'));
     const help = text('p', 'detail-help', '저장된 자료에서 항목을 골라 제목과 본문을 만들어요. 복사 전에 수정할 수 있고 자료 상태는 바뀌지 않아요.');
@@ -34,6 +34,10 @@ LCA.views.requestMessage = (() => {
     editor.append(titleLabel, title, bodyLabel, body, warnings, copyActions, manual);
     section.append(help, kindLabel, kind, typeHelp, choose, overwriteLabel, generate, feedback, editor); host.querySelector('.request-intro').after(section);
     let state = null; let available = []; let selected = new Set(); let generated = null; let touched = false; let copying = false; let initialized = false;
+    const historyView = LCA.views.messageHistory.init(editor, section, projectId, store, () => generated ? {
+      projectId, companyName: generated.companyName, productName: generated.productName, type: generated.type, targets: generated.ids,
+      title: title.value, body: body.value, token: generated.token, basisChanged: !LCA.requestMessage.check(read(), generated.type, generated.ids, generated.fingerprint).ok, busy: copying
+    } : null);
     function read() { try { return getState(); } catch { return { ok: false, error: '최신 기록을 읽지 못했어요. 다시 확인해 주세요.' }; } }
     function ids() { return [...selected].sort(); }
     function sameSelection() { return generated && generated.type === kind.value && JSON.stringify(ids()) === JSON.stringify(generated.ids.slice().sort()); }
@@ -45,6 +49,7 @@ LCA.views.requestMessage = (() => {
       for (const node of [copyTitle, copyBody, copyBoth]) node.disabled = copying || !sameSelection() || !state?.ok || state.canGenerate === false;
       title.disabled = body.disabled = copying;
       overwriteLabel.hidden = !touched;
+      historyView.sync();
     }
     function render(reset) {
       const focused = choices.contains(document.activeElement) ? document.activeElement.dataset.messageRequest : null;
@@ -66,7 +71,7 @@ LCA.views.requestMessage = (() => {
       sync();
       if (focused) [...choices.querySelectorAll('input')].find((node) => node.dataset.messageRequest === focused)?.focus({ preventScroll: true });
     }
-    function refresh() { if (section.isConnected) { render(!initialized); initialized = true; } }
+    function refresh() { if (section.isConnected) { render(!initialized); historyView.refresh(); initialized = true; } }
     kind.addEventListener('change', () => { overwrite.checked = false; manual.hidden = true; render(true); feedback.textContent = '종류를 바꿨어요. 기존 글은 유지했으니 자료를 고른 뒤 새로 만들어 주세요.'; });
     all.addEventListener('click', () => { selected = new Set(available.map((item) => item.id)); for (const node of choices.querySelectorAll('input')) node.checked = true; sync(); });
     none.addEventListener('click', () => { selected.clear(); for (const node of choices.querySelectorAll('input')) node.checked = false; sync(); });
@@ -74,9 +79,9 @@ LCA.views.requestMessage = (() => {
     overwrite.addEventListener('change', sync);
     for (const node of [title, body]) node.addEventListener('input', () => { touched = true; overwrite.checked = false; manual.hidden = true; feedback.textContent = '직접 수정한 내용은 복사할 수 있어요. 새로 만들려면 위 교체 확인에 체크해 주세요.'; sync(); });
     function fill(current, result) {
-      state = current; generated = { ...result, type: kind.value }; title.value = result.title; body.value = result.body;
+      state = current; generated = { ...result, type: kind.value, companyName: current.project.companyName, productName: current.project.productName, token: crypto.randomUUID() }; title.value = result.title; body.value = result.body;
       touched = false; overwrite.checked = false; manual.hidden = true; editor.hidden = false;
-      warnings.textContent = result.warnings.join(' '); feedback.textContent = '제목과 본문을 만들었어요. 받는 사람·기간·자료·기한을 확인하고 필요한 부분을 수정한 뒤 복사해 주세요.'; sync(); title.focus();
+      warnings.textContent = result.warnings.join(' '); feedback.textContent = '제목과 본문을 만들었어요. 받는 사람·기간·자료·기한을 확인하고 필요한 부분을 수정한 뒤 복사해 주세요.'; historyView.newMessage(current); sync(); title.focus();
     }
     generate.addEventListener('click', () => {
       if (copying || (touched && !overwrite.checked)) return;

@@ -26,7 +26,7 @@ LCA.views.projectDeletion = (() => {
       try {
         plan = LCA.projectDeletion.prepare(id, sampleDate); const p = plan.project; const c = plan.counts;
         for (const value of [`${p.companyName} (가상) · ${p.code}`, `제품: ${p.productName}`,
-          `함께 삭제: 자료 요청 ${c.requests}건(삭제 이력 포함), 보고서 ${c.reportVersions}개 버전, 고객 의견 ${c.comments}건, 검증 지적 ${c.issues}건`,
+          `함께 삭제: 자료 요청 ${c.requests}건(삭제 이력 포함), 보고서 ${c.reportVersions}개 버전, 고객 의견 ${c.comments}건, 검증 지적 ${c.issues}건, 발송 기록 ${c.messages}건`,
           '이 프로젝트의 범위·받은 자료·계산·해석·내부 검토·인증·완료 기록도 함께 삭제돼요. 다른 프로젝트와 담당 연구원 명단은 유지해요.',
           '삭제 후에는 되돌릴 수 없어요. 보관할 기록이 있다면 취소하고 설정에서 먼저 백업해 주세요. 다른 창의 이 앱은 닫아 주세요.']) {
           const paragraph = document.createElement('p'); paragraph.textContent = value; details.append(paragraph);

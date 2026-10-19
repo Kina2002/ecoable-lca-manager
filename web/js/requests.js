@@ -75,6 +75,7 @@ LCA.requests = (() => {
           ids.add(item.id);
           if (!item.deletedAt) projectCategories.add(pair);
         }
+        if (data.messageLog !== undefined && !LCA.messageHistory?.validLog(data.messageLog, knownProjects)) throw new Error('invalid message log');
         return { ok: true, data };
       } catch {
         return failure('저장한 자료 요청을 읽지 못했습니다. 기존 기록을 보호하기 위해 변경을 멈췄습니다. 브라우저의 저장 설정과 기록을 확인해 주세요.');
@@ -95,6 +96,31 @@ LCA.requests = (() => {
       const result = read();
       if (!result.ok) return result;
       return { ok: true, items: result.data.requests.filter((item) => !item.deletedAt) };
+    }
+
+    function messages(projectId) {
+      const result = read(); if (!result.ok) return result;
+      if (!knownProjects.has(projectId)) return failure('프로젝트를 찾을 수 없어요.');
+      const log = result.data.messageLog || { nextNumber: 1, items: [] };
+      return { ok: true, revision: log.nextNumber, items: JSON.parse(JSON.stringify(log.items.filter((item) => item.projectId === projectId))) };
+    }
+    async function recordMessage(projectId, draft, expectedRevision) {
+      function write() {
+        const current = read(); if (!current.ok) return current;
+        if (!knownProjects.has(projectId) || draft?.projectId !== projectId || !LCA.messageHistory.validContent(draft)
+          || draft.confirmed !== true || Date.parse(draft.sentAt) > Date.now()) return failure('실제로 보낸 날짜·시각, 받는 사람, 기록자, 제목·본문을 확인하고 발송 확인에 체크해 주세요. 입력 필요 표시도 실제 내용으로 바꿔 주세요.');
+        const log = current.data.messageLog || { nextNumber: 1, items: [] };
+        if (log.items.some((item) => item.token === draft.token)) return failure('이 요청문은 이미 발송 기록으로 저장했어요. 중복 저장하지 않았어요.');
+        if (log.nextNumber !== expectedRevision) return failure('다른 화면에서 발송 기록이 추가됐어요. 최신 기록을 확인한 뒤 다시 저장해 주세요.');
+        if (draft.type !== 'info' && draft.targets.some((id) => !current.data.requests.some((item) => item.id === id && item.projectId === projectId))) return failure('발송 대상 자료와 프로젝트 연결을 확인하지 못했어요.');
+        const item = { ...JSON.parse(JSON.stringify(Object.fromEntries(LCA.messageHistory.FIELDS.map((key) => [key, draft[key]])))), id: `MSG-${String(log.nextNumber).padStart(4, '0')}`, recordedAt: new Date().toISOString() };
+        const data = { ...current.data, messageLog: { nextNumber: log.nextNumber + 1, items: [...log.items, item] } };
+        if (!LCA.messageHistory.validLog(data.messageLog, knownProjects)) return failure('발송 기록의 형식을 확인하지 못해 저장하지 않았어요.');
+        try { getStorage().setItem(STORAGE_KEY, JSON.stringify(data)); return { ok: true, item }; }
+        catch { return failure('발송 기록을 저장하지 못했어요. 입력과 기존 자료는 유지했어요.'); }
+      }
+      try { return typeof navigator !== 'undefined' && navigator.locks?.request ? await navigator.locks.request('ecoable-lca-manager.review-workflow-write', write) : write(); }
+      catch { return failure('발송 기록 저장을 시작하지 못했어요. 입력은 유지했어요.'); }
     }
 
     function add(projectId, draft) {
@@ -288,7 +314,7 @@ LCA.requests = (() => {
         return action(projectId, ...args);
       };
     }
-    return { list, listAll, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
+    return { list, listAll, messages, recordMessage, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };

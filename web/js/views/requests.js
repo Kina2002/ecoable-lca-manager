@@ -32,7 +32,7 @@ LCA.views.requests = (() => {
     const messageEditor = LCA.views.requestMessage.init(panel, getMessageState || (() => {
       const result = store.list(project.id);
       return result.ok ? { ok: true, project, items: result.items, canGenerate: result.canWrite, reason: result.readOnlyReason } : { ok: false, error: result.message };
-    }));
+    }), store, project.id);
     const fields = {
       categoryKey: find('#request-category'), detail: find('#request-detail'), dueDate: find('#request-due-date')
     };
