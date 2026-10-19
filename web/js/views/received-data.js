@@ -133,6 +133,7 @@ LCA.views.receivedData = (() => {
       find('#receipt-source-details').open = Boolean(item.receipt?.provenance);
       find('#receipt-title').textContent = item.receipt ? '받은 자료 확인·수정' : '받은 자료 기록하기';
       find('#receipt-request-context').replaceChildren(text('strong', '', `${item.id} · ${category.name}`), text('p', '', item.detail));
+      find('#receipt-request-context').append(text('p', 'detail-help', LCA.views.requestContext.summary(item)), text('p', 'input-help', '고객사 담당자가 취합해 전달하는 자료예요. 위 안내와 실제로 받은 증빙을 비교해 주세요.'));
       showKind();
       dialog.showModal();
       (item.receipt ? fields.kind : fields.kind.value === 'quantity' ? fields.value : fields.description).focus();

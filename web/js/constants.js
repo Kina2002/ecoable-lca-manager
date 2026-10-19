@@ -85,7 +85,7 @@ LCA.constants = (() => {
   const BOUNDARIES = ['요람~문 (cradle-to-gate)', '요람~무덤 (cradle-to-grave)', '기타'];
   const DEADLINE_TYPES = ['확정', '조건부', '확인 필요'];
   const INDUSTRIES = ['석유화학·화학', '배터리·소재', '철강·금속', '전자·부품', '포장재', '소비재·식품', '자동차', '건자재', '공공', '기타'];
-  const DEPTS = ['구매', '생산', '환경안전', '물류', '재무·ERP', '품질', '협력사'];
+  const DEPTS = ['구매', '생산', '시설관리', '환경안전', '물류', '재무·ERP', '품질', '연구개발', '협력사'];
   const DATA_SOURCES = ['1차', '2차'];
   const METHODS = ['측정', '계산', '추정', '가정'];
   const EVIDENCE_TYPES = ['고지서', '계량기 검침표', '생산실적', '구매·입고 기록', 'BOM·사양서', 'MSDS', '폐기물 인계서', '운송장', '측정기록', '공급사 PCF 선언서', '기타'];

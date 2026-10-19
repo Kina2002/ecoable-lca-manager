@@ -7,6 +7,20 @@ LCA.requests = (() => {
   const MAX_DETAIL = 1000;
   const MAX_NOT_APPLICABLE_REASON = 1000;
   const categoryByKey = (key) => LCA.constants.CATEGORIES.find((category) => category.key === key);
+  const CONTEXT_FIELDS = ['department', 'evidenceType'];
+  function validContext(value) {
+    return !!value && typeof value === 'object' && !Array.isArray(value)
+      && CONTEXT_FIELDS.every((key) => typeof value[key] === 'string' && value[key] === value[key].trim() && value[key].length <= 100 && !/[\x00-\x1f\x7f]/.test(value[key]))
+      && Number.isSafeInteger(value.revision) && value.revision > 0
+      && typeof value.updatedAt === 'string' && Number.isFinite(Date.parse(value.updatedAt))
+      && Object.keys(value).every((key) => [...CONTEXT_FIELDS, 'revision', 'updatedAt'].includes(key));
+  }
+  function suggestedContext(categoryKey) {
+    const pairs = { general: ['환경안전', '사업장 현황표'], product: ['품질', 'BOM·사양서'], material: ['구매', '구매·입고 기록'],
+      energy: ['시설관리', '고지서'], water: ['환경안전', '계량기 검침표'], packaging: ['구매', 'BOM·사양서'], transport: ['물류', '운송장'],
+      emission: ['환경안전', '폐기물 인계서'], allocation: ['생산', '생산실적'], useEol: ['연구개발', 'BOM·사양서'], supply: ['구매', '공급사 PCF 선언서'] };
+    const pair = pairs[categoryKey]; return pair ? { department: pair[0], evidenceType: pair[1] } : { department: '', evidenceType: '' };
+  }
 
   // 숫자만 이어 쓰면 앞의 네 자리는 연도, 다음 두 자리씩은 월·일이다.
   function formatDateInput(value) {
@@ -73,6 +87,7 @@ LCA.requests = (() => {
             || guide.url !== LCA.constants.REQUEST_GUIDELINE.url || !validDate(guide.checkedOn)
             || !Number.isInteger(guide.page) || guide.page < 1 || typeof guide.note !== 'string') throw new Error('invalid record');
           ids.add(item.id);
+          if (item.collectionContext !== undefined && !validContext(item.collectionContext)) throw new Error('invalid collection context');
           if (!item.deletedAt) projectCategories.add(pair);
         }
         if (data.messageLog !== undefined && !LCA.messageHistory?.validLog(data.messageLog, knownProjects)) throw new Error('invalid message log');
@@ -326,6 +341,28 @@ LCA.requests = (() => {
       return writeReview(current, { ...current.item, status, review });
     }
 
+    async function saveContext(projectId, id, draft, expected) {
+      function write() {
+        if (getStage) {
+          const stage = getStage(projectId);
+          if (!stage.ok || !Number.isInteger(stage.stage) || stage.stage >= 9) return failure(stage.error || '현재 단계에서는 자료 취합 정보를 바꿀 수 없어요.');
+        }
+        const current = read(); if (!current.ok) return current;
+        const item = current.data.requests.find((value) => value.projectId === projectId && value.id === id && !value.deletedAt);
+        if (!knownProjects.has(projectId) || !item) return failure('취합 정보를 연결할 자료 요청을 찾지 못했어요.');
+        if (!draft || CONTEXT_FIELDS.some((key) => typeof draft[key] !== 'string')) return failure('취합 부서와 필요한 증빙 종류를 확인해 주세요.');
+        const context = { ...Object.fromEntries(CONTEXT_FIELDS.map((key) => [key, draft[key].trim()])), revision: (item.collectionContext?.revision || 0) + 1, updatedAt: new Date().toISOString() };
+        if (!validContext(context)) return failure('부서와 증빙 종류는 각각 줄바꿈 없이 100자 이내로 적어 주세요.');
+        if (JSON.stringify(item.collectionContext || null) !== JSON.stringify(expected || null)) return failure('다른 화면에서 취합 정보가 바뀌었어요. 작성한 내용을 보관하고 최신 기록을 다시 열어 주세요.');
+        const changed = { ...item, collectionContext: context };
+        try {
+          getStorage().setItem(STORAGE_KEY, JSON.stringify({ ...current.data, requests: current.data.requests.map((value) => value.id === id ? changed : value) }));
+          return { ok: true, item: changed };
+        } catch { return failure('취합 정보를 저장하지 못했어요. 입력과 기존 기록은 유지했어요.'); }
+      }
+      try { return typeof navigator !== 'undefined' && navigator.locks?.request ? await navigator.locks.request('ecoable-lca-manager.review-workflow-write', write) : write(); }
+      catch { return failure('취합 정보를 저장하지 못했어요. 입력과 기존 기록은 유지했어요.'); }
+    }
     function writable(action) {
       return (projectId, ...args) => {
         if (getStage) {
@@ -336,8 +373,8 @@ LCA.requests = (() => {
         return action(projectId, ...args);
       };
     }
-    return { list, listAll, templates, saveTemplate, messages, recordMessage, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
+    return { list, listAll, templates, saveTemplate, messages, recordMessage, saveContext, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
-  return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };
+  return { STORAGE_KEY, MAX_DETAIL, validContext, suggestedContext, validDate, formatDateInput, validate, createStore };
 })();

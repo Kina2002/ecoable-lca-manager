@@ -48,6 +48,7 @@ LCA.views.requests = (() => {
     let selectedCategory = '';
     let selectedStatus = null;
     const drafts = new Map();
+    const contextDrafts = new Map();
     const statusButtons = new Map();
     const expandedRecords = new Set();
     const notApplicableDrafts = new Map();
@@ -215,6 +216,16 @@ LCA.views.requests = (() => {
         if (item.status === '보완 요청' && item.review?.note) card.append(textElement('p', 'request-revision-note', `보완 필요: ${item.review.note}`));
         if (item.notApplicable) card.append(textElement('p', 'request-revision-note', `해당 없음: ${item.notApplicable.reason}`));
         details.append(reference); card.append(details);
+        if (!deleted) card.append(LCA.views.requestContext.editor(item, project, store, {
+          open: expandedRecords.has(`context:${item.id}`), canWrite: result.canWrite, drafts: contextDrafts,
+          onSaved: (saved) => {
+            expandedRecords.add(`context:${item.id}`); renderItems();
+            showFeedback(saved, `${saved.id} 취합 정보를 저장했어요. 고객사 담당자와 자료 전달 경로는 유지돼요.`);
+            const target = [...find('#request-items').querySelectorAll('.request-context')].find((node) => node.dataset.recordDetails === `context:${saved.id}`)?.querySelector('summary');
+            target?.focus({ preventScroll: true });
+          }
+        }));
+        else if (item.collectionContext) card.append(textElement('p', 'detail-help', LCA.views.requestContext.summary(item)));
         if (!deleted && item.status === '요청' && result.canWrite) {
           const box = document.createElement('details'); box.className = 'request-na-details'; box.dataset.notApplicableDetails = item.id;
           box.open = expandedRecords.has(`na:${item.id}`);

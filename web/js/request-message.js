@@ -82,6 +82,7 @@ LCA.requestMessage = (() => {
     const period = LCA.requests.validDate(p.refStart) && LCA.requests.validDate(p.refEnd) && p.refStart <= p.refEnd
       ? `${p.refStart.replaceAll('-', '.')}~${p.refEnd.replaceAll('-', '.')}` : value('', '자료 기준기간');
     const rows = items.map((item) => ({ id: item.id, name: value(category(item), '자료 구분'), detail: value(item.detail, `${item.id} 요청 내용`, false),
+      department: line(item.collectionContext?.department), evidenceType: line(item.collectionContext?.evidenceType),
       due: date(item.dueDate, `${item.id} 제출 기한`), group: type === 'followup' ? group(item) : '', revision: type === 'revision' || (type === 'followup' && item.status === '보완 요청') ? value(item.review?.note, `${item.id} 보완 사유`, false) : '' }));
     if (type === 'followup') rows.sort((a, b) => ['overdue', 'revision', 'pending'].indexOf(a.group) - ['overdue', 'revision', 'pending'].indexOf(b.group));
     const commonDue = type !== 'followup' && new Set(rows.map((item) => item.due)).size === 1;
@@ -96,18 +97,22 @@ LCA.requestMessage = (() => {
     for (const [index, item] of rows.entries()) {
       if (type === 'followup' && previousGroup !== item.group) { previousGroup = item.group; body.push(`[${{ overdue: '기한 지난 미제출 자료', revision: '보완이 필요한 자료', pending: '아직 기한 전인 미제출 자료 · 오늘 마감 포함' }[item.group]}]`); }
       body.push(`${index + 1}. ${item.name} (${item.id})`, `   요청 내용: ${item.detail}`);
+      if (item.department) body.push(`   고객사 내부 취합 참고 부서: ${item.department}`);
+      if (item.evidenceType) body.push(`   필요한 증빙 종류: ${item.evidenceType}`);
       if (type === 'revision' || (type === 'followup' && item.group === 'revision')) body.push(`   보완 내용: ${item.revision}`, `   기존 제출 기한: ${item.due} (보완 기한은 별도 협의)`);
       else if (!commonDue) body.push(`   제출 기한: ${item.due}`);
       body.push('');
     }
     if (type !== 'revision' && commonDue) body.push(`제출 기한: ${rows[0].due}`, '');
+    if (rows.some((item) => item.department || item.evidenceType)) body.push('담당자님께서 관련 부서의 자료와 증빙을 취합해 전달 부탁드립니다. 취합 부서나 증빙 형태가 다르면 알려 주세요.', '');
     body.push(type === 'initial' ? '자료 준비가 어렵거나 기한 조정이 필요하면 말씀 부탁드립니다.' : type === 'reminder'
       ? '제출 여부와 준비 일정을 확인 부탁드립니다. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : type === 'followup' ? '미제출 자료의 전달 여부와 준비 일정을 확인 부탁드립니다. 보완 자료의 새 기한은 별도로 협의하겠습니다. 이미 보내주셨다면 전달 경로를 알려 주세요.' : type === 'upcoming'
         ? '안내드린 기한까지 전달 부탁드립니다. 준비가 어렵거나 기한 조정이 필요하면 말씀해 주세요. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : '확인 후 보완 자료를 전달 부탁드립니다. 보완 자료 제출 일정은 별도 협의 부탁드립니다.',
       '', '감사합니다.', `담당 연구원 ${researcher}`);
     const fingerprint = JSON.stringify({ type, today: type === 'followup' ? LCA.rules.today() : null, project: [p.id, p.stage, p.companyName, p.productName, p.customerContactName, p.researcherId, p.researcherName, p.refStart, p.refEnd].map((v) => v ?? null),
       sender: [sender?.id, sender?.name, sender?.company, sender?.department].map((v) => v ?? null),
-      items: items.map((item) => [item.id, item.categoryKey, item.status, item.detail, item.dueDate, ['revision', 'followup'].includes(type) ? item.review?.note ?? null : null]) });
+      items: items.map((item) => [item.id, item.categoryKey, item.status, item.detail, item.dueDate, ['revision', 'followup'].includes(type) ? item.review?.note ?? null : null,
+        ...(item.collectionContext ? [item.collectionContext] : [])]) });
     return { ok: true, title, body: body.join('\n'), fingerprint, ids: items.map((item) => item.id), warnings: [...missing].map((label) => `${label} 입력이 필요해요.`) };
   }
   function buildInfo(state, items) {
