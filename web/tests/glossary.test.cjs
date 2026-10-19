@@ -50,8 +50,8 @@ test('검색어를 정규식 명령으로 실행하지 않고 원본·순서를 
   assert.notEqual(search(''), TERMS);
 });
 
-test('사전 40개의 고유 ID·설명·예시·출처 연결을 확인한다', () => {
-  assert.equal(TERMS.length, 40);
+test('사전 55개의 고유 ID·설명·예시·출처 연결을 확인한다', () => {
+  assert.equal(TERMS.length, 55);
   assert.equal(new Set(TERMS.map((entry) => entry.id)).size, TERMS.length);
   for (const entry of TERMS) {
     assert.ok(entry.term && entry.category && entry.meaning && entry.example);

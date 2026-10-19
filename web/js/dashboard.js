@@ -9,7 +9,8 @@ LCA.dashboard = (() => {
     const ids = new Set(active.map((p) => p.id));
     const taskItems = tasks.items.filter((item) => ids.has(item.projectId));
     const own = requests.ok ? requests.items.filter((r) => ids.has(r.projectId) && !r.deletedAt) : [];
-    const received = own.filter((r) => !!r.receipt && r.status !== '요청');
+    const applicable = own.filter((r) => r.status !== '해당 없음');
+    const received = applicable.filter((r) => !!r.receipt && r.status !== '요청');
     const approved = received.filter((r) => r.status === '승인');
     const attention = [];
     for (const project of active) {
@@ -39,7 +40,7 @@ LCA.dashboard = (() => {
     attention.sort((a, b) => a.rank - b.rank || (a.days ?? Infinity) - (b.days ?? Infinity) || a.code.localeCompare(b.code));
     const percent = (count, total) => total ? Math.round(count / total * 100) : null;
     return { ok: true, today, researcherOptions, researcherLabel: researcher ? researcherOptions.find(([id]) => id === researcher)?.[1] || '이전 선택 연구원' : '담당 연구원 전체', activeCount: active.length, requestsOk: requests.ok,
-      collection: { total: own.length, received: received.length, percent: requests.ok ? percent(received.length, own.length) : null },
+      collection: { total: applicable.length, received: received.length, percent: requests.ok ? percent(received.length, applicable.length) : null },
       approval: { total: received.length, approved: approved.length, percent: requests.ok ? percent(approved.length, received.length) : null },
       registeredProjects: new Set(own.map((r) => r.projectId)).size,
       attentionCount: attention.length, attention: attention.slice(0, 3), taskCount: taskItems.length, tasks: taskItems.slice(0, 3),

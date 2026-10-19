@@ -12,14 +12,16 @@ LCA.scope = (() => {
   function collectionReadiness(projectId, result) {
     if (!result?.ok || !Array.isArray(result.items)) return { ok: false, ready: false, error: result?.message || result?.error || '자료 요청 기록을 확인하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.' };
     const items = result.items.filter((item) => item.projectId === projectId && !item.deletedAt);
-    const missing = items.filter((item) => !LCA.constants.SUBMITTED_STATUSES.includes(item.status) || !item.receipt);
-    return { ok: true, ready: items.length > 0 && missing.length === 0, total: items.length, submitted: items.length - missing.length, missing };
+    const applicable = items.filter((item) => item.status !== '해당 없음');
+    const missing = applicable.filter((item) => !LCA.constants.SUBMITTED_STATUSES.includes(item.status) || !item.receipt);
+    return { ok: true, ready: applicable.length > 0 && missing.length === 0, total: applicable.length, submitted: applicable.length - missing.length, notApplicable: items.length - applicable.length, missing };
   }
   function reviewReadiness(projectId, result) {
     if (!result?.ok || !Array.isArray(result.items)) return { ok: false, ready: false, error: result?.message || result?.error || '자료 요청 기록을 확인하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.' };
     const items = result.items.filter((item) => item.projectId === projectId && !item.deletedAt);
-    const missing = items.filter((item) => item.status !== '승인' || !item.receipt || !item.review);
-    return { ok: true, ready: items.length > 0 && missing.length === 0, total: items.length, approved: items.length - missing.length, missing };
+    const applicable = items.filter((item) => item.status !== '해당 없음');
+    const missing = applicable.filter((item) => item.status !== '승인' || !item.receipt || !item.review);
+    return { ok: true, ready: applicable.length > 0 && missing.length === 0, total: applicable.length, approved: applicable.length - missing.length, notApplicable: items.length - applicable.length, missing };
   }
   function twelveMonths(start, end) {
     if (!LCA.requests.validDate(start) || !LCA.requests.validDate(end)) return false;

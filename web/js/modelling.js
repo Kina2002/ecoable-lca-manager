@@ -19,15 +19,18 @@ LCA.modelling = (() => {
     if (own.some((item) => typeof item.id !== 'string')) return { ok: false, error: '자료 요청 번호를 확인하지 못했어요.' };
     const requests = own.map((item) => ({
       id: item.id, projectId: item.projectId, categoryKey: item.categoryKey, detail: item.detail, dueDate: item.dueDate,
-      status: item.status, receipt: item.receipt || null, review: item.review || null
+      status: item.status, receipt: item.receipt || null, review: item.review || null,
+      ...(item.notApplicable ? { notApplicable: item.notApplicable } : {})
     })).sort((a, b) => a.id.localeCompare(b.id));
     const approved = requests.filter((item) => item.status === '승인');
     if (approved.some((item) => !LCA.receivedData.validRecord(item.receipt) || !LCA.review.validRecord(item.review, item.status, item.receipt))) {
       return { ok: false, error: '승인된 자료의 원본·검토 기록을 확인하지 못했어요.' };
     }
     const basis = { project: projectSnapshot(project), requests: clone(requests) };
-    return { ok: true, total: own.length, approved: clone(approved), excluded: own.length - approved.length,
-      ready: own.length > 0 && approved.length === own.length, basis, signature: JSON.stringify(basis) };
+    const applicable = requests.filter((item) => item.status !== '해당 없음');
+    return { ok: true, total: applicable.length, approved: clone(approved), excluded: applicable.length - approved.length,
+      notApplicable: own.length - applicable.length,
+      ready: applicable.length > 0 && approved.length === applicable.length, basis, signature: JSON.stringify(basis) };
   }
   function csvCell(value) {
     let text = String(value ?? '');
@@ -94,7 +97,10 @@ LCA.modelling = (() => {
           if (!projects.some((p) => p.id === id) || !record || record.projectId !== id || Object.keys(validate(record)).length
             || !Number.isSafeInteger(record.revision) || record.revision < 1 || record.source?.project?.id !== id
             || !Array.isArray(record.source.requests) || !record.source.requests.length
-            || record.source.requests.some((item) => item.projectId !== id || item.status !== '승인')
+            || record.source.requests.some((item) => item.projectId !== id || !['승인', '해당 없음'].includes(item.status)
+              || (item.status === '해당 없음' && (!item.notApplicable || typeof item.notApplicable.reason !== 'string'
+                || !item.notApplicable.reason.trim() || typeof item.notApplicable.recordedAt !== 'string'
+                || !Number.isFinite(Date.parse(item.notApplicable.recordedAt)))))
             || ['createdAt', 'updatedAt'].some((key) => typeof record[key] !== 'string' || !Number.isFinite(Date.parse(record[key])))
             || record.createdAt > record.updatedAt) return failure();
           const p = record.source.project;

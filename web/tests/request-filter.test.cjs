@@ -48,7 +48,7 @@ test('0건 상태와 빈 프로젝트도 남기고 없는 상태 선택은 빈 �
   assert.equal(only.counts['승인'], 0);
   assert.equal(only.visible.length, 0);
   const empty = snapshot([], 'a');
-  assert.equal(Object.keys(empty.counts).length, 5);
+  assert.equal(Object.keys(empty.counts).length, 6);
   assert.equal(Object.values(empty.counts).every((count) => count === 0), true);
   assert.equal(snapshot(items, 'missing').total, 0);
   assert.equal(snapshot(items, 'a', '알 수 없는 상태').visible.length, 0);

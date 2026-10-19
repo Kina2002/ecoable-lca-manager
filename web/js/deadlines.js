@@ -26,6 +26,7 @@ LCA.deadlines = (() => {
   function item(item, today = LCA.rules.today()) {
     if (item.deletedAt) return { staticText: true, text: '삭제됨', tone: 'muted', date: item.dueDate, status: '삭제됨' };
     if (item.status === '승인') return { staticText: true, text: '승인', tone: 'complete', date: item.dueDate, status: item.status };
+    if (item.status === '해당 없음') return { staticText: true, text: '해당 없음', tone: 'muted', date: item.dueDate, status: item.status };
     return refresh({ date: item.dueDate, status: item.status }, today);
   }
   function collection(project, today = LCA.rules.today()) {
@@ -35,9 +36,10 @@ LCA.deadlines = (() => {
   }
   function summary(projectId, items, today = LCA.rules.today()) {
     const own = items.filter((record) => record.projectId === projectId && !record.deletedAt);
-    const pending = own.filter((record) => record.status !== '승인');
-    const counts = { total: own.length, approved: own.length - pending.length, pending: pending.length };
-    if (!own.length) return { ...counts, staticText: true, text: '요청 없음', tone: 'muted', status: null };
+    const applicable = own.filter((record) => record.status !== '해당 없음');
+    const pending = applicable.filter((record) => record.status !== '승인');
+    const counts = { total: applicable.length, approved: applicable.length - pending.length, pending: pending.length, notApplicable: own.length - applicable.length };
+    if (!applicable.length) return { ...counts, staticText: true, text: own.length ? '해당 자료 없음' : '요청 없음', tone: 'muted', status: null };
     if (!pending.length) return { ...counts, staticText: true, text: '자료 검토 완료', tone: 'complete', status: null };
     if (pending.some((record) => dayNumber(record.dueDate) === null)) return { ...counts, staticText: true, text: '기한 확인 필요', tone: 'unknown', status: null };
     // 같은 날짜는 기존 등록 순서를 유지한다. 조회할 때 원본을 정렬하지 않는다.

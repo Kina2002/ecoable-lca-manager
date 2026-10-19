@@ -27,7 +27,7 @@ LCA.report = (() => {
     const output = [
       { title: '프로젝트', paragraphs: [`프로젝트 번호: ${p.code}`, `회사: ${p.companyName} (가상)`, `제품: ${p.productName}`, `업무 목적: ${p.purpose || '미정'}`, `프로젝트 유형: ${p.type || '미정'}`, `고객 담당자: ${p.customerContactName || '미정'}`, `담당 연구원: ${p.researcherName || '미정'}`] },
       { title: '평가 범위', paragraphs: [`평가 기준량: ${scope.functionalUnit.qty} ${scope.functionalUnit.unit}`, `시스템 경계: ${scope.boundary}`, `평가 모듈: ${scope.modules || '별도 기록 없음'}`, `기준기간: ${scope.refStart} ~ ${scope.refEnd}`, `적용 기준: ${scope.standards.join(' / ')}`] },
-      { title: `계산에 연결한 승인 원자료 (${c.source.requests.length}건)`, paragraphs: c.source.requests.map((item) => {
+      { title: `계산에 연결한 승인 원자료 (${c.source.requests.filter((item) => item.status === '승인').length}건)`, paragraphs: c.source.requests.filter((item) => item.status === '승인').map((item) => {
         const r = item.receipt;
         const category = LCA.constants.CATEGORIES.find((entry) => entry.key === item.categoryKey)?.name || item.categoryKey;
         return `${item.id} · ${category}\n요청 내용: ${item.detail}\n원자료: ${r.kind === 'quantity' ? `${r.value} ${r.unit}${r.density ? ` · 밀도 ${r.density} kg/m³` : ''}` : r.description}\n자료 기간: ${r.periodStart} ~ ${r.periodEnd}\n증빙 파일 이름: ${r.evidenceFileName}\n검토 메모: ${item.review.note || '없음'}`;
@@ -36,6 +36,11 @@ LCA.report = (() => {
       { title: `담당자의 결과 해석 (버전 ${interpretation.revision})`, paragraphs: Object.entries(LCA.interpretation.LABELS).map(([field, label]) => `${label}\n${interpretation[field]}`) },
       { title: '작성 메모', paragraphs: [record.note || '별도 작성 메모가 없습니다.'] }
     ];
+    const notApplicable = c.source.requests.filter((item) => item.status === '해당 없음');
+    if (notApplicable.length) output.splice(3, 0, { title: `해당 없음 자료 (${notApplicable.length}건)`, paragraphs: notApplicable.map((item) => {
+      const category = LCA.constants.CATEGORIES.find((entry) => entry.key === item.categoryKey)?.name || item.categoryKey;
+      return `${item.id} · ${category}\n사유: ${item.notApplicable.reason}`;
+    }) });
     if (record.historyNotice) output.unshift({ title: '보관본 안내', paragraphs: [record.historyNotice] });
     if (record.change) output.push({ title: '이 버전의 변경 기록', paragraphs: [
       ...Object.entries(LCA.reportHistory.FIELDS).filter(([field]) => record.change[field]).map(([field, rule]) => `${rule.label}: ${record.change[field]}`),

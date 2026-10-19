@@ -200,7 +200,7 @@ LCA.views.modelling = (() => {
         sourceSignature = editingRecord?.source.signature || state.source.signature; fill(editingRecord);
       }
       if (!dirty && !editingRecord) sourceSignature = state.source.signature;
-      counts.textContent = `승인 ${state.source.approved.length}/${state.source.total}건 · 미승인 ${state.source.excluded}건은 내보내기에서 제외해요.`;
+      counts.textContent = `승인 ${state.source.approved.length}/${state.source.total}건 · 해당 없음 ${state.source.notApplicable}건 · 미승인 ${state.source.excluded}건은 내보내기에서 제외해요.`;
       summary.textContent = `승인 자료 ${state.source.approved.length}건 보기`;
       sources.replaceChildren(...state.source.approved.map((item) => {
         const row = document.createElement('li');

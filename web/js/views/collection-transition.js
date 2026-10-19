@@ -59,15 +59,15 @@ LCA.views.collectionTransition = (() => {
       finish.disabled = !readiness.ok || !readiness.ready || dirty;
       if (reviewing) {
         status.textContent = !readiness.ok ? readiness.error
-          : !readiness.total ? '승인 0/0건. 검토할 자료 요청이 없어요. 자료를 등록하고 검토·승인해 주세요.'
-          : readiness.ready ? `승인 ${readiness.approved}/${readiness.total}건. 모든 자료가 승인됐어요. 버튼을 누르면 계산(모델링) 단계로 이동해요.`
-          : `승인 ${readiness.approved}/${readiness.total}건. 아래 자료의 검토와 승인을 마쳐 주세요.`;
+          : !readiness.total ? `승인 0/0건${readiness.notApplicable ? ` · 해당 없음 ${readiness.notApplicable}건` : ''}. 계산에 쓸 자료가 최소 한 건 필요해요.`
+          : readiness.ready ? `승인 ${readiness.approved}/${readiness.total}건${readiness.notApplicable ? ` · 해당 없음 ${readiness.notApplicable}건` : ''}. 버튼을 누르면 계산(모델링) 단계로 이동해요.`
+          : `승인 ${readiness.approved}/${readiness.total}건${readiness.notApplicable ? ` · 해당 없음 ${readiness.notApplicable}건` : ''}. 아래 자료의 검토와 승인을 마쳐 주세요.`;
       } else {
         status.textContent = !readiness.ok ? readiness.error
           : dirty ? '입력 중인 수집 마감일을 먼저 저장하거나 원래 값으로 되돌려 주세요.'
-          : !readiness.total ? '아직 자료 요청이 없어요. 필요한 요청을 등록하고 받은 자료를 기록해 주세요.'
-          : readiness.ready ? `제출 확인 ${readiness.submitted}/${readiness.total}건. 모든 자료가 제출됐어요. 버튼을 누르면 데이터 검토 단계로 이동해요.`
-          : `제출 확인 ${readiness.submitted}/${readiness.total}건. 아래 자료를 받거나 보완한 뒤 기록해 주세요.`;
+          : !readiness.total ? `제출 확인 0/0건${readiness.notApplicable ? ` · 해당 없음 ${readiness.notApplicable}건` : ''}. 실제로 받을 자료가 최소 한 건 필요해요.`
+          : readiness.ready ? `제출 확인 ${readiness.submitted}/${readiness.total}건${readiness.notApplicable ? ` · 해당 없음 ${readiness.notApplicable}건` : ''}. 버튼을 누르면 데이터 검토 단계로 이동해요.`
+          : `제출 확인 ${readiness.submitted}/${readiness.total}건${readiness.notApplicable ? ` · 해당 없음 ${readiness.notApplicable}건` : ''}. 아래 자료를 받거나 보완한 뒤 기록해 주세요.`;
       }
       for (const item of readiness.missing || []) {
         const line = document.createElement('li');

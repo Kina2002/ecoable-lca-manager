@@ -50,6 +50,7 @@ LCA.views.requests = (() => {
     const drafts = new Map();
     const statusButtons = new Map();
     const expandedRecords = new Set();
+    const notApplicableDrafts = new Map();
     for (const status of [null, ...LCA.requestFilter.STATUSES]) {
       const button = textElement('button', 'request-status-filter', '');
       button.type = 'button';
@@ -122,6 +123,10 @@ LCA.views.requests = (() => {
       for (const details of panel.querySelectorAll('details[data-record-details]')) {
         if (details.open) expandedRecords.add(details.dataset.recordDetails); else expandedRecords.delete(details.dataset.recordDetails);
       }
+      for (const details of panel.querySelectorAll('details[data-not-applicable-details]')) {
+        const id = details.dataset.notApplicableDetails;
+        if (details.open) expandedRecords.add(`na:${id}`); else expandedRecords.delete(`na:${id}`);
+      }
       const result = store.list(project.id);
       messageEditor.refresh();
       batchEditor.render(result);
@@ -163,7 +168,7 @@ LCA.views.requests = (() => {
         action.dataset.requestAction = deleted ? 'restore' : 'remove';
         action.dataset.requestId = item.id;
         action.setAttribute('aria-label', `${item.id} ${category.name} 자료 요청 ${deleted ? '복원' : '삭제'}`);
-        const stateClass = !deleted && item.status === '보완 요청' ? ' request-state-revision' : !deleted && item.receipt ? ' request-state-received' : '';
+        const stateClass = !deleted && item.status === '보완 요청' ? ' request-state-revision' : !deleted && item.status === '해당 없음' ? ' request-state-na' : !deleted && item.receipt ? ' request-state-received' : '';
         identity.append(textElement('h3', '', category.name), textElement('span', 'request-code', item.id), textElement('span', `request-state${stateClass}`, deleted ? '삭제됨' : item.status));
         const due = textElement('p', 'request-item-due', '제출 기한 ');
         const date = textElement('time', '', item.dueDate.replaceAll('-', '.'));
@@ -179,13 +184,21 @@ LCA.views.requests = (() => {
         details.append(detailsToggle, textElement('p', 'request-item-detail', item.detail));
         if (item.receipt) details.append(LCA.views.receivedData.summary(item.receipt, item.status));
         if (item.review) details.append(LCA.views.review.summary(item));
+        if (item.notApplicable) details.append(textElement('p', 'request-item-detail', `해당 없음 사유: ${item.notApplicable.reason}`));
         if (!deleted) {
-          const record = textElement('button', 'request-action-button receipt-open-button', item.receipt ? '받은 자료 보기·수정' : '받은 자료 기록');
-          record.type = 'button';
-          record.disabled = !result.canWrite;
-          record.dataset.receiptId = item.id;
-          record.setAttribute('aria-label', `${item.id} ${category.name} ${record.textContent}`);
-          actions.append(record);
+          if (item.status !== '해당 없음') {
+            const record = textElement('button', 'request-action-button receipt-open-button', item.receipt ? '받은 자료 보기·수정' : '받은 자료 기록');
+            record.type = 'button';
+            record.disabled = !result.canWrite;
+            record.dataset.receiptId = item.id;
+            record.setAttribute('aria-label', `${item.id} ${category.name} ${record.textContent}`);
+            actions.append(record);
+          } else {
+            const restore = textElement('button', 'request-action-button', '다시 요청하기');
+            restore.type = 'button'; restore.disabled = !result.canWrite; restore.dataset.applicableRestore = item.id;
+            restore.setAttribute('aria-label', `${item.id} ${category.name} 해당 없음 취소하고 다시 요청하기`);
+            actions.append(restore);
+          }
           if (item.receipt) {
             const reviewLabel = item.status === '제출됨' ? '검토 시작' : item.status === '검토 중' ? '이어서 검토' : '검토 결과 보기';
             const reviewButton = textElement('button', 'request-action-button receipt-open-button review-open-button', reviewLabel);
@@ -200,7 +213,23 @@ LCA.views.requests = (() => {
         if (item.receipt) card.append(textElement('p', 'request-item-value', item.receipt.kind === 'quantity'
           ? `${LCA.receivedData.displayNumber(item.receipt.value)} ${item.receipt.unit} · ${item.receipt.evidenceFileName}` : `문서 자료 · ${item.receipt.evidenceFileName}`));
         if (item.status === '보완 요청' && item.review?.note) card.append(textElement('p', 'request-revision-note', `보완 필요: ${item.review.note}`));
+        if (item.notApplicable) card.append(textElement('p', 'request-revision-note', `해당 없음: ${item.notApplicable.reason}`));
         details.append(reference); card.append(details);
+        if (!deleted && item.status === '요청' && result.canWrite) {
+          const box = document.createElement('details'); box.className = 'request-na-details'; box.dataset.notApplicableDetails = item.id;
+          box.open = expandedRecords.has(`na:${item.id}`);
+          box.append(textElement('summary', '', '이 자료가 해당하지 않나요?'));
+          const form = document.createElement('form'); form.dataset.notApplicableForm = item.id;
+          const label = textElement('label', '', '해당하지 않는 이유');
+          label.htmlFor = `na-reason-${item.id}`;
+          const reason = document.createElement('textarea'); reason.id = label.htmlFor; reason.name = 'reason'; reason.maxLength = 1000; reason.rows = 2;
+          reason.value = notApplicableDrafts.get(item.id) || '';
+          reason.setAttribute('aria-describedby', `na-help-${item.id} na-error-${item.id}`);
+          const help = textElement('p', 'input-help', '예: 해당 사업장에는 이 공정이 없어 이 자료가 발생하지 않아요.'); help.id = `na-help-${item.id}`;
+          const error = textElement('p', 'form-error', ''); error.id = `na-error-${item.id}`; error.setAttribute('role', 'alert'); error.hidden = true;
+          const save = textElement('button', 'request-action-button', '사유 저장 · 해당 없음'); save.type = 'submit';
+          form.append(label, reason, help, error, save); box.append(form); card.append(box);
+        }
         return card;
       }
       find('#request-items').replaceChildren(...snapshot.visible.map((item) => requestCard(item, false)));
@@ -232,6 +261,14 @@ LCA.views.requests = (() => {
     });
 
     find('.request-list-card').addEventListener('click', (event) => {
+      const restoreApplicable = event.target.closest('button[data-applicable-restore]');
+      if (restoreApplicable) {
+        const result = store.restoreApplicable(project.id, restoreApplicable.dataset.applicableRestore);
+        const error = find('#request-action-error'); error.hidden = result.ok; error.textContent = result.message || '';
+        if (!result.ok) return;
+        renderItems(); showFeedback(result.item, `${result.item.id}을 다시 요청 상태로 돌렸어요.`);
+        focusChanged(result.item, 'receipt'); return;
+      }
       const reviewButton = event.target.closest('button[data-review-id]');
       if (reviewButton) { reviewEditor.open(reviewButton.dataset.reviewId); return; }
       const receiptButton = event.target.closest('button[data-receipt-id]');
@@ -250,6 +287,25 @@ LCA.views.requests = (() => {
         ? `${result.item.id} 자료 요청을 삭제했어요. 아래 ‘삭제한 자료 요청’에서 복원할 수 있어요.`
         : `${result.item.id} 자료 요청을 복원했어요.`);
       find('#request-list-title').focus({ preventScroll: true });
+    });
+
+    find('.request-list-card').addEventListener('input', (event) => {
+      const form = event.target.closest('form[data-not-applicable-form]');
+      if (form && event.target.name === 'reason') notApplicableDrafts.set(form.dataset.notApplicableForm, event.target.value);
+    });
+    find('.request-list-card').addEventListener('submit', (event) => {
+      const form = event.target.closest('form[data-not-applicable-form]');
+      if (!form) return;
+      event.preventDefault();
+      const id = form.dataset.notApplicableForm;
+      const result = store.markNotApplicable(project.id, id, form.elements.reason.value);
+      const error = form.querySelector('[role="alert"]');
+      error.hidden = result.ok; error.textContent = result.errors?.reason || result.message || '';
+      form.elements.reason.setAttribute('aria-invalid', String(!result.ok));
+      if (!result.ok) { form.elements.reason.focus(); return; }
+      notApplicableDrafts.delete(id); expandedRecords.delete(`na:${id}`);
+      renderItems(); showFeedback(result.item, `${id}을 해당 없음으로 기록했어요. 사유는 요청 기록에서 볼 수 있어요.`);
+      statusButtons.get(selectedStatus).button.focus({ preventScroll: true });
     });
 
     fields.categoryKey.addEventListener('change', () => {

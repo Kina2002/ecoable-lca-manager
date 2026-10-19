@@ -39,6 +39,25 @@ function ready(s) {
   s.scope.finishReview(s.project.id, S.snapshot(s.project));
   return item;
 }
+
+test('승인 자료와 해당 없음 사유를 계산 근거에 보관하고 다시 읽는다', () => {
+  const s = setup();
+  const approved = add(s); approve(s, approved);
+  const excluded = add(s, 'packaging');
+  assert.equal(s.requests.markNotApplicable(s.project.id, excluded.id, '해당 공정이 없음').ok, true);
+  assert.equal(s.scope.finishCollection(s.project.id, S.snapshot(s.project)).ok, true);
+  assert.equal(s.scope.finishReview(s.project.id, S.snapshot(s.project)).ok, true);
+  const current = s.store.load(s.project.id);
+  assert.equal(current.ok, true);
+  assert.equal(current.source.ready, true);
+  const saved = s.store.save(s.project.id, draft(), 0, current.source.signature);
+  assert.equal(saved.ok, true);
+  assert.equal(saved.record.source.requests.find((item) => item.id === excluded.id).notApplicable.reason, '해당 공정이 없음');
+  const restored = M.createStore(s.projects, () => s.storage, (id) => s.requests.list(id), (id) => ({ ok: true, project: s.projects.find((p) => p.id === id) }));
+  assert.equal(restored.load(s.project.id).ok, true);
+  assert.equal(restored.load(s.project.id).stale, false);
+  assert.equal(restored.csv(s.project.id).count, 1);
+});
 function save(s, value = draft(), loaded = s.store.load(s.project.id)) {
   return s.store.save(s.project.id, value, loaded.record?.revision || 0, loaded.source?.signature || '');
 }

@@ -1,5 +1,7 @@
 # 웹앱 기능별 SPEC
 
+최신: [WEB-045 자료 요청의 해당 없음과 사유](WEB-045-not-applicable-request.md) — 사유 필수·다시 요청하기·두 상태 필터·기한/단계/계산/보고서 집계.
+
 최신: [WEB-044 할 일에서 상황에 맞는 요청문 만들기](WEB-044-task-request-message-shortcut.md) — 최신 할 일에 맞춰 종류·자료 한 건 선택과 초안 생성, 임박 안내문 추가, 같은 프로젝트의 직접 수정 글 보호.
 
 최신: [WEB-043 할 일 한 행·홈 연구원 필터·용어사전 페이지](WEB-043-task-rows-home-filter-glossary-pages.md) — D-day·프로젝트 메뉴 전체 목록·업무 용어 15개 보충·6개씩 페이지.

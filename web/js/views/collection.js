@@ -50,8 +50,9 @@ LCA.views.collection = (() => {
         note.title = item.review.note;
         detail.append(note);
       }
+      if (item.notApplicable) detail.append(text('p', 'collection-preview', `해당 없음: ${item.notApplicable.reason}`));
       const progress = text('div', 'collection-progress', '');
-      const tone = item.status === '보완 요청' ? ' request-state-revision' : item.receipt ? ' request-state-received' : '';
+      const tone = item.status === '보완 요청' ? ' request-state-revision' : item.status === '해당 없음' ? ' request-state-na' : item.receipt ? ' request-state-received' : '';
       progress.append(text('span', `request-state${tone}`, item.status));
       const due = text('p', 'collection-meta', '제출 기한 ');
       const date = text('time', '', item.dueDate.replaceAll('-', '.'));

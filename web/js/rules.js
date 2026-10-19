@@ -167,6 +167,7 @@ LCA.rules = (() => {
         break;
       }
       case 'allApproved': {
+        if (!own.length) unmet.push('계산에 사용할 자료가 최소 한 건 필요해요');
         const notApproved = own.filter((i) => i.status !== '승인').length;
         if (notApproved) unmet.push(`아직 승인되지 않은 항목 ${notApproved}개`);
         break;

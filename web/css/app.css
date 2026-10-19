@@ -208,6 +208,12 @@ h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; 
 .request-state { padding: 4px 8px; border-radius: 4px; color: #9b6a20; background: #faf2e2; font-size: 10px; }
 .request-state-received { color: #347259; background: #e6f2e9; }
 .request-state-revision { color: #9b5434; background: #fbece0; }
+.request-state-na { color: #526274; background: #edf1f5; }
+.request-na-details { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #dfe7df; border-radius: 6px; }
+.request-na-details summary { cursor: pointer; }
+.request-na-details form { display: grid; gap: 8px; margin-top: 10px; }
+.request-na-details textarea { width: 100%; box-sizing: border-box; }
+.request-na-details button { justify-self: start; }
 .review-open-button { margin-left: 8px; }
 .review-summary { margin-top: 14px; padding: 14px 15px; border-left: 3px solid #bacdb2; background: #f7f8f2; overflow-wrap: anywhere; }
 .review-summary h4 { margin: 0; color: #4a6b44; font-size: 12px; }

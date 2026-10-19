@@ -5,6 +5,7 @@ LCA.requests = (() => {
   const STORAGE_KEY = 'ecoable-lca-manager.requests.v1';
   const VERSION = 1;
   const MAX_DETAIL = 1000;
+  const MAX_NOT_APPLICABLE_REASON = 1000;
   const categoryByKey = (key) => LCA.constants.CATEGORIES.find((category) => category.key === key);
 
   // 숫자만 이어 쓰면 앞의 네 자리는 연도, 다음 두 자리씩은 월·일이다.
@@ -58,8 +59,13 @@ LCA.requests = (() => {
           if (!Number.isSafeInteger(number) || number < 1 || number >= data.nextNumber || ids.has(item.id)
             || !knownProjects.has(item.projectId) || (!item.deletedAt && projectCategories.has(pair))
             || Object.keys(validate(item)).length
-            || !['요청', '제출됨', ...LCA.review.STATUSES].includes(item.status)
-            || (item.status !== '요청' ? !LCA.receivedData.validRecord(item.receipt) : 'receipt' in item)
+            || !['요청', '제출됨', '해당 없음', ...LCA.review.STATUSES].includes(item.status)
+            || (item.status !== '요청' && item.status !== '해당 없음' ? !LCA.receivedData.validRecord(item.receipt) : 'receipt' in item)
+            || (item.status === '해당 없음'
+              ? !item.notApplicable || typeof item.notApplicable.reason !== 'string' || !item.notApplicable.reason.trim()
+                || item.notApplicable.reason !== item.notApplicable.reason.trim() || item.notApplicable.reason.length > MAX_NOT_APPLICABLE_REASON
+                || typeof item.notApplicable.recordedAt !== 'string' || !Number.isFinite(Date.parse(item.notApplicable.recordedAt))
+              : 'notApplicable' in item)
             || (LCA.review.STATUSES.includes(item.status) ? !LCA.review.validRecord(item.review, item.status, item.receipt) : 'review' in item)
             || typeof item.createdAt !== 'string' || !Number.isFinite(Date.parse(item.createdAt))
             || ('deletedAt' in item && (typeof item.deletedAt !== 'string' || !Number.isFinite(Date.parse(item.deletedAt))))
@@ -194,6 +200,7 @@ LCA.requests = (() => {
       if (!current.ok) return current;
       const item = current.data.requests.find((value) => value.projectId === projectId && value.id === id && !value.deletedAt);
       if (!knownProjects.has(projectId) || !item) return failure('받은 자료를 연결할 요청을 찾지 못했습니다. 프로젝트를 다시 열어 확인해 주세요.');
+      if (item.status === '해당 없음') return failure('해당 없음을 먼저 취소한 뒤 받은 자료를 기록해 주세요.');
       const now = new Date().toISOString();
       const receipt = { ...LCA.receivedData.normalize(draft), recordedAt: item.receipt?.recordedAt || now, updatedAt: now };
       const changed = { ...item, status: '제출됨', receipt };
@@ -205,6 +212,27 @@ LCA.requests = (() => {
         return { ok: true, item: changed };
       } catch {
         return failure('받은 자료를 저장하지 못했습니다. 입력은 남겨 두었어요. 저장 설정을 확인한 뒤 다시 시도해 주세요.');
+      }
+    }
+
+    function changeNotApplicable(projectId, id, reason, restoring) {
+      if (!knownProjects.has(projectId)) return failure('프로젝트를 확인할 수 없습니다.');
+      const current = read();
+      if (!current.ok) return current;
+      const item = current.data.requests.find((value) => value.projectId === projectId && value.id === id && !value.deletedAt);
+      if (!item || item.status !== (restoring ? '해당 없음' : '요청')) return failure('자료 상태가 바뀌었어요. 최신 요청을 확인해 주세요.');
+      if (!restoring && (typeof reason !== 'string' || !reason.trim() || reason.trim().length > MAX_NOT_APPLICABLE_REASON)) {
+        return { ok: false, errors: { reason: `해당하지 않는 이유를 1~${MAX_NOT_APPLICABLE_REASON}자로 적어 주세요.` } };
+      }
+      const changed = { ...item, status: restoring ? '요청' : '해당 없음' };
+      if (restoring) delete changed.notApplicable;
+      else changed.notApplicable = { reason: reason.trim(), recordedAt: new Date().toISOString() };
+      const data = { ...current.data, requests: current.data.requests.map((value) => value.id === id ? changed : value) };
+      try {
+        getStorage().setItem(STORAGE_KEY, JSON.stringify(data));
+        return { ok: true, item: changed };
+      } catch {
+        return failure('상태를 저장하지 못했어요. 기존 기록은 그대로 두었습니다.');
       }
     }
 
@@ -260,7 +288,7 @@ LCA.requests = (() => {
         return action(projectId, ...args);
       };
     }
-    return { list, listAll, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
+    return { list, listAll, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };

@@ -1,7 +1,7 @@
 /* 현재 프로젝트의 전체 건수와 선택 상태의 목록을 별도로 계산한다. */
 window.LCA = window.LCA || {};
 LCA.requestFilter = (() => {
-  const STATUSES = ['요청', '제출됨', ...LCA.review.STATUSES];
+  const STATUSES = ['요청', '제출됨', ...LCA.review.STATUSES, '해당 없음'];
   function snapshot(items, projectId, selectedStatus = null) {
     return forProjects(items, [projectId], selectedStatus);
   }
