@@ -51,6 +51,7 @@
   const projects = projectLoadResult.ok ? projectLoadResult.items : samples;
   const researcherStore = LCA.researchers.createStore();
   let requestStore = LCA.requests.createStore(projects.map((project) => project.id), undefined, (id) => scopeStore.currentStage(id));
+  LCA.views.requestTemplates.init(() => requestStore);
   let verificationStore = null;
   let certificationStore = null;
   let reviewRouteStore = null;

@@ -312,7 +312,7 @@ LCA.views.requests = (() => {
       if (selectedCategory) drafts.set(selectedCategory, fields.detail.value);
       selectedCategory = fields.categoryKey.value;
       const category = LCA.constants.CATEGORIES.find((value) => value.key === selectedCategory);
-      fields.detail.value = drafts.get(selectedCategory) ?? category?.detail ?? '';
+      fields.detail.value = drafts.get(selectedCategory) ?? store.templates().values?.[selectedCategory] ?? category?.detail ?? '';
       if (fields.detail.value.trim()) clearError('detail');
       showGuide();
     });

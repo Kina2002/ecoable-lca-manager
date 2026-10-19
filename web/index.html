@@ -21,7 +21,7 @@
     <script src="./js/received-data.js?v=web-007" defer></script>
     <script src="./js/review.js?v=web-008" defer></script>
     <script src="./js/message-history.js?v=web-054" defer></script>
-    <script src="./js/requests.js?v=web-054" defer></script>
+    <script src="./js/requests.js?v=web-058" defer></script>
     <script src="./js/request-message.js?v=web-055" defer></script>
     <script src="./js/views/message-history.js?v=web-054" defer></script>
     <script src="./js/views/request-message.js?v=web-055" defer></script>
@@ -72,11 +72,12 @@
     <script src="./js/views/project-create.js?v=web-039" defer></script>
     <script src="./js/views/received-data.js?v=web-008" defer></script>
     <script src="./js/views/review.js?v=web-008" defer></script>
-    <script src="./js/views/request-batch.js?v=web-032" defer></script>
-    <script src="./js/views/requests.js?v=web-054" defer></script>
+    <script src="./js/views/request-batch.js?v=web-058" defer></script>
+    <script src="./js/views/requests.js?v=web-058" defer></script>
     <script src="./js/glossary.js?v=web-043" defer></script>
     <script src="./js/views/glossary.js?v=web-043" defer></script>
-    <script src="./js/app.js?v=web-057" defer></script>
+    <script src="./js/views/request-templates.js?v=web-058" defer></script>
+    <script src="./js/app.js?v=web-058" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -483,6 +484,14 @@
 
           <section id="settings-view" aria-labelledby="settings-title" hidden>
             <div class="page-heading"><div><p class="eyebrow">SETTINGS</p><h1 id="settings-title" tabindex="-1">설정</h1><p class="page-description">참고한 공개 자료의 출처를 확인하고, 이 브라우저의 업무 기록을 백업하거나 복원해요.</p></div></div>
+            <details id="request-template-settings" class="detail-card"><summary>구분별 기본 요청 문장</summary>
+              <p class="detail-help">새 자료 요청을 만들 때 처음 채울 문장이에요. 저장해 두면 다른 프로젝트에서도 재사용해요. 기존 요청과 작성 중인 입력은 바꾸지 않아요.</p>
+              <form novalidate><fieldset class="interpretation-fields"><legend class="sr-only">기본 요청 문장 설정</legend>
+                <label for="template-category">자료 구분</label><select id="template-category"></select>
+                <label for="template-content">기본 요청 문장 (필수 · 최대 1,000자)</label><textarea id="template-content" rows="3" maxlength="1000"></textarea>
+                <div class="receipt-form-actions"><button type="submit" class="primary-button">이 구분 문장 저장</button><button type="button" data-template-reset class="request-action-button">이 구분을 앱 기본값으로</button><button type="button" data-template-reload class="request-action-button">수정 버리고 최신 문장 불러오기</button></div>
+              </fieldset></form><p class="request-feedback" role="status" aria-live="polite"></p>
+            </details>
             <section class="detail-card source-guide" aria-labelledby="source-guide-title">
               <h2 id="source-guide-title">자료 출처 안내</h2>
               <p class="detail-help">이 프로그램을 설계할 때 살펴본 공개 자료예요. <strong>여기에 적힌 숫자나 원본 파일을 프로젝트에 자동으로 넣지는 않아요.</strong> 고객사가 제출한 자료 한 건의 출처는 각 프로젝트의 ‘받은 자료’에서 따로 기록해요.</p>

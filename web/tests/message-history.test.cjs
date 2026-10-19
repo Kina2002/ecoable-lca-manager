@@ -61,10 +61,13 @@ test('기존 백업 키로 발송 기록을 검증하고 프로젝트 삭제 계
   store.add(created.item.id, { categoryKey: 'energy', detail: '전력', dueDate: '2026-10-23' });
   await store.recordMessage(created.item.id, message({ projectId: created.item.id }), 1);
   await store.recordMessage(samples[0].id, message({ projectId: samples[0].id, type: 'info', targets: ['customerContactName'], token: 'message-token-002' }), 2);
+  await store.saveTemplate('energy', '저장한 전력 기본 요청', 0);
   const snapshot = LCA.backup.create(date); assert.equal(snapshot.summary.messages, 2);
   assert.equal(LCA.backup.parse(snapshot.content).summary.messages, 2);
   const plan = LCA.projectDeletion.prepare(created.item.id, date); assert.equal(plan.counts.messages, 1);
   const after = JSON.parse(plan.values[LCA.requests.STORAGE_KEY]);
+  assert.equal(after.templates.values.energy, '저장한 전력 기본 요청');
+  assert.equal(JSON.parse(LCA.backup.parse(snapshot.content).data.records[LCA.requests.STORAGE_KEY]).templates.values.energy, '저장한 전력 기본 요청');
   assert.equal(after.messageLog.items.length, 1); assert.equal(after.messageLog.items[0].projectId, samples[0].id);
   const profileHistory = JSON.parse(plan.values[LCA.projects.STORAGE_KEY]).profileHistory;
   assert.equal(profileHistory[created.item.id], undefined); assert.equal(profileHistory[samples[0].id].length, 1);

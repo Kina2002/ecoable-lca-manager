@@ -35,14 +35,14 @@ LCA.views.requestBatch = (() => {
       const editor = document.createElement('details'); editor.className = 'request-batch-editor'; editor.hidden = true;
       editor.append(text('summary', '', '기본 요청 내용 확인·수정'));
       const contentLabel = text('label', '', `${category.name} 요청 내용 (필수 · 최대 1,000자)`); contentLabel.htmlFor = `request-batch-detail-${category.key}`;
-      const detail = document.createElement('textarea'); detail.id = contentLabel.htmlFor; detail.rows = 3; detail.maxLength = LCA.requests.MAX_DETAIL; detail.value = category.detail;
+      const detail = document.createElement('textarea'); detail.id = contentLabel.htmlFor; detail.rows = 3; detail.maxLength = LCA.requests.MAX_DETAIL; detail.value = store.templates().values?.[category.key] ?? category.detail;
       const error = text('p', 'field-error', ''); error.id = `${detail.id}-error`; error.setAttribute('role', 'alert'); detail.setAttribute('aria-describedby', error.id);
       editor.append(contentLabel, detail, error);
       const guide = LCA.constants.requestGuideline(category.key); const reference = document.createElement('details'); reference.className = 'request-reference';
       reference.append(text('summary', '', '지침 근거 보기'), text('p', 'guideline-section', `${guide.source} · ${guide.section}`));
       const link = text('a', 'guideline-link', `원문 ${guide.page}쪽 보기 ↗`); link.href = `${guide.url}#page=${guide.page}`; link.target = '_blank'; link.rel = 'noopener noreferrer';
       reference.append(link, text('p', 'detail-help', `${guide.note} 확인일: ${guide.checkedOn}`)); editor.append(reference);
-      row.append(label, status, editor); grid.append(row); rows.set(category.key, { check, status, editor, detail, error });
+      row.append(label, status, editor); grid.append(row); rows.set(category.key, { seed: detail.value, check, status, editor, detail, error });
       check.addEventListener('change', () => { selectionError.textContent = ''; feedback.textContent = ''; update(); });
       detail.addEventListener('input', () => { detail.removeAttribute('aria-invalid'); error.textContent = ''; feedback.textContent = ''; });
     }
@@ -55,7 +55,10 @@ LCA.views.requestBatch = (() => {
     section.append(form); panel.insertBefore(section, panel.querySelector('.request-workspace'));
     let state = null; let busy = false;
     function selected() { return [...rows.values()].filter((row) => row.check.checked); }
+    section.addEventListener('toggle', () => { if (section.open) update(); });
     function update() {
+      const templates = store.templates();
+      if (templates.ok) for (const [key, row] of rows) if (row.detail.value === row.seed) { row.seed = templates.values[key]; row.detail.value = row.seed; }
       const disabled = busy || !state?.ok || !state.canWrite; fields.disabled = disabled;
       const registered = new Set(state?.ok ? state.items.map((item) => item.categoryKey) : []);
       for (const [key, row] of rows) {

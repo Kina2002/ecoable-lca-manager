@@ -76,6 +76,9 @@ LCA.requests = (() => {
           if (!item.deletedAt) projectCategories.add(pair);
         }
         if (data.messageLog !== undefined && !LCA.messageHistory?.validLog(data.messageLog, knownProjects)) throw new Error('invalid message log');
+        if (data.templates !== undefined && (!data.templates || !Number.isSafeInteger(data.templates.revision) || data.templates.revision < 1
+          || !data.templates.values || Array.isArray(data.templates.values) || typeof data.templates.values !== 'object'
+          || Object.entries(data.templates.values).some(([key, value]) => !categoryByKey(key) || typeof value !== 'string' || !value.trim() || value !== value.trim() || value.length > MAX_DETAIL))) throw new Error('invalid templates');
         return { ok: true, data };
       } catch {
         return failure('저장한 자료 요청을 읽지 못했습니다. 기존 기록을 보호하기 위해 변경을 멈췄습니다. 브라우저의 저장 설정과 기록을 확인해 주세요.');
@@ -96,6 +99,25 @@ LCA.requests = (() => {
       const result = read();
       if (!result.ok) return result;
       return { ok: true, items: result.data.requests.filter((item) => !item.deletedAt) };
+    }
+
+    function templates() {
+      const result = read(); if (!result.ok) return result;
+      const saved = result.data.templates || { revision: 0, values: {} };
+      return { ok: true, revision: saved.revision, values: Object.fromEntries(LCA.constants.CATEGORIES.map((c) => [c.key, saved.values[c.key] ?? c.detail])), customized: Object.keys(saved.values) };
+    }
+    async function saveTemplate(key, value, expectedRevision) {
+      function write() {
+        const current = read(); if (!current.ok) return current;
+        if (!categoryByKey(key) || (value !== null && (typeof value !== 'string' || !value.trim() || value.trim().length > MAX_DETAIL))) return failure('자료 구분과 1~1,000자의 요청 문장을 확인해 주세요.');
+        const saved = current.data.templates || { revision: 0, values: {} };
+        if (saved.revision !== expectedRevision || !Number.isSafeInteger(saved.revision + 1)) return failure('다른 화면에서 기본 문장이 바뀌었어요. 최신 문장을 불러온 뒤 다시 저장해 주세요.');
+        const values = { ...saved.values }; if (value === null) delete values[key]; else values[key] = value.trim();
+        try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ ...current.data, templates: { revision: saved.revision + 1, values } })); return templates(); }
+        catch { return failure('기본 문장을 저장하지 못했어요. 입력과 기존 기록은 유지했어요.'); }
+      }
+      try { return typeof navigator !== 'undefined' && navigator.locks?.request ? await navigator.locks.request('ecoable-lca-manager.review-workflow-write', write) : write(); }
+      catch { return failure('기본 문장 저장을 시작하지 못했어요.'); }
     }
 
     function messages(projectId) {
@@ -314,7 +336,7 @@ LCA.requests = (() => {
         return action(projectId, ...args);
       };
     }
-    return { list, listAll, messages, recordMessage, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
+    return { list, listAll, templates, saveTemplate, messages, recordMessage, add: writable(add), addMany: writable(addMany), recordReceipt: writable(recordReceipt), startReview: writable(startReview), saveReview: writable(saveReview), markNotApplicable: writable((projectId, id, reason) => changeNotApplicable(projectId, id, reason, false)), restoreApplicable: writable((projectId, id) => changeNotApplicable(projectId, id, '', true)), remove: writable((projectId, id) => changeDeleted(projectId, id, true)), restore: writable((projectId, id) => changeDeleted(projectId, id, false)) };
   }
 
   return { STORAGE_KEY, MAX_DETAIL, validDate, formatDateInput, validate, createStore };
