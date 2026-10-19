@@ -338,3 +338,27 @@ h1 { font-size: 25px; }
 .standard-glossary-link:focus-visible { outline: 3px solid #247158; outline-offset: 4px; border-radius: 2px; }
 .glossary-card-target { border-color: #247158; box-shadow: 0 0 0 2px #24715833; }
 .glossary-return { margin: 0 0 12px; }
+
+/* WEB-068: 짧은 범위 값은 필요한 폭으로 모으고 메모 예시는 접어서 제공한다. */
+.scope-editor .scope-form-compact { grid-template-columns: minmax(0, 1fr); max-width: 880px; }
+.scope-form-compact > .scope-field-scopeStatus { width: min(100%, 220px); }
+.scope-form-compact > .scope-measurements { display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 140px) minmax(0, 260px); gap: 12px; }
+.scope-form-compact > .scope-period { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)) minmax(0, 320px); gap: 12px; }
+.scope-measurements > div, .scope-period > div { min-width: 0; }
+.scope-form-compact .scope-date-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.scope-date-row > button { margin: 0; white-space: nowrap; }
+.scope-memo-example { margin-top: 6px; }
+.scope-memo-example summary, .scope-period-example summary { cursor: pointer; color: #174c3d; font-size: 13px; }
+.scope-memo-example pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 13px; line-height: 1.65; background: #f4f7f4; padding: 10px 12px; border-radius: 6px; }
+.scope-period-example { margin-top: 5px; }
+.scope-form-compact > #scope-date-help { margin: -4px 0 0; }
+@media (max-width: 1200px) {
+  .scope-form-compact > .scope-period { grid-template-columns: repeat(2, minmax(0, 220px)); }
+  .scope-period > .scope-field-periodReason { grid-column: 1 / -1; max-width: 452px; }
+}
+@media (max-width: 680px) {
+  .scope-form-compact > .scope-measurements { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scope-measurements > .scope-field-boundary { grid-column: 1 / -1; }
+  .scope-form-compact > .scope-period { grid-template-columns: minmax(0, 1fr); }
+  .scope-period > .scope-field-periodReason { max-width: none; }
+}

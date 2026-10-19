@@ -145,11 +145,12 @@ LCA.views.scope = (() => {
       refreshActiveResearchers();
     }
     const form = document.createElement('form');
-    form.className = 'scope-form';
+    form.className = 'scope-form scope-form-compact';
     form.noValidate = true;
     const controls = {};
-    function field(key, label, value, options) {
+    function field(key, label, value, options, parent = form) {
       const box = document.createElement('div');
+      box.className = `scope-field scope-field-${key}`;
       const caption = document.createElement('label');
       caption.htmlFor = `scope-${key}`;
       caption.textContent = label;
@@ -165,21 +166,40 @@ LCA.views.scope = (() => {
       else input.maxLength = key === 'scopeMemo' ? 2000 : key === 'periodReason' ? 1000 : 30;
       input.value = value || '';
       box.append(caption, input);
-      form.append(box);
+      parent.append(box);
       controls[key] = input;
       return input;
     }
     field('scopeStatus', '범위 상태', project.scopeStatus, LCA.scope.STATUSES);
     const memo = field('scopeMemo', '협의 메모 (선택 · 최대 2,000자)', project.scopeMemo);
-    memo.rows = 4;
-    memo.parentElement.className = 'scope-memo-field';
-    memo.placeholder = '예: 고객은 요람~무덤을 요청했으며, 사용 단계 자료를 확보할 수 있는지 확인 중이에요.';
-    field('qty', '평가 기준량 (0보다 큰 수)', project.functionalUnit?.qty);
+    memo.rows = 5;
+    memo.parentElement.classList.add('scope-memo-field');
+    const memoTemplate = '대상 제품: \n평가 기준량: \n평가 범위 (포함 / 제외): \n자료 기준기간: \n적용 기준 (확정 / 확인 중): \n추가 협의·미정 사항: ';
+    memo.placeholder = '대상 제품: 제품명·모델/규격\n평가 기준량: 예) 제품 1 kg\n평가 범위: 포함할 과정 / 제외할 과정\n자료 기준기간: 시작일 ~ 종료일\n적용 기준: 합의한 기준 또는 고객 확인 중\n추가 협의·미정 사항: 더 확인할 내용';
+    const memoExamples = document.createElement('details'); memoExamples.className = 'scope-memo-example';
+    const memoSummary = document.createElement('summary'); memoSummary.textContent = '협의 메모 예시 양식';
+    const memoHelp = document.createElement('p'); memoHelp.className = 'detail-help'; memoHelp.id = 'scope-memo-help';
+    memoHelp.textContent = '메모는 고객과 협의한 내용을 정리하는 공간이에요. 아래는 가상 예시이며 실제 합의 내용에 맞게 적어요. 메모만 적어도 다른 입력칸이 자동으로 채워지지는 않아요.';
+    const memoExample = document.createElement('pre'); memoExample.textContent = '대상 제품: 종이 포장 상자 A형 1종 (HB-BOX-01)\n평가 기준량: 제품 1 kg\n평가 범위: 원료 생산 → 공장까지 운송 → 상자 제조 → 공장 출하\n제외 범위: 출하 후 운송·사용·폐기 (협의 필요)\n자료 기준기간: 2025-01-01 ~ 2025-12-31\n적용 기준: 고객 확인 중\n추가 협의·미정 사항: 거래처 요구 기준과 제출 양식 확인';
+    const addTemplate = document.createElement('button'); addTemplate.type = 'button'; addTemplate.className = 'request-action-button'; addTemplate.textContent = '빈 메모에 항목 넣기';
+    const memoFeedback = document.createElement('p'); memoFeedback.className = 'detail-help'; memoFeedback.setAttribute('role', 'status');
+    const syncTemplate = () => { addTemplate.disabled = !!memo.value.trim(); addTemplate.title = addTemplate.disabled ? '작성한 메모가 있어요. 기존 내용을 유지해요.' : '빈 항목만 넣고 직접 작성해요.'; };
+    addTemplate.addEventListener('click', () => {
+      if (memo.value.trim()) return;
+      memo.value = memoTemplate; memo.dispatchEvent(new Event('input', { bubbles: true })); memo.focus();
+      memoFeedback.textContent = '빈 항목을 넣었어요. 협의 내용을 작성한 뒤 범위 저장을 눌러 주세요.';
+    });
+    memo.addEventListener('input', syncTemplate); syncTemplate();
+    memoExamples.append(memoSummary, memoHelp, memoExample, addTemplate, memoFeedback); memo.parentElement.append(memoExamples);
+    memo.setAttribute('aria-describedby', memoHelp.id);
+    const measurements = document.createElement('div'); measurements.className = 'scope-measurements'; measurements.setAttribute('role', 'group'); measurements.setAttribute('aria-label', '평가 기준량과 시스템 경계'); form.append(measurements);
+    field('qty', '평가 기준량 (0보다 큰 수)', project.functionalUnit?.qty, null, measurements);
     controls.qty.inputMode = 'decimal';
-    field('unit', '기준량 단위 (예: kg, t, 장)', project.functionalUnit?.unit);
-    field('boundary', '시스템 경계', project.boundary, ['', '요람~문', '요람~무덤', '기타']);
+    field('unit', '단위 (kg, t, 장 등)', project.functionalUnit?.unit, null, measurements);
+    field('boundary', '시스템 경계', project.boundary, ['', '요람~문', '요람~무덤', '기타'], measurements);
+    const period = document.createElement('div'); period.className = 'scope-period'; period.setAttribute('role', 'group'); period.setAttribute('aria-label', '자료 기준기간과 사유'); form.append(period);
     for (const [key, label] of [['refStart', '기준기간 시작일'], ['refEnd', '기준기간 종료일']]) {
-      const input = field(key, `${label} (숫자 8자리 입력 가능)`, project[key]);
+      const input = field(key, label, project[key], null, period);
       input.maxLength = 10;
       input.inputMode = 'numeric';
       const calendar = document.createElement('input');
@@ -192,17 +212,23 @@ LCA.views.scope = (() => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'request-action-button';
-      button.textContent = `${label} 달력`;
-      input.parentElement.append(calendar, button);
+      button.textContent = '달력'; button.setAttribute('aria-label', `${label} 달력`);
+      const dateRow = document.createElement('div'); dateRow.className = 'scope-date-row';
+      input.parentElement.append(dateRow); dateRow.append(input, calendar, button);
+      input.placeholder = 'YYYY-MM-DD'; input.setAttribute('aria-describedby', 'scope-date-help');
       LCA.views.dateInput.bind(input, calendar, button, () => updateReadiness(true), message);
     }
-    field('periodReason', '12개월이 아닌 기간을 사용하는 사유', project.periodReason);
+    field('periodReason', '12개월이 아닌 사유 (해당 시)', project.periodReason, null, period);
+    controls.periodReason.rows = 2; controls.periodReason.placeholder = '12개월이면 비워 두세요.';
     const periodHelp = document.createElement('p');
     periodHelp.id = 'scope-period-help';
     periodHelp.className = 'detail-help';
     periodHelp.textContent = '선택한 자료 기간이 12개월과 다른 이유예요. 예: 7월에 생산을 시작해 6개월 자료만 있어요. 이 앱의 기본 기간은 12개월이며 실제 기간은 적용 기준과 상황에 맞춰 확인해요.';
-    controls.periodReason.parentElement.append(periodHelp);
+    const periodExample = document.createElement('details'); periodExample.className = 'scope-period-example';
+    const periodSummary = document.createElement('summary'); periodSummary.textContent = '사유 작성 예시';
+    periodExample.append(periodSummary, periodHelp); controls.periodReason.parentElement.append(periodExample);
     controls.periodReason.setAttribute('aria-describedby', periodHelp.id);
+    const dateHelp = document.createElement('p'); dateHelp.id = 'scope-date-help'; dateHelp.className = 'detail-help'; dateHelp.textContent = '날짜는 YYYY-MM-DD 또는 숫자 8자리로 입력하거나 달력에서 선택해요.'; form.append(dateHelp);
     const standards = document.createElement('fieldset');
     const legend = document.createElement('legend');
     legend.textContent = '적용 기준 (하나 이상 선택)';
