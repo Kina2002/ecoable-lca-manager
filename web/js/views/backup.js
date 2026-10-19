@@ -52,7 +52,7 @@ LCA.views.backup = (() => {
         const date = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Seoul' }).format(new Date(result.data.createdAt));
         previewBody.append(paragraph(`파일: ${file.name}`), paragraph(`백업 날짜: ${date} (한국 시간)`),
           paragraph(`프로젝트 ${info.projects.length}개 · 연구원 ${info.researchers}명 · 자료 요청 ${info.requests}건 (삭제 이력 ${info.deletedRequests}건 포함)`),
-          paragraph(`보고서 ${info.reportVersions}개 버전 · 고객 의견 ${info.comments}건 · 검증 지적 ${info.issues}건 · 발송 기록 ${info.messages}건 · 자료 질의 ${info.inquiries}건`));
+          paragraph(`보고서 ${info.reportVersions}개 버전 · 고객 의견 ${info.comments}건 · 검증 지적 ${info.issues}건 · 발송 기록 ${info.messages}건 · 자료 질의 ${info.inquiries}건 · 담당 연구원 변경 ${info.researcherChanges}건`));
         const list = document.createElement('ul');
         for (const project of info.projects) { const li = document.createElement('li'); li.textContent = `${project.code} · ${project.companyName} (가상) · ${project.productName}`; list.append(li); }
         previewBody.append(list); preview.hidden = false;

@@ -18,6 +18,10 @@ LCA.backup = (() => {
     checked(requests.listAll(), '자료 요청');
     const scopes = LCA.scope.createStore(projects, getStorage);
     checked(scopes.load(), '평가 범위');
+    const assignmentHistory = records[LCA.scope.STORAGE_KEY] === null ? {} : JSON.parse(records[LCA.scope.STORAGE_KEY]).researcherHistory || {};
+    for (const events of Object.values(assignmentHistory)) for (const event of events) for (const person of [event.before, event.after]) {
+      if (person.researcherId && !researchers.some((r) => r.id === person.researcherId)) throw Error('담당자 변경 이력에 연결한 연구원이 없어요.');
+    }
     const project = (id) => ({ ok: true, project: projects.find((p) => p.id === id) });
     const modelling = LCA.modelling.createStore(projects, getStorage, (id) => requests.list(id), project);
     const interpretation = LCA.interpretation.createStore(projects, (id) => modelling.load(id), getStorage);
@@ -64,7 +68,8 @@ LCA.backup = (() => {
       researchers: researchers.length, requests: requestData.length, deletedRequests: requestData.filter((r) => r.deletedAt).length,
       reportVersions: reportCount, comments: checked(comments.snapshot(), '고객 의견').items.length, issues: issueCount,
       messages: records[LCA.requests.STORAGE_KEY] === null ? 0 : JSON.parse(records[LCA.requests.STORAGE_KEY]).messageLog?.items.length || 0,
-      inquiries: records[LCA.requests.STORAGE_KEY] === null ? 0 : JSON.parse(records[LCA.requests.STORAGE_KEY]).inquiries?.items.length || 0 };
+      inquiries: records[LCA.requests.STORAGE_KEY] === null ? 0 : JSON.parse(records[LCA.requests.STORAGE_KEY]).inquiries?.items.length || 0,
+      researcherChanges: Object.values(assignmentHistory).reduce((count, events) => count + events.length, 0) };
   }
   function create(sampleDate) {
     const values = LCA.storage.capture();

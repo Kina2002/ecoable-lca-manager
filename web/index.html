@@ -41,21 +41,21 @@
     <script src="./js/researchers.js?v=web-040" defer></script>
     <script src="./js/views/researchers.js?v=web-041" defer></script>
     <script src="./js/projects.js?v=web-061" defer></script>
-    <script src="./js/scope.js?v=web-065" defer></script>
-    <script src="./js/backup.js?v=web-065" defer></script>
-    <script src="./js/project-deletion.js?v=web-063" defer></script>
+    <script src="./js/scope.js?v=web-067" defer></script>
+    <script src="./js/backup.js?v=web-067" defer></script>
+    <script src="./js/project-deletion.js?v=web-067" defer></script>
     <script src="./js/views/project-basic.js?v=web-063" defer></script>
-    <script src="./js/views/project-deletion.js?v=web-063" defer></script>
-    <script src="./js/views/backup.js?v=web-063" defer></script>
+    <script src="./js/views/project-deletion.js?v=web-067" defer></script>
+    <script src="./js/views/backup.js?v=web-067" defer></script>
     <script src="./js/tasks.js?v=web-065" defer></script>
     <script src="./js/dashboard.js?v=web-065" defer></script>
     <script src="./js/views/dashboard.js?v=web-064" defer></script>
     <script src="./js/views/tasks.js?v=web-065" defer></script>
-    <script src="./js/views/scope.js?v=web-066" defer></script>
+    <script src="./js/views/scope.js?v=web-067" defer></script>
     <script src="./js/request-filter.js?v=web-009.2" defer></script>
     <script src="./js/views/collection.js?v=web-016" defer></script>
     <script src="./js/views/opinions.js?v=web-063" defer></script>
-    <script src="./js/views/project-detail.js?v=web-066" defer></script>
+    <script src="./js/views/project-detail.js?v=web-067" defer></script>
     <script src="./js/views/date-input.js?v=web-007" defer></script>
     <script src="./js/views/collection-deadline.js?v=web-042" defer></script>
     <script src="./js/views/collection-transition.js?v=web-042" defer></script>
@@ -82,7 +82,8 @@
     <script src="./js/glossary.js?v=web-066" defer></script>
     <script src="./js/views/glossary.js?v=web-066" defer></script>
     <script src="./js/views/request-templates.js?v=web-058" defer></script>
-    <script src="./js/app.js?v=web-066" defer></script>
+    <script src="./js/views/project-researcher.js?v=web-067" defer></script>
+    <script src="./js/app.js?v=web-067" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -213,6 +214,22 @@
             </div>
           </section>
           </div>
+
+          <dialog id="project-researcher-dialog" class="receipt-dialog" aria-labelledby="project-researcher-title" aria-describedby="project-researcher-help">
+            <h2 id="project-researcher-title">담당 연구원 변경</h2>
+            <p id="project-researcher-help" class="detail-help"></p>
+            <p id="project-researcher-current"></p>
+            <form id="project-researcher-form" novalidate>
+              <fieldset id="project-researcher-fields" class="project-basic-fields">
+                <legend class="sr-only">새 담당자와 변경 사유</legend>
+                <div class="interpretation-field"><label for="project-researcher-select">새 담당 연구원</label><select id="project-researcher-select" required></select></div>
+                <div class="interpretation-field"><label for="project-researcher-reason">변경 사유 (필수 · 최대 1,000자)</label><textarea id="project-researcher-reason" rows="2" maxlength="1000" required></textarea></div>
+              </fieldset>
+              <p id="project-researcher-error" class="form-error" role="alert"></p>
+              <div class="receipt-form-actions"><button id="project-researcher-close" type="button" class="request-action-button">닫기</button><button id="project-researcher-save" type="submit" class="primary-button">담당 연구원 변경 저장</button></div>
+            </form>
+            <details class="project-basic-history"><summary>담당 연구원 변경 이력</summary><div id="project-researcher-history"></div></details>
+          </dialog>
 
           <dialog id="project-basic-dialog" class="receipt-dialog" aria-labelledby="project-basic-title" aria-describedby="project-basic-help">
             <h2 id="project-basic-title">기본정보와 변경 이력</h2>

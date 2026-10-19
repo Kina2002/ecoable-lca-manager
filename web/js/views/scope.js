@@ -2,8 +2,10 @@ window.LCA = window.LCA || {};
 LCA.views = LCA.views || {};
 LCA.views.scope = (() => {
   let refreshActiveResearchers = () => {};
+  let refreshAssignment = () => {};
   function init(project, store, loadResult, onChanged, researcherStore) {
     refreshActiveResearchers = () => {};
+    refreshAssignment = () => {};
     const kickoffHost = document.querySelector('#kickoff-editor');
     kickoffHost.replaceChildren();
     const host = document.querySelector('#scope-editor');
@@ -33,6 +35,7 @@ LCA.views.scope = (() => {
       return;
     }
     let expected = LCA.scope.snapshot(project);
+    refreshAssignment = () => { expected.researcherId = project.researcherId || ''; expected.researcherName = project.researcherName || ''; refreshActiveResearchers(); };
     let scopeDirty = false;
     let assigneesDirty = false;
     let kickoffStart = null;
@@ -86,7 +89,7 @@ LCA.views.scope = (() => {
       let firstFill = true;
       refreshActiveResearchers = () => {
         const select = controls.researcherId;
-        const chosen = firstFill ? (project.researcherId || (project.researcherName ? 'legacy' : '')) : select.value;
+        const chosen = firstFill || !assigneesDirty ? (project.researcherId || (project.researcherName ? 'legacy' : '')) : select.value;
         const roster = researcherStore.list();
         rosterAvailable = roster.ok;
         select.disabled = !roster.ok;
@@ -278,5 +281,5 @@ LCA.views.scope = (() => {
     target.focus({ preventScroll: true });
     document.querySelector('#scope-editor').scrollIntoView({ block: 'start' });
   }
-  return { init, focusEditor, refreshResearchers: () => refreshActiveResearchers() };
+  return { init, focusEditor, refreshResearchers: () => refreshActiveResearchers(), refreshAssignment: () => refreshAssignment() };
 })();

@@ -66,7 +66,7 @@
     const route = reviewRouteStore ? reviewRouteStore.currentStage(id, true) : { ok: true, stage: null };
     return LCA.certification.combineStage(verification, certification, route);
   };
-  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
+  let scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage, () => projectStore.list());
   let scopeLoadResult = scopeStore.load();
   const modellingStore = LCA.modelling.createStore(projects, undefined, (id) => requestStore.list(id), (id) => {
     const loaded = scopeStore.load();
@@ -272,7 +272,7 @@
   LCA.views.projectCreate.init(projectStore, (result) => {
     // 범위가 반영되기 전의 기본 명단으로 저장소를 연결한 뒤 저장된 범위를 읽는다.
     projects.splice(0, projects.length, ...result.items);
-    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage, () => projectStore.list());
     scopeLoadResult = scopeStore.load();
     showScopeStorageStatus();
     requestStore = LCA.requests.createStore(projects.map((project) => project.id), undefined, (id) => scopeStore.currentStage(id));
@@ -291,7 +291,7 @@
   const deletionPage = LCA.views.projectDeletion.init(sampleDate, (result) => {
     // 새 명단으로 모든 저장소의 참조를 연결한 뒤 현재 창의 쓰기를 다시 연다.
     projects.splice(0, projects.length, ...result.items);
-    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage);
+    scopeStore = LCA.scope.createStore(projects, undefined, () => researcherStore.list(), (id) => requestStore.list(id), (id) => modellingStore.load(id), (id) => interpretationStore.load(id), verificationStage, () => projectStore.list());
     requestStore = LCA.requests.createStore(projects.map((p) => p.id), undefined, (id) => scopeStore.currentStage(id));
     LCA.storage.resumeReplacement(result.epoch);
     taskReturn = null; homeReturn = null; detailOpener = null; openedProjectId = null;
@@ -309,6 +309,25 @@
   detailView.addEventListener('click', (event) => {
     const button = event.target.closest('[data-delete-project]');
     if (button) deletionPage.open(button.dataset.deleteProject, button);
+  });
+
+  const researcherChangePage = LCA.views.projectResearcher.init({ assignment: (id) => scopeStore.assignment(id),
+    changeResearcher: (id, draft, expected) => scopeStore.changeResearcher(id, draft, expected) }, researcherStore, (id) => {
+    scopeLoadResult = scopeStore.load(); showScopeStorageStatus();
+    if (!scopeLoadResult.ok) return;
+    const project = projects.find((p) => p.id === id);
+    if (project && openedProjectId === id) {
+      LCA.views.projectDetail.refreshScope(project); LCA.views.scope.refreshAssignment();
+      LCA.views.report.refreshBasics();
+    }
+    renderProjectList(); dashboardPage.refresh(); tasksPage.refresh(); researcherPage.refresh();
+    const message = document.querySelector('#project-basic-status');
+    message.textContent = '담당 연구원을 변경하고 전후 담당자·시각·사유를 이력에 남겼어요. 진행 단계는 그대로예요.';
+    message.tabIndex = -1; message.focus({ preventScroll: true });
+  });
+  detailView.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-change-project-researcher]');
+    if (button) researcherChangePage.open(button.dataset.changeProjectResearcher, button);
   });
 
   const basicPage = LCA.views.projectBasic.init(projectStore, (id, result) => {

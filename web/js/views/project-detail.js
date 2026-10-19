@@ -129,6 +129,8 @@ LCA.views.projectDetail = (() => {
     document.querySelector('#project-current-stage').replaceWith(stageField(project));
     const edit = document.querySelector('[data-edit-project-basic]');
     if (edit) edit.textContent = (project.amendment?.fromStage || project.stage) >= 10 ? '기본정보·변경 이력' : '기본정보 수정';
+    const researcher = document.querySelector('[data-change-project-researcher]');
+    if (researcher) researcher.textContent = project.stage >= 10 ? '담당 연구원 변경 이력' : '담당 연구원 변경';
   }
 
   function targetField(project) {
@@ -170,6 +172,9 @@ LCA.views.projectDetail = (() => {
     heading.append(back, identity, textElement('span', 'demo-pill', project.origin === 'user' ? '직접 등록한 프로젝트' : '기본 샘플 · 삭제 대상 아님'));
     const edit = textElement('button', 'request-action-button', (project.amendment?.fromStage || project.stage) >= 10 ? '기본정보·변경 이력' : '기본정보 수정'); edit.type = 'button'; edit.dataset.editProjectBasic = project.id;
     edit.setAttribute('aria-haspopup', 'dialog'); edit.setAttribute('aria-controls', 'project-basic-dialog'); heading.append(edit);
+    const researcher = textElement('button', 'request-action-button', project.stage >= 10 ? '담당 연구원 변경 이력' : '담당 연구원 변경');
+    researcher.type = 'button'; researcher.dataset.changeProjectResearcher = project.id;
+    researcher.setAttribute('aria-haspopup', 'dialog'); researcher.setAttribute('aria-controls', 'project-researcher-dialog'); heading.append(researcher);
     if (project.origin === 'user') {
       const remove = textElement('button', 'request-action-button project-delete-button', '프로젝트 삭제'); remove.type = 'button'; remove.dataset.deleteProject = project.id;
       remove.setAttribute('aria-haspopup', 'dialog'); remove.setAttribute('aria-controls', 'project-delete-dialog'); heading.append(remove);

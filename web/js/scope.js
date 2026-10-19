@@ -9,6 +9,21 @@ LCA.scope = (() => {
     return Object.fromEntries(FIELDS.map((key) => [key, ['scopeMemo', 'customerContactName', 'researcherName', 'researcherId'].includes(key) && project[key] === undefined ? '' : project[key]]));
   }
   const assigned = (record) => Boolean(record.customerContactName?.trim() && record.researcherName?.trim());
+  const researcherSnapshot = (record) => ({ researcherId: record.researcherId || '', researcherName: record.researcherName || '' });
+  function validResearcher(value) {
+    return value && typeof value.researcherId === 'string' && (!value.researcherId || /^researcher-(sample|user)-[1-9]\d*$/.test(value.researcherId))
+      && typeof value.researcherName === 'string' && value.researcherName.length <= 100 && (!value.researcherId || value.researcherName.trim());
+  }
+  function validResearcherHistory(histories, originals) {
+    if (histories === undefined) return true;
+    if (!histories || typeof histories !== 'object' || Array.isArray(histories)) return false;
+    return Object.entries(histories).every(([id, events]) => originals.has(id) && Array.isArray(events) && events.length > 0 && events.every((event, index) =>
+      event && validResearcher(event.before) && validResearcher(event.after) && JSON.stringify(event.before) !== JSON.stringify(event.after)
+      && Number.isInteger(event.stage) && event.stage >= 1 && event.stage < 10 && typeof event.reason === 'string' && event.reason.length <= 1000
+      && (event.stage === 1 || (event.after.researcherId && event.after.researcherName.trim() && event.reason.trim()))
+      && typeof event.at === 'string' && Number.isFinite(Date.parse(event.at))
+      && (!index || (Date.parse(event.at) >= Date.parse(events[index - 1].at) && JSON.stringify(event.before) === JSON.stringify(events[index - 1].after)))));
+  }
   function collectionReadiness(projectId, result) {
     if (!result?.ok || !Array.isArray(result.items)) return { ok: false, ready: false, error: result?.message || result?.error || '자료 요청 기록을 확인하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.' };
     const items = result.items.filter((item) => item.projectId === projectId && !item.deletedAt);
@@ -61,7 +76,7 @@ LCA.scope = (() => {
       && (record.scopeStatus !== '확정' || !missing({ ...record, productName: '제품' }).length)
       && (record.stage < 3 || record.scopeStatus === '확정');
   }
-  function createStore(projects, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null, getVerificationStage = null) {
+  function createStore(projects, getStorage = () => LCA.storage ? LCA.storage.get() : window.localStorage, getResearchers = null, getRequests = null, getCalculation = null, getInterpretation = null, getVerificationStage = null, getProjectList = null) {
     const originals = new Map(projects.map((project) => [project.id, JSON.parse(JSON.stringify(snapshot(project)))]));
     function normalize(value, original) {
       const record = snapshot(value);
@@ -82,15 +97,52 @@ LCA.scope = (() => {
             || (originals.get(id).stage === 1 && value.stage > 1 && !assigned(value))
             || value.stage < originals.get(id).stage)) throw Error();
         // 기존 기록은 메모가 없다. 읽을 때만 빈 문자열로 보완하고 원본 저장본은 쓰지 않는다.
-        return { ok: true, records: Object.fromEntries(Object.entries(data.records).map(([id, value]) => [id, normalize(value, originals.get(id))])) };
+        if (!validResearcherHistory(data.researcherHistory, originals)) throw Error();
+        return { ok: true, ...(data.researcherHistory ? { researcherHistory: data.researcherHistory } : {}), records: Object.fromEntries(Object.entries(data.records).map(([id, value]) => [id, normalize(value, originals.get(id))])) };
       } catch { return { ok: false, error: '범위 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 저장과 단계 이동을 중단했어요.' }; }
+    }
+    function currentRecord(data, id) {
+      if (!originals.has(id)) return null;
+      return { ...(data.records[id] || originals.get(id)), ...(data.researcherHistory?.[id]?.at(-1)?.after || {}) };
+    }
+    function assignment(id) {
+      const data = read(); if (!data.ok) return data;
+      if (!originals.has(id)) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
+      const listed = getProjectList?.();
+      if (listed && (!listed.ok || !listed.items.some((p) => p.id === id))) return { ok: false, error: listed.error || '프로젝트가 삭제됐어요. 최신 목록을 확인해 주세요.' };
+      const stage = currentStage(id); if (!stage.ok) return stage;
+      return { ok: true, current: researcherSnapshot(currentRecord(data, id)), history: data.researcherHistory?.[id] || [],
+        expected: { revision: data.researcherHistory?.[id]?.length || 0, stage: stage.stage, scope: snapshot(currentRecord(data, id)) }, stage: stage.stage };
+    }
+    async function changeResearcher(id, draft, expected) {
+      const action = () => {
+        const state = assignment(id); if (!state.ok) return state;
+        if (JSON.stringify(state.expected) !== JSON.stringify(expected)) return { ok: false, error: '다른 화면에서 담당자·범위·단계가 바뀌었어요. 입력을 따로 보관하고 창을 다시 열어 주세요.' };
+        if (state.stage < 1 || state.stage >= 10) return { ok: false, error: '완료한 프로젝트는 담당자 변경 이력만 볼 수 있어요.' };
+        const roster = getResearchers?.(); if (!roster?.ok) return { ok: false, error: roster?.error || '연구원 목록을 확인하지 못했어요.' };
+        const person = roster.items.find((p) => p.id === draft.researcherId);
+        if (!person) return { ok: false, error: '새 담당 연구원을 선택해 주세요.' };
+        if (typeof draft.reason !== 'string' || !draft.reason.trim() || draft.reason.trim().length > 1000) return { ok: false, error: '변경 사유를 1~1,000자로 적어 주세요.' };
+        const after = researcherSnapshot({ researcherId: person.id, researcherName: person.name });
+        if (after.researcherId === state.current.researcherId) return { ok: false, error: '현재 담당자와 다른 연구원을 선택해 주세요.' };
+        const data = read(); if (!data.ok) return data;
+        const history = state.history;
+        const event = { before: state.current, after, stage: state.stage, reason: draft.reason.trim(), at: new Date(Math.max(Date.now(), Date.parse(history.at(-1)?.at) || 0)).toISOString() };
+        const researcherHistory = { ...(data.researcherHistory || {}), [id]: [...history, event] };
+        if (!validResearcherHistory(researcherHistory, originals)) return { ok: false, error: '담당자 변경 이력을 확인하지 못했어요.' };
+        try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: data.records, researcherHistory })); }
+        catch { return { ok: false, error: '저장하지 못했어요. 기존 담당자와 입력은 유지했으니 다시 시도해 주세요.' }; }
+        Object.assign(projects.find((p) => p.id === id), after); return { ok: true };
+      };
+      try { return typeof navigator !== 'undefined' && navigator.locks?.request ? await navigator.locks.request('ecoable-lca-manager.review-workflow-write', action) : action(); }
+      catch { return { ok: false, error: '담당자 변경을 시작하지 못했어요. 입력을 유지했으니 다시 시도해 주세요.' }; }
     }
     function load() {
       const data = read();
       if (!data.ok) return data;
       const effective = [];
       for (const project of projects) {
-        const current = data.records[project.id] || JSON.parse(JSON.stringify(originals.get(project.id)));
+        const current = currentRecord(data, project.id);
         const verification = getVerificationStage ? getVerificationStage(project.id) : { ok: true, stage: null };
         if (!verification.ok) return verification;
         effective.push({ project, current: { ...current, stage: verification.override ? verification.stage : Math.max(current.stage, verification.stage || 0) },
@@ -105,7 +157,7 @@ LCA.scope = (() => {
     function currentStage(id) {
       const data = read();
       if (!data.ok) return data;
-      const current = data.records[id] || originals.get(id);
+      const current = currentRecord(data, id);
       if (!current) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
       const verification = getVerificationStage ? getVerificationStage(id) : { ok: true, stage: null };
       return verification.ok ? { ...verification, ok: true, stage: verification.override ? verification.stage : Math.max(current.stage, verification.stage || 0) } : verification;
@@ -123,7 +175,7 @@ LCA.scope = (() => {
       if (!data.ok) return data;
       const project = projects.find((item) => item.id === id);
       if (!project) return { ok: false, error: '프로젝트를 찾을 수 없어요.' };
-      const current = data.records[id] || originals.get(id);
+      const current = currentRecord(data, id);
       if (JSON.stringify(current) !== JSON.stringify(expected)) return { ok: false, error: '다른 화면에서 프로젝트 단계나 범위가 바뀌었어요. 프로젝트 목록으로 돌아가 다시 열어 주세요.' };
       const transition = ['finishCollection', 'finishReview', 'startInterpretation', 'startReport'].includes(action);
       if (!transition && ![1, 2].includes(current.stage)) return { ok: false, error: '수집 이후의 범위 변경은 이번 기능에서 지원하지 않아요.' };
@@ -181,7 +233,12 @@ LCA.scope = (() => {
         record = snapshot({ ...project, ...draft, stage: current.stage, customerContactName: current.customerContactName, researcherName: current.researcherName, researcherId: current.researcherId });
       }
       if (!valid(record)) return { ok: false, error: '날짜·기준량·적용 기준을 확인해 주세요. 확정하려면 필수 정보를 모두 채워야 해요.' };
-      try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: { ...data.records, [id]: record } })); }
+      let researcherHistory = data.researcherHistory;
+      if (action === 'assign' && JSON.stringify(researcherSnapshot(current)) !== JSON.stringify(researcherSnapshot(record))) {
+        const history = researcherHistory?.[id] || [];
+        researcherHistory = { ...(researcherHistory || {}), [id]: [...history, { before: researcherSnapshot(current), after: researcherSnapshot(record), stage: 1, reason: '계약·착수에서 담당자 저장', at: new Date(Math.max(Date.now(), Date.parse(history.at(-1)?.at) || 0)).toISOString() }] };
+      }
+      try { getStorage().setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: { ...data.records, [id]: record }, ...(researcherHistory ? { researcherHistory } : {}) })); }
       catch { return { ok: false, error: transition
         ? '단계 이동을 저장하지 못했어요. 현재 단계와 받은 자료 기록은 그대로예요.'
         : '범위를 저장하지 못했어요. 입력 내용은 유지되며 단계도 바뀌지 않았어요.' }; }
@@ -189,7 +246,7 @@ LCA.scope = (() => {
       return { ok: true };
     }
     return {
-      load, currentStage, collectionStatus, reviewStatus, save: (id, draft, expected) => update(id, draft, expected),
+      load, currentStage, collectionStatus, reviewStatus, assignment, changeResearcher, save: (id, draft, expected) => update(id, draft, expected),
       saveAssignees: (id, draft, expected) => update(id, draft, expected, 'assign'),
       startScope: (id, expected) => update(id, null, expected, 'startScope'),
       start: (id, expected) => update(id, null, expected, 'startCollection'),
