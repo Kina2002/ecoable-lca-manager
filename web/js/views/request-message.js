@@ -15,6 +15,17 @@ LCA.views.requestMessage = (() => {
     const choices = text('div', 'request-message-options', ''); const selection = text('p', 'detail-help', '');
     function button(label) { const node = text('button', 'request-action-button', label); node.type = 'button'; return node; }
     const all = button('전체 선택'); const none = button('선택 해제'); const latest = button('최신 자료 다시 확인');
+    const recommendation = text('p', 'detail-help', ''); const useRecommendation = button('추천 대상 선택');
+    section.append(recommendation, useRecommendation);
+    useRecommendation.addEventListener('click', () => {
+      if (copying) return;
+      const result = LCA.requestMessage.recommend(read());
+      if (!result.ok || !result.type) { feedback.textContent = result.error || result.reason; return; }
+      kind.value = result.type; render(true); selected = new Set(result.ids);
+      for (const checkbox of choices.querySelectorAll('input')) checkbox.checked = selected.has(checkbox.dataset.messageRequest);
+      overwrite.checked = false; sync(); feedback.textContent = '추천 종류와 자료를 선택했어요. 기존 글은 유지했으니 내용을 확인한 뒤 요청문 만들기를 눌러 주세요.';
+      generate.focus();
+    });
     const choiceActions = text('div', 'request-message-actions', ''); choiceActions.append(all, none, latest); choose.append(choiceActions, selection, choices);
     const overwriteLabel = text('label', 'request-message-check', ''); const overwrite = document.createElement('input'); overwrite.type = 'checkbox';
     overwriteLabel.append(overwrite, document.createTextNode('직접 수정한 글을 새 요청문으로 교체할게요.')); overwriteLabel.hidden = true;
@@ -54,6 +65,10 @@ LCA.views.requestMessage = (() => {
     function render(reset) {
       const focused = choices.contains(document.activeElement) ? document.activeElement.dataset.messageRequest : null;
       state = read(); const list = LCA.requestMessage.candidates(state, kind.value); available = list.ok ? list.items : [];
+      const recommended = LCA.requestMessage.recommend(state);
+      recommendation.textContent = recommended.ok ? `${recommended.type ? `추천: ${LCA.requestMessage.TYPES[recommended.type]} · ` : ''}${recommended.reason} 기한 지난 미제출 ${recommended.groups.overdue.length}건 · 보완 ${recommended.groups.revision.length}건 · 기한 전/오늘 미제출 ${recommended.groups.pending.length}건` : recommended.error;
+      useRecommendation.disabled = copying || !recommended.ok || !recommended.type;
+      for (const option of kind.options) option.textContent = `${LCA.requestMessage.TYPES[option.value]}${recommended.type === option.value ? ' (추천)' : ''}`;
       choose.querySelector('legend').textContent = kind.value === 'info' ? '확인할 정보 선택' : '넣을 자료 선택';
       generate.textContent = kind.value === 'info' ? '선택한 정보로 안내문 만들기' : '선택한 자료로 요청문 만들기';
       selected = reset ? new Set(available.map((item) => item.id)) : new Set([...selected].filter((id) => available.some((item) => item.id === id)));
@@ -67,7 +82,7 @@ LCA.views.requestMessage = (() => {
       if (!list.ok) feedback.textContent = list.error;
       else if (!available.length) choices.append(text('p', 'detail-help', kind.value === 'info' ? '현재 입력 항목에서 고객에게 확인할 누락 정보가 없어요.' : kind.value === 'revision' ? '보완 요청 상태의 자료가 없어요.'
         : kind.value === 'upcoming' ? '오늘부터 3일 안에 제출할 미제출 요청 자료가 없어요.' : '아직 제출되지 않은 요청 자료가 없어요.'));
-      typeHelp.textContent = kind.value === 'info' ? '고객 담당자·희망 일정·활용처·협의할 범위 등 빈 정보만 확인해요. 우리 연구원 배정은 고객에게 묻지 않고 내부에서 정해요. 자료 요청이 0건이어도 만들 수 있어요.' : kind.value === 'revision' ? '보완 요청 상태만 골라 저장된 보완 사유를 넣어요. 보완 기한은 새로 확정하지 않고 별도 협의로 안내해요.'
+      typeHelp.textContent = kind.value === 'followup' ? '기한 지난 미제출·보완·기한 전 미제출 자료로 나눠 한 편에 담아요. 받은 자료와 승인 자료는 빼며 보완 기한은 별도 협의해요.' : kind.value === 'info' ? '고객 담당자·희망 일정·활용처·협의할 범위 등 빈 정보만 확인해요. 우리 연구원 배정은 고객에게 묻지 않고 내부에서 정해요. 자료 요청이 0건이어도 만들 수 있어요.' : kind.value === 'revision' ? '보완 요청 상태만 골라 저장된 보완 사유를 넣어요. 보완 기한은 새로 확정하지 않고 별도 협의로 안내해요.'
         : kind.value === 'upcoming' ? '오늘부터 3일 안에 제출할 요청 상태의 미제출 자료만 보여줘요. 오늘 마감도 포함하며, 이미 기한이 지난 자료는 미제출 재요청에서 확인해요.'
           : '요청 상태이며 아직 받은 자료가 없는 항목만 보여줘요. 제출됨·검토 중·보완 요청·승인·삭제 자료는 제외해요.';
       sync();

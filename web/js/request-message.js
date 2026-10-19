@@ -1,7 +1,7 @@
 /* 저장된 정보로 요청문을 만든다. 저장·발송·자료 상태 변경은 하지 않는다. */
 window.LCA = window.LCA || {};
 LCA.requestMessage = (() => {
-  const TYPES = { initial: '처음 요청', reminder: '미제출 재요청', upcoming: '마감 임박 안내', revision: '보완 요청', info: '정보 확인' };
+  const TYPES = { initial: '처음 요청', reminder: '미제출 재요청', upcoming: '마감 임박 안내', revision: '보완 요청', followup: '종합 제출·보완 안내', info: '정보 확인' };
   const clean = (value) => typeof value === 'string' ? value.trim() : '';
   const line = (value) => clean(value).replace(/[\r\n]+/g, ' ');
   const category = (item) => LCA.constants.CATEGORIES.find((c) => c.key === item.categoryKey)?.name;
@@ -28,6 +28,7 @@ LCA.requestMessage = (() => {
     const items = state.items.filter((item) => {
       if (item.projectId !== state.project.id || item.deletedAt) return false;
       if (type === 'revision') return item.status === '보완 요청';
+      if (type === 'followup' && item.status === '보완 요청') return true;
       if (item.status !== '요청' || item.receipt) return false;
       if (type !== 'upcoming') return true;
       const days = LCA.deadlines.refresh({ date: item.dueDate, status: item.status }, today).days;
@@ -35,6 +36,25 @@ LCA.requestMessage = (() => {
     });
     if (new Set(items.map((item) => item.id)).size !== items.length) return { ok: false, error: '자료 번호가 중복되어 요청문을 만들 수 없어요.' };
     return { ok: true, items: items.slice().sort((a, b) => a.id.localeCompare(b.id)) };
+  }
+  function group(item, today = LCA.rules.today()) {
+    if (item.status === '보완 요청') return 'revision';
+    const days = LCA.deadlines.refresh({ date: item.dueDate, status: item.status }, today).days;
+    return days !== null && days < 0 ? 'overdue' : 'pending';
+  }
+  function recommend(state, today = LCA.rules.today()) {
+    const available = candidates(state, 'followup'); if (!available.ok) return available;
+    const groups = { overdue: [], revision: [], pending: [] };
+    for (const item of available.items) groups[group(item, today)].push(item.id);
+    const soon = available.items.filter((item) => item.status === '요청' && group(item, today) === 'pending'
+      && LCA.deadlines.refresh({ date: item.dueDate, status: item.status }, today).days !== null
+      && LCA.deadlines.refresh({ date: item.dueDate, status: item.status }, today).days <= 3).map((item) => item.id);
+    let type = null; let ids = []; let reason = '현재 기한·보완 기준으로 보낼 안내문이 없어요. 처음 요청은 직접 선택할 수 있어요.';
+    if (groups.overdue.length || (groups.revision.length && soon.length)) { type = 'followup'; ids = available.items.map((item) => item.id); reason = groups.overdue.length ? '기한이 지난 미제출 자료가 있어요. 다른 미제출·보완 자료도 구분해 함께 안내해요.' : '보완 자료와 마감 임박 자료가 함께 있어 한 번에 구분해서 안내해요.'; }
+    else if (groups.revision.length) { type = 'revision'; ids = groups.revision; reason = '보완 요청 자료가 있어요.'; }
+    else if (soon.length) { type = 'upcoming'; ids = soon; reason = '오늘부터 3일 이내 기한인 미제출 자료가 있어요.'; }
+    else if (infoTargets(state.project).length) { type = 'info'; ids = infoTargets(state.project).map((i) => i.id); reason = '고객에게 확인할 프로젝트 정보가 남아 있어요.'; }
+    return { ok: true, type, ids, reason, groups, today };
   }
   function build(state, type, ids) {
     const available = candidates(state, type); if (!available.ok) return available;
@@ -57,29 +77,32 @@ LCA.requestMessage = (() => {
     const period = LCA.requests.validDate(p.refStart) && LCA.requests.validDate(p.refEnd) && p.refStart <= p.refEnd
       ? `${p.refStart.replaceAll('-', '.')}~${p.refEnd.replaceAll('-', '.')}` : value('', '자료 기준기간');
     const rows = items.map((item) => ({ id: item.id, name: value(category(item), '자료 구분'), detail: value(item.detail, `${item.id} 요청 내용`, false),
-      due: date(item.dueDate, `${item.id} 제출 기한`), revision: type === 'revision' ? value(item.review?.note, `${item.id} 보완 사유`, false) : '' }));
-    const commonDue = new Set(rows.map((item) => item.due)).size === 1;
-    const prefix = { initial: 'LCA 자료 요청', reminder: '자료 제출 확인 요청', upcoming: '자료 제출 기한 안내', revision: '자료 보완 요청' }[type];
+      due: date(item.dueDate, `${item.id} 제출 기한`), group: type === 'followup' ? group(item) : '', revision: type === 'revision' || (type === 'followup' && item.status === '보완 요청') ? value(item.review?.note, `${item.id} 보완 사유`, false) : '' }));
+    if (type === 'followup') rows.sort((a, b) => ['overdue', 'revision', 'pending'].indexOf(a.group) - ['overdue', 'revision', 'pending'].indexOf(b.group));
+    const commonDue = type !== 'followup' && new Set(rows.map((item) => item.due)).size === 1;
+    const prefix = { initial: 'LCA 자료 요청', reminder: '자료 제출 확인 요청', upcoming: '자료 제출 기한 안내', revision: '자료 보완 요청', followup: '자료 제출·보완 종합 안내' }[type];
     const title = `[${prefix}] ${company} ${product} 평가`;
     const body = [`안녕하세요, ${contact} 담당자님.`, `${senderCompany} ${senderDepartment} ${researcher}입니다.`, '',
       type === 'initial' ? `${product} LCA 평가를 위해 아래 자료를 요청드립니다.` : type === 'reminder'
         ? '앞서 요청드린 자료 중 아직 제출 확인이 되지 않은 항목을 안내드립니다.' : type === 'upcoming'
-          ? '제출 기한이 가까워진 아래 자료의 준비 일정을 확인 부탁드립니다.' : '보내주신 자료를 검토한 결과, 아래 사항의 보완을 부탁드립니다.',
+          ? '제출 기한이 가까워진 아래 자료의 준비 일정을 확인 부탁드립니다.' : type === 'followup' ? '미제출 자료와 보완이 필요한 자료를 구분해 안내드립니다. 각 항목의 준비 일정을 확인 부탁드립니다.' : '보내주신 자료를 검토한 결과, 아래 사항의 보완을 부탁드립니다.',
       '', `대상 회사: ${company}`, `평가 대상 제품: ${product}`, `자료 기준기간: ${period}`, '', type === 'revision' ? '보완 대상 자료' : '요청 자료'];
+    let previousGroup = '';
     for (const [index, item] of rows.entries()) {
+      if (type === 'followup' && previousGroup !== item.group) { previousGroup = item.group; body.push(`[${{ overdue: '기한 지난 미제출 자료', revision: '보완이 필요한 자료', pending: '아직 기한 전인 미제출 자료 · 오늘 마감 포함' }[item.group]}]`); }
       body.push(`${index + 1}. ${item.name} (${item.id})`, `   요청 내용: ${item.detail}`);
-      if (type === 'revision') body.push(`   보완 내용: ${item.revision}`, `   기존 제출 기한: ${item.due} (보완 기한은 별도 협의)`);
+      if (type === 'revision' || (type === 'followup' && item.group === 'revision')) body.push(`   보완 내용: ${item.revision}`, `   기존 제출 기한: ${item.due} (보완 기한은 별도 협의)`);
       else if (!commonDue) body.push(`   제출 기한: ${item.due}`);
       body.push('');
     }
     if (type !== 'revision' && commonDue) body.push(`제출 기한: ${rows[0].due}`, '');
     body.push(type === 'initial' ? '자료 준비가 어렵거나 기한 조정이 필요하면 말씀 부탁드립니다.' : type === 'reminder'
-      ? '제출 여부와 준비 일정을 확인 부탁드립니다. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : type === 'upcoming'
+      ? '제출 여부와 준비 일정을 확인 부탁드립니다. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : type === 'followup' ? '미제출 자료의 전달 여부와 준비 일정을 확인 부탁드립니다. 보완 자료의 새 기한은 별도로 협의하겠습니다. 이미 보내주셨다면 전달 경로를 알려 주세요.' : type === 'upcoming'
         ? '안내드린 기한까지 전달 부탁드립니다. 준비가 어렵거나 기한 조정이 필요하면 말씀해 주세요. 이미 보내주셨다면 전달 경로를 알려주시면 확인하겠습니다.' : '확인 후 보완 자료를 전달 부탁드립니다. 보완 자료 제출 일정은 별도 협의 부탁드립니다.',
       '', '감사합니다.', `담당 연구원 ${researcher}`);
-    const fingerprint = JSON.stringify({ type, project: [p.id, p.stage, p.companyName, p.productName, p.customerContactName, p.researcherId, p.researcherName, p.refStart, p.refEnd].map((v) => v ?? null),
+    const fingerprint = JSON.stringify({ type, today: type === 'followup' ? LCA.rules.today() : null, project: [p.id, p.stage, p.companyName, p.productName, p.customerContactName, p.researcherId, p.researcherName, p.refStart, p.refEnd].map((v) => v ?? null),
       sender: [sender?.id, sender?.name, sender?.company, sender?.department].map((v) => v ?? null),
-      items: items.map((item) => [item.id, item.categoryKey, item.status, item.detail, item.dueDate, type === 'revision' ? item.review?.note ?? null : null]) });
+      items: items.map((item) => [item.id, item.categoryKey, item.status, item.detail, item.dueDate, ['revision', 'followup'].includes(type) ? item.review?.note ?? null : null]) });
     return { ok: true, title, body: body.join('\n'), fingerprint, ids: items.map((item) => item.id), warnings: [...missing].map((label) => `${label} 입력이 필요해요.`) };
   }
   function buildInfo(state, items) {
@@ -115,5 +138,5 @@ LCA.requestMessage = (() => {
     if (!task.requestId) return null;
     return { overdue: 'reminder', soon: 'upcoming', revision: 'revision' }[task.kind] || null;
   }
-  return { TYPES, infoTargets, candidates, build, check, copy, typeForTask };
+  return { TYPES, infoTargets, candidates, build, check, copy, typeForTask, group, recommend };
 })();

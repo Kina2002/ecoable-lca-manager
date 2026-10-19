@@ -1,7 +1,7 @@
 /* 외부에서 실제 보낸 요청문의 사본을 보관한다. 발송 기능은 없다. */
 window.LCA = window.LCA || {};
 LCA.messageHistory = (() => {
-  const TYPES = ['initial', 'reminder', 'upcoming', 'revision', 'info'];
+  const TYPES = ['initial', 'reminder', 'upcoming', 'revision', 'info', 'followup'];
   const CHANNELS = ['메일', '메신저', '기타'];
   const FIELDS = ['projectId', 'companyName', 'productName', 'type', 'channel', 'recipient', 'actor', 'title', 'body', 'targets', 'sentAt', 'basisChanged', 'token'];
   const text = (value, max) => typeof value === 'string' && !!value.trim() && value.length <= max;
