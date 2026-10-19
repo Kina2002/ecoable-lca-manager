@@ -59,7 +59,7 @@ LCA.views.dashboard = (() => {
           state.requestsOk ? approval.total ? `받은 자료 ${approval.total}건 중 ${approval.approved}건 승인` : '받은 자료가 없어요.' : '자료 요청 기록을 읽지 못했어요.', approval.percent),
         metric('확인 필요 프로젝트', `${state.attentionCount}개`, state.warnings.length ? '확인 가능한 기록 기준 · 아래 안내 확인' : '기한·자료·의견·사후관리 확인 필요'),
         metric('완료 프로젝트', `${state.completedCount}개`, `선택한 연구원의 전체 ${state.projectCount}개 중 완료·사후관리`));
-      basis.textContent = `${state.today} 기준 · ${state.researcherLabel}의 진행 프로젝트 지표예요. 갱신·연간 점검은 완료 프로젝트도 포함해요. 프로젝트·할 일 탭의 필터와 별개예요. 비율은 프로젝트 전체 진행률이 아니에요.${state.requestsOk ? ` 자료 요청이 등록된 프로젝트 ${state.registeredProjects}/${state.activeCount}개.` : ''}`;
+      basis.textContent = `${state.today} 기준 · ${state.researcherLabel}의 진행 프로젝트 지표예요. 인증 상태 확인·갱신·연간 점검은 완료 프로젝트도 포함해요. 프로젝트·할 일 탭의 필터와 별개예요. 비율은 프로젝트 전체 진행률이 아니에요.${state.requestsOk ? ` 자료 요청이 등록된 프로젝트 ${state.registeredProjects}/${state.activeCount}개.` : ''}`;
       const attentionItems = attentionExpanded ? state.allAttention : state.attention;
       attentionMore.hidden = state.attentionCount <= 3; attentionMore.textContent = attentionExpanded ? '3개만 보기' : `나머지 ${state.attentionCount - 3}개 더 보기`; attentionMore.setAttribute('aria-expanded', String(attentionExpanded));
       attentionCount.textContent = `${state.warnings.length ? '확인 가능한 기록에서 ' : ''}${state.attentionCount}개 중 ${attentionItems.length}개 표시 · 목표일·수집 마감과 할 일 기록 기준`;

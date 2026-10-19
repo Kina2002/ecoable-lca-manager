@@ -1,7 +1,7 @@
 window.LCA = window.LCA || {};
 LCA.tasks = (() => {
-  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', inquiry: '자료 질의', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
-  const ORDER = { overdue: 0, revision: 1, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, inquiry: 7, info: 8 };
+  const KINDS = { overdue: '기한 초과', soon: '마감 임박', revision: '보완 요청', certification: '인증 상태 확인', renewal: '갱신 확인', inspection: '연간 점검', review: '자료 검토', inquiry: '자료 질의', comment: '고객 의견', verification: '검증 지적', info: '정보 확인' };
+  const ORDER = { overdue: 0, revision: 1, certification: 2, renewal: 2, inspection: 3, soon: 4, review: 5, verification: 6, comment: 7, inquiry: 7, info: 8 };
   function build({ projects, requests, inquiries, comments, verifications, certifications }, today = LCA.rules.today()) {
     const items = []; const warnings = [];
     if (!requests.ok) warnings.push(requests.message || '자료 요청을 읽지 못했어요. 자료 관련 할 일은 계산하지 않았어요.');
@@ -60,6 +60,12 @@ LCA.tasks = (() => {
     if (certifications?.ok) for (const saved of certifications.items) {
       const project = projects.find((p) => p.id === saved.projectId);
       if (!project || project.stage < 9) continue;
+      const certificationStatus = LCA.certification.currentStatus({ status: saved.status, details: saved.details },
+        { validity: saved.officialExpiryOn ? { expiryOn: saved.officialExpiryOn } : null, statusChecks: saved.statusChecks || [], cancelled: saved.cancelled }, today);
+      if (saved.status === '승인·등록' && saved.details.kind !== '고객 제출' && certificationStatus.label === '확인 필요') {
+        add(project, 'certification', 'certification-status', '인증·등록의 현재 상태 확인', certificationStatus.detail, 'certification', { status: certificationStatus.label });
+      }
+      if (saved.cancelled) continue;
       if (saved.status === '승인·등록' && saved.details.kind === '등록' && saved.details.scheme.trim() === 'International EPD') {
         if (!saved.inspectionPlan) add(project, 'inspection', 'inspection-plan', 'International EPD 점검 기준일 확인',
           'EPD 문서의 최신 버전과 버전일을 기록하면 연간 점검 예정일과 30일 전 안내를 계산해요.', 'certification');

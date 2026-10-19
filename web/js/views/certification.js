@@ -79,7 +79,8 @@ LCA.views.certification = (() => {
     const history = text('section', 'detail-card calculation-card', ''); history.append(text('h2', '', '완료·제출 변경 이력')); const historyList = text('div', '', ''); history.append(historyList);
     const inspectionHost = document.createElement('div');
     const renewalHost = document.createElement('div');
-    host.replaceChildren(intro, completionCard, processCard, validityCard, renewalHost, inspectionHost, finishCard, rebase, feedback, history);
+    const statusHost = document.createElement('div');
+    host.replaceChildren(intro, statusHost, completionCard, processCard, validityCard, renewalHost, inspectionHost, finishCard, rebase, feedback, history);
     let state; let busy = false; let dirty = false; let revision = 0; let basis = null; let formRevision = -1; let validityFormRevision = -1; let finishReasonAuto = '';
     const controls = { kind, organization, scheme, submittedOn, registrationNumber, issuedOn, note };
     function updateExpiry() {
@@ -92,6 +93,7 @@ LCA.views.certification = (() => {
         : kind.value === '고객 제출' ? '고객 제출의 확인일은 인증 만료일이 아니므로 계산하지 않아요.'
           : status.value !== '승인·등록' ? '인증·등록이 승인되고 발급일을 기록하면 예상 만료일을 볼 수 있어요.'
             : '예상 만료일을 계산하려면 진행 유형과 제도 이름(추천 목록의 정확한 이름), 올바른 발급일을 확인해 주세요.';
+      if (sameRecord && state.cancelled) expiryInfo.textContent = `취소 확인 상태예요.${schedule ? ` 보관한 ${dateLabel} ${schedule.date}.` : ''} 갱신·점검 할 일 안내는 중단하며, 유효 회복 확인이나 새 공식 인증서의 갱신 완료를 기록해 주세요.`;
     }
     function adopt(loaded) {
       revision = loaded.record.revision;
@@ -166,7 +168,10 @@ LCA.views.certification = (() => {
       historyList.replaceChildren();
       for (const event of state.record.events.slice().reverse()) {
         const item = text('details', 'customer-review-event', ''); item.append(text('summary', '', `${date(event.at)} · ${event.type === 'completed' ? '검토·검증 완료 기록' : event.type === 'started' ? '9단계 시작' : event.type === 'validity' ? '공식 만료일 확인' : event.type === 'renewed' ? '갱신 완료' : event.type === 'inspection-plan' ? 'EPD 점검 기준 기록' : event.type === 'inspection' ? `연간 ${event.status}` : event.type === 'finished' ? '프로젝트 완료 · 10단계' : event.status} · ${event.actor}`));
-        if (event.type === 'completed') {
+        if (event.type === 'status-check') {
+          item.querySelector('summary').textContent = `${date(event.at)} · 상태 확인: ${event.status} · ${event.actor}`;
+          item.append(text('p', 'detail-help', `확인일 ${event.checkedOn} · 확인 문서 ${event.documentName} · ${event.organization} · ${event.scheme} · 번호 ${event.registrationNumber} · 발급일 ${event.issuedOn} · 당시 공식 만료일 ${event.expiryOn || '미정'}`));
+        } else if (event.type === 'completed') {
           item.append(text('p', 'detail-help', `완료일 ${event.completedOn} · 보고서 v${event.report.revision} · ${event.reviewMethod === 'internal' ? '내부 검토 완료' : `외부 검증 ${event.verification.rounds.length}차까지 보관`} · 결과 기록 ${event.documentName}`));
         } else if (event.type === 'validity') {
           item.append(text('p', 'detail-help', `공식 만료일 ${event.expiryOn} · 확인 문서 ${event.documentName} · 인증·등록 번호 ${event.registrationNumber}`));
@@ -224,6 +229,7 @@ LCA.views.certification = (() => {
     finishForm.addEventListener('submit', (event) => { event.preventDefault(); run('finished', { finishedOn: finishedOn.value, actor: finishActor.value, reason: finishReason.value, confirmed: finishCheck.checked }, finishError); });
     LCA.views.certificationInspection.init(inspectionHost, project, store, onChanged);
     LCA.views.certificationRenewal.init(renewalHost, project, store, onChanged);
+    LCA.views.certificationStatus.init(statusHost, project, store, onChanged);
     refreshCurrent = refresh; refresh();
   }
   function dateField(parent, id, label) {
@@ -234,5 +240,5 @@ LCA.views.certification = (() => {
   function checkbox(parent, label) {
     const wrapper = text('label', 'calculation-confirmation', ''); const input = document.createElement('input'); input.type = 'checkbox'; wrapper.append(input, document.createTextNode(label)); parent.append(wrapper); return input;
   }
-  return { init, refresh: () => { refreshCurrent(); LCA.views.certificationInspection.refresh(); LCA.views.certificationRenewal.refresh(); } };
+  return { init, refresh: () => { refreshCurrent(); LCA.views.certificationInspection.refresh(); LCA.views.certificationRenewal.refresh(); LCA.views.certificationStatus.refresh(); } };
 })();

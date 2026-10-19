@@ -36,7 +36,7 @@ LCA.views.certificationRenewal = (() => {
       const progress = loaded.renewalProgress;
       const current = loaded.process?.details;
       const renewal = loaded.record.events.filter((event) => event.type === 'renewed').at(-1);
-      summary.textContent = current ? `현재 인증·등록 ${current.registrationNumber || '미정'} · 발급일 ${current.issuedOn || '미정'} · ${progress ? `${progress.status} · 처리일 ${progress.actionOn}` : renewal ? `최근 갱신 완료 ${renewal.actionOn}` : '아직 기록한 갱신 처리가 없어요.'}` : '';
+      summary.textContent = current ? `현재 인증·등록 ${current.registrationNumber || '미정'} · 발급일 ${current.issuedOn || '미정'} · ${progress ? `${progress.status} · 처리일 ${progress.actionOn}` : renewal ? `최근 갱신 완료 ${renewal.actionOn}` : '아직 기록한 갱신 처리가 없어요.'}${loaded.cancelled ? ' 취소 확인 상태예요. 유효 회복을 먼저 확인하거나 새 공식 인증서의 갱신 완료만 기록할 수 있어요.' : ''}` : '';
       if (!dirty) {
         revision = loaded.record.revision; status.value = progress?.status || '갱신 준비'; actionOn.value = LCA.rules.today();
         documentName.value = ''; reason.value = ''; submittedOn.value = ''; issuedOn.value = ''; expiryOn.value = '';

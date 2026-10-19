@@ -53,10 +53,10 @@ LCA.views.certificationInspection = (() => {
     function refresh() {
       loaded = store.load(project.id);
       if (!loaded.ok) { summary.textContent = loaded.error; for (const item of [plan, check]) item.fields.disabled = item.save.disabled = item.rebase.disabled = true; return; }
-      const eligible = loaded.canRecordValidity && loaded.process?.details.kind === '등록' && loaded.process.details.scheme.trim() === 'International EPD';
+      const eligible = loaded.canRecordValidity && !loaded.cancelled && loaded.process?.details.kind === '등록' && loaded.process.details.scheme.trim() === 'International EPD';
       card.hidden = !loaded.process || loaded.process.details.kind !== '등록' || loaded.process.details.scheme.trim() !== 'International EPD';
       const schedule = loaded.process && LCA.certification.inspectionSchedule(loaded.process.details, loaded.process.status, loaded.inspectionPlan, loaded.inspections, LCA.rules.today(), loaded.validity?.expiryOn);
-      summary.textContent = !eligible ? 'International EPD 승인·등록 후 점검 기준과 결과를 기록할 수 있어요.' : !loaded.inspectionPlan ? 'EPD 최신 버전과 버전일을 먼저 기록해 주세요. 발급일과 버전일이 다를 수 있어요.'
+      summary.textContent = loaded.cancelled ? '취소 확인 기록이 있어요. 유효 회복 확인 후 점검을 기록해 주세요. 이전 이력은 남아 있어요.' : !eligible ? 'International EPD 승인·등록 후 점검 기준과 결과를 기록할 수 있어요.' : !loaded.inspectionPlan ? 'EPD 최신 버전과 버전일을 먼저 기록해 주세요. 발급일과 버전일이 다를 수 있어요.'
         : `기준 버전 ${loaded.inspectionPlan.version} · 버전일 ${loaded.inspectionPlan.versionOn} · ${schedule ? `다음 미완료 점검 ${schedule.date} · ${schedule.active ? schedule.days < 0 ? `${-schedule.days}일 경과` : `${schedule.days}일 남음` : `안내 시작 ${schedule.startDate}`}` : '현재 유효기간 안에 남은 연간 점검 예정이 없어요.'}`;
       for (const item of [plan, check]) { item.fields.disabled = item.save.disabled = busy || !eligible || (item === check && !cycles().length); item.rebase.disabled = busy; }
       if (!plan.state.dirty) {
