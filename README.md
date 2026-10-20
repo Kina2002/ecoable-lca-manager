@@ -1,5 +1,9 @@
 # LCA 프로젝트 관리
 
+**[회사 제출용 공개 데모 열기](https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site)** — 로그인이나 로컬 서버 실행 없이 접속합니다. 가상 샘플을 제공하며 입력 기록은 방문자 브라우저마다 저장됩니다. 개인 포트폴리오이며 회사 공식 서비스가 아닙니다.
+
+**WEB-069 공개 배포 완료:** 기능 기준은 WEB-068입니다. 새 업무 기능 추가를 멈추고 Sites의 public 버전 1로 배포했습니다. [배포 SPEC·확인 범위](docs/04-webapp-spec/WEB-069-public-demo-deployment.md). 전체 동작 시험은 집에서 이어갑니다.
+
 **최신 WEB-068:** 개요·범위 입력칸을 필요한 폭으로 모으고 **협의 메모 예시 양식**과 **빈 메모에 항목 넣기**를 추가했습니다. 기존 메모는 유지합니다. [명세](docs/04-webapp-spec/WEB-068-scope-layout-handoff.md). **부트캠프 노트북에서 이어갈 때는 [CONTINUE-HERE.md](CONTINUE-HERE.md)를 먼저 읽으세요.** 업무 기록은 별도 전달한 JSON 백업으로 옮깁니다.
 
 **최신 WEB-067:** 프로젝트 상세 상단의 **담당 연구원 변경**에서 진행 중인 프로젝트의 담당자를 교체하고 전후 담당자·저장 시각·사유를 이력으로 보관합니다. 완료 프로젝트는 이력만 조회하며 백업/삭제와 연구원별 담당 건수도 연결했습니다. [명세와 확인 범위](docs/04-webapp-spec/WEB-067-project-researcher-change.md).
