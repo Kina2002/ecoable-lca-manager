@@ -1,0 +1,3 @@
+# Keep handoff JSON bytes unchanged across Windows and other checkouts.
+handoff/latest-backup.json -text
+handoff/roleplay/**/evidence/*backup.json -text

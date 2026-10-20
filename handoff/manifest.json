@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "preparedOn": "2026-10-20",
+  "timezone": "Asia/Seoul",
+  "authorizedScope": "사용자가 백업과 가상 롤플레이 기록을 비공개 GitHub에 함께 보관하도록 요청함",
+  "backup": {
+    "file": "latest-backup.json",
+    "originalFileName": "LCA-백업-2026-10-20-144633.json",
+    "createdAtUtc": "2026-10-20T14:46:33.898Z",
+    "bytes": 2432,
+    "sha256": "AD216A5AD1C27CA7E36E3F108BC4C263BFBD1C8458AC9367464B9D9D9E217237",
+    "source": "Chrome 공개 사이트의 백업 내려받기",
+    "sourceUrl": "https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site/",
+    "format": "lca-project-manager-backup",
+    "formatVersion": 1,
+    "projects": 8,
+    "researchers": 4,
+    "researcherChanges": 1
+  },
+  "practice": {
+    "code": "LCA-2026-009",
+    "name": "한빛 포장 연습",
+    "researcher": "박기나",
+    "researcherId": "researcher-user-4",
+    "stage": 2,
+    "scopeStatus": "고객 요청안",
+    "quantity": "1",
+    "unit": "kg",
+    "boundary": "요람~문",
+    "refStart": "2025-01-01",
+    "refEnd": "2025-12-31",
+    "standards": [
+      "ISO 14040/44"
+    ],
+    "requests": 0,
+    "latestReplyApplied": false,
+    "nextEvent": "R08",
+    "nextAction": "추가 고객 회신을 메모에 반영하고 협의 중으로 저장한 뒤 화면과 이유 기록"
+  },
+  "roleplay": {
+    "path": "roleplay/hanbit-LCA-2026-009",
+    "screenshots": 16,
+    "currentScreenshots": 10,
+    "historicalScreenshots": 6,
+    "pdfCreated": false
+  },
+  "scopeInputComparison": {
+    "file": "roleplay/hanbit-LCA-2026-009/evidence/bedtime-scope-fields.json",
+    "comparedFields": 16,
+    "differences": 0,
+    "scope": "범위 입력만 비교했으며 다른 화면의 모든 미저장 입력을 확인한 것은 아님"
+  },
+  "restore": {
+    "automaticOnPull": false,
+    "mode": "현재 브라우저를 먼저 백업하고 미리보기/전체 교체 확인 후 복원·새로고침",
+    "publicDeploymentChanged": false
+  }
+}

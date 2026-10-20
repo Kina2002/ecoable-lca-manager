@@ -1,0 +1,213 @@
+- link "본문으로 건너뛰기":
+  - /url: "#main-content"
+- complementary "워크스페이스":
+  - link "LCA 프로젝트 관리 · 홈으로":
+    - /url: "#home-view"
+    - generic: LCA
+    - generic: 프로젝트 관리
+  - paragraph: 워크스페이스
+  - navigation "주 메뉴":
+    - link "홈":
+      - /url: "#home-view"
+      - text: 홈
+    - link "프로젝트":
+      - /url: ./
+      - text: 프로젝트
+    - link "할 일":
+      - /url: "#tasks-view"
+      - text: 할 일
+    - link "담당 연구원":
+      - /url: "#researcher-view"
+      - text: 담당 연구원
+    - link "설정":
+      - /url: "#settings-view"
+      - text: 설정
+    - link "용어사전":
+      - /url: "#glossary-view"
+      - text: 용어사전
+  - generic: 포트폴리오 시연
+  - paragraph:
+    - text: 고객사와 프로젝트는
+    - text: 모두 가상의 사례입니다.
+  - paragraph: Life cycle. Clear workflow.
+- banner:
+  - text: 워크스페이스
+  - generic: /
+  - strong: 프로젝트 상세
+  - time: 2026년 10월 20일 화 기준
+- main:
+  - region "한빛 포장 연습 가상":
+    - button "← 목록으로"
+    - heading "한빛 포장 연습 가상" [active] [level=1]:
+      - text: 한빛 포장 연습
+      - generic: 가상
+    - paragraph: 종이 포장 상자 · LCA-2026-009
+    - generic: 직접 등록한 프로젝트
+    - button "기본정보 수정"
+    - button "담당 연구원 변경"
+    - button "프로젝트 삭제"
+    - term: 현재 단계
+    - definition:
+      - text: 범위 정의 · 2/10
+      - generic "현재 단계 설명": 설명
+    - term: 목표 완료일
+    - definition:
+      - time: 2026.11.30
+      - generic "목표 완료일 설명": 설명
+      - generic "D-41 · 기준 기한 2026-11-30": D-41
+    - term: 고객사 업종
+    - definition: 미정
+    - term: 프로젝트 유형
+    - definition: 미정
+    - tablist "프로젝트 상세 내용":
+      - tab "개요·범위" [selected]
+      - tab "자료 요청 0":
+        - text: 자료 요청
+        - generic: "0"
+      - tab "계산 자료·결과"
+      - tab "결과 해석"
+      - tab "보고서"
+      - tab "고객 검토"
+      - tab "질문·의견"
+      - tab "검토·검증"
+      - tab "인증·등록"
+    - tabpanel "개요·범위":
+      - heading "자료 수집 일정" [level=2]
+      - paragraph:
+        - generic "미정"
+        - text: · 수집 마감 미정
+      - generic "마감일 입력·수정"
+      - heading "업무 목적과 활용" [level=2]
+      - term: 업무 목적
+      - definition: 고객사 요구 대응
+      - term: 세부 동인
+      - definition: 미정
+      - term: 결과 활용처
+      - definition: 미정
+      - generic "항목 설명"
+      - heading "제품과 평가 범위" [level=2]
+      - term: 범위 상태
+      - definition:
+        - button "고객 요청안 · 수정"
+      - term: 고객 담당자
+      - definition: 김민지
+      - term: 담당 연구원
+      - definition:
+        - button "박기나 담당 연구원 화면으로 이동": 박기나 · RSR-004
+      - term: 평가 대상 제품
+      - definition: 종이 포장 상자
+      - term: 평가 기준량
+      - definition: 1 kg
+      - term: 시스템 경계
+      - definition: 요람~문
+      - term: 기준기간
+      - definition: 2025-01-01 ~ 2025-12-31
+      - term: 적용 기준
+      - definition:
+        - list:
+          - link "ISO 14040/44 · 용어사전 설명 보기":
+            - /url: "#glossary-view"
+            - text: ISO 14040/44
+      - term: 추가 확인할 권장 정보
+      - definition:
+        - list:
+          - listitem: 고객사 업종
+          - listitem: 프로젝트 유형
+          - listitem: 결과 활용처
+          - listitem: 고객 담당 부서
+          - listitem: 고객 담당자 직책
+          - listitem: 고객 담당자 이메일
+          - listitem: 제품 코드
+          - listitem: 단위 중량·단위
+          - listitem: 연간 생산량·단위
+          - listitem: 착수일
+          - listitem: 고객이 요청한 마감일
+          - listitem: 컷오프 기준·근거
+          - listitem: 할당 방법·근거
+          - listitem: 사용할 배경 DB·버전
+      - term: 협의 메모
+      - definition: "대상 제품: 종이 포장 상자 A형 1종(HB-BOX-01) 대상 사업장: 제1공장 평가 기준량: 제품 1kg 요청 결과: 제품 1kg당 온실가스 배출량 평가 범위: 원료 생산 → 공장까지 원료 운송 → 상자 제조 → 공장 출하 이번 요청에서 제외: 출하 후 배송·사용·폐기 자료 기간: 2025-01-01~2025-12-31 자료 취합 담당: 김민지 적용 기준 및 거래처 지정 양식: 추가 확인 필요"
+      - generic "항목 설명"
+      - heading "범위 합의 기록" [level=2]
+      - paragraph: 범위 상태는 합의 여부, 프로젝트 단계는 전체 업무 진행을 뜻해요. 이 샘플의 범위 정보는 모두 가상이에요.
+      - generic: 범위 상태
+      - combobox "범위 상태":
+        - option "미정"
+        - option "고객 요청안" [selected]
+        - option "협의 중"
+        - option "확정"
+      - generic: 협의 메모 (선택 · 최대 2,000자)
+      - textbox "협의 메모 (선택 · 최대 2,000자)":
+        - /placeholder: "대상 제품: 제품명·모델/규격\n평가 기준량: 예) 제품 1 kg\n평가 범위: 포함할 과정 / 제외할 과정\n자료 기준기간: 시작일 ~ 종료일\n적용 기준: 합의한 기준 또는 고객 확인 중\n추가 협의·미정 사항: 더 확인할 내용"
+        - text: "대상 제품: 종이 포장 상자 A형 1종(HB-BOX-01) 대상 사업장: 제1공장 평가 기준량: 제품 1kg 요청 결과: 제품 1kg당 온실가스 배출량 평가 범위: 원료 생산 → 공장까지 원료 운송 → 상자 제조 → 공장 출하 이번 요청에서 제외: 출하 후 배송·사용·폐기 자료 기간: 2025-01-01~2025-12-31 자료 취합 담당: 김민지 적용 기준 및 거래처 지정 양식: 추가 확인 필요"
+      - generic "협의 메모 예시 양식"
+      - group "평가 기준량과 시스템 경계":
+        - generic: 평가 기준량 (0보다 큰 수)
+        - textbox "평가 기준량 (0보다 큰 수)": "1"
+        - generic: 단위 (kg, t, 장 등)
+        - textbox "단위 (kg, t, 장 등)": kg
+        - generic: 시스템 경계
+        - combobox "시스템 경계":
+          - option "미정"
+          - option "요람~문" [selected]
+          - option "요람~무덤"
+          - option "기타"
+      - group "자료 기준기간과 사유":
+        - generic: 기준기간 시작일
+        - textbox "기준기간 시작일":
+          - /placeholder: YYYY-MM-DD
+          - text: 2025-01-01
+        - textbox
+        - button "기준기간 시작일 달력": 달력
+        - generic: 기준기간 종료일
+        - textbox "기준기간 종료일":
+          - /placeholder: YYYY-MM-DD
+          - text: 2025-12-31
+        - textbox
+        - button "기준기간 종료일 달력": 달력
+        - generic: 12개월이 아닌 사유 (해당 시)
+        - textbox "12개월이 아닌 사유 (해당 시)":
+          - /placeholder: 12개월이면 비워 두세요.
+        - generic "사유 작성 예시"
+      - paragraph: 날짜는 YYYY-MM-DD 또는 숫자 8자리로 입력하거나 달력에서 선택해요.
+      - group "적용 기준 (하나 이상 선택)":
+        - generic: 적용 기준 (하나 이상 선택)
+        - paragraph: 체크박스는 적용 여부를 선택하고, 기준 이름은 용어사전 설명을 열어요. 설명을 본 뒤 돌아와도 작성 중인 내용은 유지돼요.
+        - checkbox "ISO 14040/44" [checked]
+        - link "ISO 14040/44 · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: ISO 14040/44
+        - checkbox "ISO 14067"
+        - link "ISO 14067 · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: ISO 14067
+        - checkbox "GHG Protocol Product"
+        - link "GHG Protocol Product · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: GHG Protocol Product
+        - checkbox "PEF"
+        - link "PEF · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: PEF
+        - checkbox "EN 15804+A2"
+        - link "EN 15804+A2 · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: EN 15804+A2
+        - checkbox "작성지침(PCR)"
+        - link "작성지침(PCR) · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: 작성지침(PCR)
+        - checkbox "PACT"
+        - link "PACT · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: PACT
+        - checkbox "Catena-X"
+        - link "Catena-X · 용어사전 설명 보기":
+          - /url: "#glossary-view"
+          - text: Catena-X
+      - paragraph: 미정·고객 요청안·협의 중은 빈 항목을 남겨 저장할 수 있어요. 확정은 필수 정보가 필요해요. 적용 기준 선택은 자동 적합성 판정이 아니에요. 기타 경계의 상세 설명과 컷오프·할당 등 추가 범위 조건은 후속 구현 대상이에요.
+      - button "범위 저장"
+      - button "데이터 수집 시작" [disabled]
+      - paragraph: 합의가 끝났다면 상태를 확정으로 바꾸고 저장해 주세요.
+  - paragraph: 에코에이블컨설팅 지원을 위해 만든 포트폴리오이며, 회사의 공식 서비스가 아닙니다.
+  - generic: LCA MANAGEMENT

@@ -1,0 +1,72 @@
+[
+  {
+    "file": "images/01-restored-home.jpg",
+    "caption": "기록 시점의 복원 후 홈 화면. 전체 프로젝트 8개와 연구원별 필터를 보여준다.",
+    "capturedAtUtc": "2026-10-20T14:33:11.91Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/02-practice-project-list.jpg",
+    "caption": "기록용으로 한빛을 검색한 현재 프로젝트 목록. 담당 박기나, 범위 정의, 고객 요청안 상태를 확인한다.",
+    "capturedAtUtc": "2026-10-20T14:33:18.713Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/03-project-overview.jpg",
+    "caption": "기록 시점의 실습 상세 상단. 프로젝트 식별·담당자·현재 단계·범위 요약을 보여준다.",
+    "capturedAtUtc": "2026-10-20T14:33:27.467Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/04-scope-memo.jpg",
+    "caption": "기존 협의 메모 입력 화면. 고객 요청을 정리한 메모이며 추가 회신 반영 전이다.",
+    "capturedAtUtc": "2026-10-20T14:33:51.222Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/05-scope-values.jpg",
+    "caption": "기준량 1 kg·요람~문·2025년 자료 기간을 보여주는 입력 화면. 체크된 기준은 별도 화면 09에서 확인한다.",
+    "capturedAtUtc": "2026-10-20T14:34:00.875Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/06-memo-example.jpg",
+    "caption": "협의 메모 양식을 펼친 화면. 기존 메모가 있어 항목 넣기는 비활성화되고 실제 내용은 유지된다.",
+    "capturedAtUtc": "2026-10-20T14:34:01.589Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/07-researcher-change-history.jpg",
+    "caption": "저장된 담당자 변경 이력 1건. 실제 기록 시각과 전후 담당자·사유를 펼쳐 확인한 화면이며 이번 촬영 중에는 저장하지 않았다.",
+    "capturedAtUtc": "2026-10-20T14:34:21.469Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/08-standard-glossary.jpg",
+    "caption": "실제 선택된 ISO 14040/44 이름으로 용어사전 설명을 연 화면. 기준의 뜻을 확인하며 체크 선택과 설명 이동은 별개다.",
+    "capturedAtUtc": "2026-10-20T14:34:31.404Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/09-standards-and-save.jpg",
+    "caption": "적용 기준 ISO 14040/44만 체크된 상태와 범위 저장/수집 시작 안내. 추가 회신 입력과 협의 중 저장은 아직 진행 전이다.",
+    "capturedAtUtc": "2026-10-20T14:35:04.884Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  },
+  {
+    "file": "images/10-bedtime-backup.jpg",
+    "caption": "취침 전 최신 Chrome 백업 다운로드 안내. 사용자가 요청한 GitHub 인수인계용 파일 이름을 확인한다.",
+    "capturedAtUtc": "2026-10-20T14:49:51.664Z",
+    "source": "Chrome 공개 사이트 현재 화면",
+    "fullPage": false
+  }
+]

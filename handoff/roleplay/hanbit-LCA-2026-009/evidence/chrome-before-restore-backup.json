@@ -1,0 +1,19 @@
+{
+  "format": "lca-project-manager-backup",
+  "version": 1,
+  "createdAt": "2026-10-20T14:19:36.918Z",
+  "sampleDate": "2026-10-20",
+  "records": {
+    "ecoable-lca-manager.projects.v1": null,
+    "ecoable-lca-manager.researchers.v1": "{\"version\":1,\"nextNumber\":5,\"researchers\":[{\"id\":\"researcher-user-4\",\"code\":\"RSR-004\",\"number\":4,\"name\":\"박기나\",\"company\":\"에코에이블컨설팅\",\"department\":\"전과정 순환본부\"}]}",
+    "ecoable-lca-manager.scope.v1": null,
+    "ecoable-lca-manager.requests.v1": null,
+    "ecoable-lca-manager.modelling.v1": null,
+    "ecoable-lca-manager.interpretation.v1": null,
+    "ecoable-lca-manager.report.v1": null,
+    "ecoable-lca-manager.comments.v1": null,
+    "ecoable-lca-manager.verification.v1": null,
+    "ecoable-lca-manager.certification.v1": null,
+    "ecoable-lca-manager.review-route.v1": null
+  }
+}

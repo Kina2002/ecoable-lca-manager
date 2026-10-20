@@ -1,0 +1,50 @@
+[
+  {
+    "id": "H01",
+    "file": "images/h01-user-first-scope.png",
+    "caption": "사용자가 대화에 첨부한 초기 범위 입력 화면. 당시 기준 미선택과 기간 사유 해당없음 표기를 확인할 수 있다.",
+    "sourcePath": "C:\\Users\\82109\\AppData\\Local\\Temp\\codex-clipboard-fc5a71d4-711a-4166-ae27-26dc3d7fc058.png",
+    "capturedAtUtc": null,
+    "timeNote": "과거 대화 첨부 또는 기존 캡처. 촬영 시각을 새로 추정하지 않음."
+  },
+  {
+    "id": "H02",
+    "file": "images/h02-user-wide-inputs.png",
+    "caption": "사용자가 첨부한 폭이 넓은 입력칸 화면. UI 개선 요청의 직접 근거.",
+    "sourcePath": "C:\\Users\\82109\\AppData\\Local\\Temp\\codex-clipboard-ebd8d526-8015-40c9-b893-2f040f4f5b89.png",
+    "capturedAtUtc": null,
+    "timeNote": "과거 대화 첨부 또는 기존 캡처. 촬영 시각을 새로 추정하지 않음."
+  },
+  {
+    "id": "H03",
+    "file": "images/h03-pef-glossary.jpg",
+    "caption": "WEB-066 구현 때 임시 탭에서 확인한 PEF 설명 화면. 당시 기능 확인용이며 사용자가 PEF를 선택했다는 뜻이 아니다.",
+    "sourcePath": "C:\\Users\\82109\\.codex\\visualizations\\2026\\10\\17\\01a14746-beaf-71c2-b222-94e936d6266e\\web066-glossary.png",
+    "capturedAtUtc": null,
+    "timeNote": "과거 대화 첨부 또는 기존 캡처. 촬영 시각을 새로 추정하지 않음."
+  },
+  {
+    "id": "H04",
+    "file": "images/h04-compact-layout.jpg",
+    "caption": "WEB-068 작업 중 보관한 좁혀진 범위 입력 배치. 업무 저장을 수행한 순간의 캡처는 아니다.",
+    "sourcePath": "C:\\Users\\82109\\.codex\\visualizations\\2026\\10\\17\\01a14746-beaf-71c2-b222-94e936d6266e\\web068-scope-layout.png",
+    "capturedAtUtc": null,
+    "timeNote": "과거 대화 첨부 또는 기존 캡처. 촬영 시각을 새로 추정하지 않음."
+  },
+  {
+    "id": "H05",
+    "file": "images/h05-chrome-backup-ready.jpg",
+    "caption": "Chrome 공개 사이트의 기존 기록 백업 안내 화면. 이전 백업 가져오기 전 상태.",
+    "sourcePath": "C:\\Users\\82109\\.codex\\visualizations\\2026\\10\\17\\01a14746-beaf-71c2-b222-94e936d6266e\\chrome-backup-ready.png",
+    "capturedAtUtc": null,
+    "timeNote": "과거 대화 첨부 또는 기존 캡처. 촬영 시각을 새로 추정하지 않음."
+  },
+  {
+    "id": "H06",
+    "file": "images/h06-chrome-restored.jpg",
+    "caption": "실제 Chrome 복원 완료 후 한빛 포장 연습을 연 화면.",
+    "sourcePath": "C:\\Users\\82109\\.codex\\visualizations\\2026\\10\\17\\01a14746-beaf-71c2-b222-94e936d6266e\\chrome-lca-restored.png",
+    "capturedAtUtc": null,
+    "timeNote": "과거 대화 첨부 또는 기존 캡처. 촬영 시각을 새로 추정하지 않음."
+  }
+]
