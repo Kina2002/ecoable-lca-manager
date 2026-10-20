@@ -1,5 +1,7 @@
 # LCA 프로젝트 관리
 
+**롤플레이 실습 기록:** 화면·가상 회신·입력 이유를 누적해 나중에 PDF로 정리합니다. [기록 작성·다른 노트북 재개 방법](docs/ROLEPLAY-RECORDING.md). 개인 실습 원문과 캡처는 저장소 밖 폴더에 보관합니다.
+
 **[회사 제출용 공개 데모 열기](https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site)** — 로그인이나 로컬 서버 실행 없이 접속합니다. 가상 샘플을 제공하며 입력 기록은 방문자 브라우저마다 저장됩니다. 개인 포트폴리오이며 회사 공식 서비스가 아닙니다.
 
 **WEB-069 공개 배포 완료:** 기능 기준은 WEB-068입니다. 새 업무 기능 추가를 멈추고 Sites의 public 버전 1로 배포했습니다. [배포 SPEC·확인 범위](docs/04-webapp-spec/WEB-069-public-demo-deployment.md). 전체 동작 시험은 집에서 이어갑니다.
