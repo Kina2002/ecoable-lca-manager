@@ -103,12 +103,24 @@ LCA.views.projectDetail = (() => {
     if (project.information) for (const [key,label] of Object.entries(LCA.projects.INFORMATION)) scopeFields.push(field(label, project.information[key] || '미기록'));
     const missingInfo = LCA.projects.missingInformation(project);
     if (missingInfo.length) scopeFields.push(field('추가 확인할 권장 정보', missingInfo, '상단 기본정보 수정에서 보충해요. 지금 단계의 필수 이동 조건과는 구분해요.'));
-    scopeFields.push(field('협의 메모', project.scopeMemo || '기록한 메모가 없어요.'));
+    const scopeMemos = LCA.scope.memos(project);
+    scopeFields.push(field(`${project.scopeStatus || '미정'} 메모`, scopeMemos[project.scopeStatus] || '이 상태에 기록한 메모가 없어요.'));
     if (project.modules) {
       scopeFields.push(field('평가 모듈', project.modules,
         project.modules === 'A1–A3' ? '건설제품 평가의 단계 표기예요. A1은 원료 공급, A2는 원료 운송, A3는 제품 제조를 뜻해요.' : '이 프로젝트에서 평가할 과정의 구분이에요.'));
     }
     const scope = card('제품과 평가 범위', '무엇을, 얼마만큼, 어디까지 살펴볼까요?', scopeFields);
+    const otherMemos = LCA.scope.STATUSES.filter((status) => status !== project.scopeStatus && scopeMemos[status]?.trim());
+    if (otherMemos.length) {
+      const history = document.createElement('details'); history.className = 'scope-memo-history';
+      history.append(textElement('summary', '', `다른 범위 상태의 메모 ${otherMemos.length}개`));
+      for (const status of otherMemos) {
+        const item = document.createElement('div'); item.className = 'scope-memo-history-item';
+        item.append(textElement('h3', '', `${status} 메모`), textElement('p', 'detail-value', scopeMemos[status]));
+        history.append(item);
+      }
+      scope.append(history);
+    }
     scope.querySelector('.card-field-guide').append(textElement('p', 'detail-note', '기능·선언 단위는 여기서 기준량으로 간단히 표시했어요. 실제로 제품을 비교하려면 기능·성능·수명 같은 조건도 함께 정해야 해요.'));
     scope.id = 'scope-summary';
     return scope;

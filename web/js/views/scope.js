@@ -171,27 +171,68 @@ LCA.views.scope = (() => {
       return input;
     }
     field('scopeStatus', '범위 상태', project.scopeStatus, LCA.scope.STATUSES);
-    const memo = field('scopeMemo', '협의 메모 (선택 · 최대 2,000자)', project.scopeMemo);
+    const memoDrafts = LCA.scope.memos(project);
+    let memoStatus = controls.scopeStatus.value;
+    const memo = field('scopeMemo', '', memoDrafts[memoStatus]);
     memo.rows = 5;
     memo.parentElement.classList.add('scope-memo-field');
-    const memoTemplate = '대상 제품: \n평가 기준량: \n평가 범위 (포함 / 제외): \n자료 기준기간: \n적용 기준 (확정 / 확인 중): \n추가 협의·미정 사항: ';
-    memo.placeholder = '대상 제품: 제품명·모델/규격\n평가 기준량: 예) 제품 1 kg\n평가 범위: 포함할 과정 / 제외할 과정\n자료 기준기간: 시작일 ~ 종료일\n적용 기준: 합의한 기준 또는 고객 확인 중\n추가 협의·미정 사항: 더 확인할 내용';
+    const memoGuides = {
+      '미정': {
+        help: '아직 정하지 못한 내용과 먼저 확인할 질문을 적어요.',
+        template: '처음 받은 문의: \n아직 모르는 내용: \n먼저 확인할 질문: ',
+        example: '처음 받은 문의: 거래처 제출용 제품 환경정보 문의\n아직 모르는 내용: 평가할 제품과 필요한 결과\n먼저 확인할 질문: 대상 제품·제출 목적·요청 기한'
+      },
+      '고객 요청안': {
+        help: '고객이 처음 요청한 제품·범위와 확인이 필요한 내용을 남겨요.',
+        template: '대상 제품: \n평가 기준량: \n평가 범위 (포함 / 제외): \n자료 기준기간: \n적용 기준 (확정 / 확인 중): \n추가 협의·미정 사항: ',
+        example: '대상 제품: 종이 포장 상자 A형 1종 (HB-BOX-01)\n평가 기준량: 제품 1 kg\n평가 범위: 원료 생산 → 공장까지 운송 → 상자 제조 → 공장 출하\n제외 범위: 출하 후 운송·사용·폐기 (협의 필요)\n자료 기준기간: 2025-01-01 ~ 2025-12-31\n적용 기준: 고객 확인 중\n추가 협의·미정 사항: 거래처 요구 기준과 제출 양식 확인'
+      },
+      '협의 중': {
+        help: '추가로 받은 답변, 합의한 내용, 아직 남은 쟁점을 적어요.',
+        template: '추가 회신·협의 내용: \n합의한 내용: \n아직 남은 쟁점: \n다음에 확인할 내용: ',
+        example: '추가 회신·협의 내용: 거래처가 지정한 제출 양식은 없음\n합의한 내용: 원료 생산부터 공장 출하까지 평가\n아직 남은 쟁점: 적용 기준에 대한 최종 합의\n다음에 확인할 내용: 연구원이 제안한 기준에 대한 고객 의견'
+      },
+      '확정': {
+        help: '최종 합의한 범위·기준과 확인 근거를 정리해요. 상태를 선택한 것만으로 저장되지는 않아요.',
+        template: '합의일·확인자: \n최종 합의한 범위: \n합의한 적용 기준: \n제외 사항·유의 사항: ',
+        example: '합의일·확인자: 고객 회신 날짜와 확인자 기록\n최종 합의한 범위: 고객과 합의한 포함·제외 과정\n합의한 적용 기준: 최종 확인한 기준 이름\n제외 사항·유의 사항: 별도 확인이 필요한 제한 조건'
+      }
+    };
+    const memoStateHelp = document.createElement('p'); memoStateHelp.className = 'detail-help'; memoStateHelp.id = 'scope-memo-state-help'; memoStateHelp.setAttribute('aria-live', 'polite');
+    memo.parentElement.append(memoStateHelp);
     const memoExamples = document.createElement('details'); memoExamples.className = 'scope-memo-example';
-    const memoSummary = document.createElement('summary'); memoSummary.textContent = '협의 메모 예시 양식';
+    const memoSummary = document.createElement('summary');
     const memoHelp = document.createElement('p'); memoHelp.className = 'detail-help'; memoHelp.id = 'scope-memo-help';
     memoHelp.textContent = '메모는 고객과 협의한 내용을 정리하는 공간이에요. 아래는 가상 예시이며 실제 합의 내용에 맞게 적어요. 메모만 적어도 다른 입력칸이 자동으로 채워지지는 않아요.';
-    const memoExample = document.createElement('pre'); memoExample.textContent = '대상 제품: 종이 포장 상자 A형 1종 (HB-BOX-01)\n평가 기준량: 제품 1 kg\n평가 범위: 원료 생산 → 공장까지 운송 → 상자 제조 → 공장 출하\n제외 범위: 출하 후 운송·사용·폐기 (협의 필요)\n자료 기준기간: 2025-01-01 ~ 2025-12-31\n적용 기준: 고객 확인 중\n추가 협의·미정 사항: 거래처 요구 기준과 제출 양식 확인';
+    const memoExample = document.createElement('pre');
     const addTemplate = document.createElement('button'); addTemplate.type = 'button'; addTemplate.className = 'request-action-button'; addTemplate.textContent = '빈 메모에 항목 넣기';
     const memoFeedback = document.createElement('p'); memoFeedback.className = 'detail-help'; memoFeedback.setAttribute('role', 'status');
     const syncTemplate = () => { addTemplate.disabled = !!memo.value.trim(); addTemplate.title = addTemplate.disabled ? '작성한 메모가 있어요. 기존 내용을 유지해요.' : '빈 항목만 넣고 직접 작성해요.'; };
     addTemplate.addEventListener('click', () => {
       if (memo.value.trim()) return;
-      memo.value = memoTemplate; memo.dispatchEvent(new Event('input', { bubbles: true })); memo.focus();
+      memo.value = memoGuides[memoStatus].template; memo.dispatchEvent(new Event('input', { bubbles: true })); memo.focus();
       memoFeedback.textContent = '빈 항목을 넣었어요. 협의 내용을 작성한 뒤 범위 저장을 눌러 주세요.';
     });
-    memo.addEventListener('input', syncTemplate); syncTemplate();
+    function showMemo() {
+      const guide = memoGuides[memoStatus];
+      memo.parentElement.querySelector('label').textContent = `${memoStatus} 메모 (선택 · 상태별 최대 2,000자)`;
+      memo.placeholder = guide.template;
+      memoStateHelp.textContent = `${guide.help} 상태마다 따로 보관해요. 다른 상태로 바꿔도 작성 중인 메모는 유지되며, 범위 저장을 눌러야 모든 상태의 메모가 저장돼요.`;
+      memoSummary.textContent = `${memoStatus} 메모 예시 양식`;
+      memoExample.textContent = guide.example;
+      memoFeedback.textContent = '';
+      syncTemplate();
+    }
+    controls.scopeStatus.addEventListener('change', () => {
+      memoDrafts[memoStatus] = memo.value;
+      memoStatus = controls.scopeStatus.value;
+      memo.value = memoDrafts[memoStatus];
+      showMemo();
+    });
+    memo.addEventListener('input', () => { memoDrafts[memoStatus] = memo.value; syncTemplate(); });
+    showMemo();
     memoExamples.append(memoSummary, memoHelp, memoExample, addTemplate, memoFeedback); memo.parentElement.append(memoExamples);
-    memo.setAttribute('aria-describedby', memoHelp.id);
+    memo.setAttribute('aria-describedby', `${memoStateHelp.id} ${memoHelp.id}`);
     const measurements = document.createElement('div'); measurements.className = 'scope-measurements'; measurements.setAttribute('role', 'group'); measurements.setAttribute('aria-label', '평가 기준량과 시스템 경계'); form.append(measurements);
     field('qty', '평가 기준량 (0보다 큰 수)', project.functionalUnit?.qty, null, measurements);
     controls.qty.inputMode = 'decimal';
@@ -278,17 +319,23 @@ LCA.views.scope = (() => {
     form.addEventListener('change', () => updateReadiness(true));
     form.addEventListener('submit', (event) => {
       event.preventDefault();
+      memoDrafts[memoStatus] = memo.value.trim();
       const draft = {
         scopeStatus: controls.scopeStatus.value,
         functionalUnit: { qty: controls.qty.value.trim(), unit: controls.unit.value.trim() },
         boundary: controls.boundary.value, refStart: controls.refStart.value, refEnd: controls.refEnd.value,
         periodReason: controls.periodReason.value.trim(),
         scopeMemo: controls.scopeMemo.value.trim(),
+        scopeMemos: { ...memoDrafts },
         standards: Array.from(standards.querySelectorAll('input:checked'), (input) => input.value)
       };
       const result = store.save(project.id, draft, expected);
       message.textContent = result.ok ? '범위를 저장했어요. 프로젝트 단계는 그대로예요.' : result.error;
-      if (result.ok) { expected = LCA.scope.snapshot(project); updateReadiness(); onChanged(false); }
+      if (result.ok) {
+        expected = LCA.scope.snapshot(project);
+        Object.assign(memoDrafts, LCA.scope.memos(project)); memo.value = memoDrafts[memoStatus]; syncTemplate();
+        updateReadiness(); onChanged(false);
+      }
     });
     start.addEventListener('click', () => {
       const result = store.start(project.id, expected);

@@ -1,0 +1,14 @@
+{
+  "capturedAtUtc": "2026-10-22T01:12:39.103Z",
+  "origin": "http://127.0.0.1:8786/",
+  "scope": "격리된 로컬 확인용 사본이며 공개 사이트 실습 진행이 아님",
+  "oldMemoPreserved": true,
+  "allFourAfterBackupRestore": true,
+  "memoLengths": {
+    "미정": 17,
+    "고객 요청안": 225,
+    "협의 중": 26,
+    "확정": 22
+  },
+  "automatedTestSuiteRun": false
+}

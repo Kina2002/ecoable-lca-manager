@@ -348,6 +348,11 @@ h1 { font-size: 25px; }
 .scope-form-compact .scope-date-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
 .scope-date-row > button { margin: 0; white-space: nowrap; }
 .scope-memo-example { margin-top: 6px; }
+.scope-memo-history { margin-top: 12px; border-top: 1px solid #d6e0d9; padding-top: 12px; }
+.scope-memo-history summary { cursor: pointer; color: #174c3d; font-size: 13px; }
+.scope-memo-history-item { margin-top: 12px; }
+.scope-memo-history-item h3 { font-size: 14px; margin: 0 0 6px; }
+.scope-memo-history-item .detail-value { font-size: 13px; margin: 0; }
 .scope-memo-example summary, .scope-period-example summary { cursor: pointer; color: #174c3d; font-size: 13px; }
 .scope-memo-example pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 13px; line-height: 1.65; background: #f4f7f4; padding: 10px 12px; border-radius: 6px; }
 .scope-period-example { margin-top: 5px; }

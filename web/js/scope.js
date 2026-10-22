@@ -4,9 +4,19 @@ LCA.scope = (() => {
   const STORAGE_KEY = 'ecoable-lca-manager.scope.v1';
   const STATUSES = ['미정', '고객 요청안', '협의 중', '확정'];
   const STANDARDS = ['ISO 14040/44', 'ISO 14067', 'GHG Protocol Product', 'PEF', 'EN 15804+A2', '작성지침(PCR)', 'PACT', 'Catena-X'];
-  const FIELDS = ['scopeStatus', 'functionalUnit', 'boundary', 'refStart', 'refEnd', 'periodReason', 'standards', 'stage', 'scopeMemo', 'customerContactName', 'researcherName', 'researcherId'];
+  const FIELDS = ['scopeStatus', 'functionalUnit', 'boundary', 'refStart', 'refEnd', 'periodReason', 'standards', 'stage', 'scopeMemo', 'scopeMemos', 'customerContactName', 'researcherName', 'researcherId'];
+  function memos(project) {
+    if (project.scopeMemos !== undefined) return { ...project.scopeMemos };
+    // 이전의 한 칸 메모는 당시 저장된 상태에만 연결한다. 읽을 때 저장소를 다시 쓰지 않는다.
+    return Object.fromEntries(STATUSES.map((status) => [status, status === project.scopeStatus ? project.scopeMemo || '' : '']));
+  }
+  function validMemos(value) {
+    return value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === STATUSES.length
+      && STATUSES.every((status) => Object.hasOwn(value, status) && typeof value[status] === 'string' && value[status].length <= 2000);
+  }
   function snapshot(project) {
-    return Object.fromEntries(FIELDS.map((key) => [key, ['scopeMemo', 'customerContactName', 'researcherName', 'researcherId'].includes(key) && project[key] === undefined ? '' : project[key]]));
+    return Object.fromEntries(FIELDS.map((key) => [key, key === 'scopeMemos' ? memos(project)
+      : ['scopeMemo', 'customerContactName', 'researcherName', 'researcherId'].includes(key) && project[key] === undefined ? '' : project[key]]));
   }
   const assigned = (record) => Boolean(record.customerContactName?.trim() && record.researcherName?.trim());
   const researcherSnapshot = (record) => ({ researcherId: record.researcherId || '', researcherName: record.researcherName || '' });
@@ -69,6 +79,7 @@ LCA.scope = (() => {
       && (!record.refStart || !record.refEnd || record.refStart <= record.refEnd)
       && record.periodReason.length <= 1000 && Array.isArray(record.standards)
       && (record.scopeMemo === undefined || (typeof record.scopeMemo === 'string' && record.scopeMemo.length <= 2000))
+      && (record.scopeMemos === undefined || (validMemos(record.scopeMemos) && record.scopeMemo === record.scopeMemos[record.scopeStatus]))
       && ['customerContactName', 'researcherName'].every((key) => record[key] === undefined || (typeof record[key] === 'string' && record[key].length <= 100))
       && (record.researcherId === undefined || record.researcherId === '' || (typeof record.researcherId === 'string' && /^researcher-(sample|user)-[1-9]\d*$/.test(record.researcherId)))
       && (!record.researcherId || (typeof record.researcherName === 'string' && Boolean(record.researcherName.trim())))
@@ -96,7 +107,7 @@ LCA.scope = (() => {
         if (Object.entries(data.records).some(([id, value]) => !originals.has(id) || !valid(value) || ![1, 2, 3, 4, 5, 6, 7].includes(originals.get(id).stage)
             || (originals.get(id).stage === 1 && value.stage > 1 && !assigned(value))
             || value.stage < originals.get(id).stage)) throw Error();
-        // 기존 기록은 메모가 없다. 읽을 때만 빈 문자열로 보완하고 원본 저장본은 쓰지 않는다.
+        // 이전 기록의 메모·상태별 메모는 읽을 때만 보완하고 원본 저장본은 쓰지 않는다.
         if (!validResearcherHistory(data.researcherHistory, originals)) throw Error();
         return { ok: true, ...(data.researcherHistory ? { researcherHistory: data.researcherHistory } : {}), records: Object.fromEntries(Object.entries(data.records).map(([id, value]) => [id, normalize(value, originals.get(id))])) };
       } catch { return { ok: false, error: '범위 기록을 읽을 수 없어요. 기존 기록을 보호하기 위해 저장과 단계 이동을 중단했어요.' }; }
@@ -230,7 +241,11 @@ LCA.scope = (() => {
         if (current.stage !== 2 || current.scopeStatus !== '확정' || missing({ ...project, ...current }).length) return { ok: false, error: '범위 정의 단계에서 필수 정보를 갖추고 확정을 저장한 뒤 시작해 주세요.' };
         record = { ...current, stage: 3 };
       } else {
-        record = snapshot({ ...project, ...draft, stage: current.stage, customerContactName: current.customerContactName, researcherName: current.researcherName, researcherId: current.researcherId });
+        const next = { ...project, ...draft, stage: current.stage, customerContactName: current.customerContactName, researcherName: current.researcherName, researcherId: current.researcherId };
+        // 이전 호출 형식(scopeMemo 한 칸)으로 저장해도 다른 상태의 메모를 지우지 않는다.
+        next.scopeMemos = draft.scopeMemos === undefined ? { ...memos(current), [next.scopeStatus]: next.scopeMemo || '' } : { ...draft.scopeMemos };
+        if (!validMemos(next.scopeMemos) || next.scopeMemo !== next.scopeMemos[next.scopeStatus]) return { ok: false, error: '범위 상태별 메모를 확인해 주세요. 메모는 상태별로 2,000자까지 저장할 수 있어요.' };
+        record = snapshot(next);
       }
       if (!valid(record)) return { ok: false, error: '날짜·기준량·적용 기준을 확인해 주세요. 확정하려면 필수 정보를 모두 채워야 해요.' };
       let researcherHistory = data.researcherHistory;
@@ -256,5 +271,5 @@ LCA.scope = (() => {
       startReport: (id, expected) => update(id, null, expected, 'startReport')
     };
   }
-  return { STORAGE_KEY, STATUSES, STANDARDS, snapshot, assigned, missing, twelveMonths, collectionReadiness, reviewReadiness, createStore };
+  return { STORAGE_KEY, STATUSES, STANDARDS, memos, snapshot, assigned, missing, twelveMonths, collectionReadiness, reviewReadiness, createStore };
 })();
