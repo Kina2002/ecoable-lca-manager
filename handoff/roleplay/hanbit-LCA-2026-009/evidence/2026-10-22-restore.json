@@ -1,0 +1,47 @@
+{
+  "dateLocal": "2026-10-22",
+  "timezone": "Asia/Seoul",
+  "url": "https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site/",
+  "browser": "ChatGPT in-app browser",
+  "chromeAlsoRestored": false,
+  "blocker": "파일 선택과 확인란은 정상이나 현재 페이지에서 선백업하지 않아 버튼 비활성",
+  "preRestoreBackup": {
+    "file": "LCA-백업-2026-10-22-003555.json",
+    "bytes": 665,
+    "sha256": "FB0AA60CC12E8097B6BD822DAD5DD63D2B275069972CB3B2870BA383BD6E62ED",
+    "createdAtUtc": "2026-10-22T00:35:55.277Z"
+  },
+  "appliedBackup": {
+    "file": "latest-backup.json",
+    "bytes": 2432,
+    "sha256": "AD216A5AD1C27CA7E36E3F108BC4C263BFBD1C8458AC9367464B9D9D9E217237",
+    "createdAtUtc": "2026-10-20T14:46:33.898Z"
+  },
+  "observedPreview": {
+    "projects": 8,
+    "researchers": 4,
+    "researcherChanges": 1,
+    "requests": 0
+  },
+  "successMessage": "백업 복원을 마쳤어요.",
+  "reloadAndDetailVerified": true,
+  "practice": {
+    "code": "LCA-2026-009",
+    "name": "한빛 포장 연습",
+    "researcher": "박기나",
+    "researcherCode": "RSR-004",
+    "stage": "범위 정의 2/10",
+    "scopeStatus": "고객 요청안",
+    "functionalUnit": "1 kg",
+    "boundary": "요람~문",
+    "referencePeriod": "2025-01-01~2025-12-31",
+    "standards": [
+      "ISO 14040/44"
+    ],
+    "requests": 0,
+    "latestReplyApplied": false
+  },
+  "nextPracticeEvent": "R08",
+  "featureChanges": false,
+  "automatedTestsRun": false
+}

@@ -1,5 +1,7 @@
 # 아침에 다른 노트북에서 이어가기
 
+**2026-10-22 상태:** ChatGPT 앱 내 브라우저의 공개 사이트에 `handoff/latest-backup.json`을 실제 복원하고 새로고침했다. 선백업 누락으로 비활성이던 교체 버튼은 현재 기록 다운로드 후 확인란 재체크로 활성화됐다. 한빛 포장 연습 / 박기나 / 범위 정의 2/10 / 고객 요청안이며 추가 고객 회신 메모·협의 중 저장(R08)은 아직 진행 전이다. Chrome 저장 공간에 적용한 것은 아니다. 이번 복원 근거와 추가 화면은 handoff 실습기록 16절에 있다.
+
 최종 정리: **2026-10-20 (한국 시간)** · 기능 **WEB-068** · 공개 배포 **WEB-069** · 브랜치 **main**
 
 ## 백업도 GitHub에 함께 보관했다
@@ -9,7 +11,7 @@
 - **[최신 백업 — handoff/latest-backup.json](handoff/latest-backup.json)**
 - **[아침 복원 순서 — handoff/README.md](handoff/README.md)**
 - **[실습 기록 원문](handoff/roleplay/hanbit-LCA-2026-009/실습기록.md)** / [읽기·인쇄 미리보기](handoff/roleplay/hanbit-LCA-2026-009/실습기록-미리보기.html)
-- **[화면 16장 목록](handoff/roleplay/hanbit-LCA-2026-009/화면목록.md)** / [기록을 계속 쓰는 지침](docs/ROLEPLAY-RECORDING.md)
+- **[화면 20장 목록](handoff/roleplay/hanbit-LCA-2026-009/화면목록.md)** / [기록을 계속 쓰는 지침](docs/ROLEPLAY-RECORDING.md)
 
 현재 Chrome 공개 사이트에서 백업 내려받기로 새로 만든 원본은 `LCA-백업-2026-10-20-144633.json`, 크기 2,432바이트다. 저장 직전 범위 입력 16개와 대조했을 때 미저장 차이는 0개였다. 원문 그대로 latest-backup.json에 복사했으며 원본 SHA-256과 내용 요약은 [manifest.json](handoff/manifest.json)에 남긴다. 다른 화면의 모든 미저장 입력을 검사했다고 설명하지 않는다.
 

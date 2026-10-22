@@ -68,5 +68,33 @@
     "capturedAtUtc": "2026-10-20T14:49:51.664Z",
     "source": "Chrome 공개 사이트 현재 화면",
     "fullPage": false
+  },
+  {
+    "file": "images/11-chrome-before-restore-2026-10-21.jpg",
+    "capturedAtUtc": "2026-10-21T00:37:25.119Z",
+    "caption": "2026-10-21 Chrome의 현재 기록 선백업 안내. 이 날 자동 파일 선택 제한과 URL 확인 실패로 복원을 완료하지 못했다.",
+    "source": "Chrome 공개 사이트",
+    "fullPage": false
+  },
+  {
+    "file": "images/12-iab-restore-ready-2026-10-22.jpg",
+    "capturedAtUtc": "2026-10-22T00:36:22.701Z",
+    "caption": "2026-10-22 앱 내 브라우저의 백업 미리보기 8개 프로젝트·4명 연구원과 체크된 확인란, 활성화된 복원 버튼.",
+    "source": "ChatGPT 앱 내 브라우저 공개 사이트",
+    "fullPage": false
+  },
+  {
+    "file": "images/13-iab-restore-complete-2026-10-22.jpg",
+    "capturedAtUtc": "2026-10-22T00:36:26.175Z",
+    "caption": "2026-10-22 앱 내 브라우저의 실제 백업 복원 완료 안내와 새로고침 버튼.",
+    "source": "ChatGPT 앱 내 브라우저 공개 사이트",
+    "fullPage": false
+  },
+  {
+    "file": "images/14-iab-restored-hanbit-2026-10-22.jpg",
+    "capturedAtUtc": "2026-10-22T00:36:47.780Z",
+    "caption": "새로고침 후 열린 한빛 포장 연습 상세 상단. 범위 정의 2/10이며 업무 상태를 편집하지 않았다.",
+    "source": "ChatGPT 앱 내 브라우저 공개 사이트",
+    "fullPage": false
   }
 ]
