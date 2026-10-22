@@ -35,21 +35,24 @@
     "requests": 0,
     "latestReplyApplied": false,
     "nextEvent": "R08",
-    "nextAction": "고객 요청안 메모를 유지하고 협의 중 메모에 추가 회신을 기록·저장한 뒤 화면과 이유 기록"
+    "nextAction": "고객 요청안 메모를 유지하고 협의 중 메모에 추가 회신을 기록·저장한 뒤 화면과 이유 기록",
+    "latestReplyDrafted": true
   },
   "roleplay": {
     "path": "roleplay/hanbit-LCA-2026-009",
-    "screenshots": 21,
-    "currentScreenshots": 15,
+    "screenshots": 22,
+    "currentScreenshots": 16,
     "historicalScreenshots": 6,
     "pdfCreated": false,
     "currentEvent": {
       "id": "R08",
       "dateLocal": "2026-10-22",
-      "status": "안내 / 사용자 입력·저장 대기",
+      "status": "사용자 입력 화면 확인 / 저장 대기",
       "email": "roleplay/hanbit-LCA-2026-009/evidence/2026-10-22-R08-customer-email.md",
       "scopeSaveVerified": false,
-      "nextInput": "협의 중 상태의 별도 메모에 회신을 기록하고 범위 저장"
+      "nextInput": "협의 중 상태의 별도 메모에 회신을 기록하고 범위 저장",
+      "draftScopeStatus": "협의 중",
+      "proposalEntriesFilled": false
     }
   },
   "scopeInputComparison": {
