@@ -8,6 +8,8 @@
 
 **[회사 제출용 공개 데모 열기](https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site)** — 로그인이나 로컬 서버 실행 없이 접속합니다. 가상 샘플을 제공하며 입력 기록은 방문자 브라우저마다 저장됩니다. 개인 포트폴리오이며 회사 공식 서비스가 아닙니다.
 
+**최신 WEB-070 / 공개 버전 2:** 범위 상태마다 메모를 따로 보관합니다. 상태를 오가며 입력을 유지하고 범위 저장 시 네 메모를 함께 보관합니다. 기존 메모·백업을 보존하며 로컬 저장/새로고침/새 백업 재복원을 확인했습니다. 실제 공개 실습의 기존 18개 입력도 유지했습니다. [SPEC과 확인 범위](docs/04-webapp-spec/WEB-070-scope-status-memos.md).
+
 **WEB-069 공개 배포 완료:** 기능 기준은 WEB-068입니다. 새 업무 기능 추가를 멈추고 Sites의 public 버전 1로 배포했습니다. [배포 SPEC·확인 범위](docs/04-webapp-spec/WEB-069-public-demo-deployment.md). 전체 동작 시험은 집에서 이어갑니다.
 
 **최신 WEB-068:** 개요·범위 입력칸을 필요한 폭으로 모으고 **협의 메모 예시 양식**과 **빈 메모에 항목 넣기**를 추가했습니다. 기존 메모는 유지합니다. [명세](docs/04-webapp-spec/WEB-068-scope-layout-handoff.md). **부트캠프 노트북에서 이어갈 때는 [CONTINUE-HERE.md](CONTINUE-HERE.md)를 먼저 읽으세요.** 최신 업무 백업은 handoff/latest-backup.json입니다.

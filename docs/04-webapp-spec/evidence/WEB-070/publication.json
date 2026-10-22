@@ -1,0 +1,16 @@
+{
+  "feature": "WEB-070",
+  "project_id": "appgprj_6ad72e6be4dc8191bdc6b088fc884519",
+  "version_number": 2,
+  "version_id": "appgprj_6ad72e6be4dc8191bdc6b088fc884519~appgver_7b421c255c4881918ab3b02a7ec43386",
+  "deployment_id": "appgdep_6ad963a572488191b7f3282fa4de11a6",
+  "status": "succeeded",
+  "url": "https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site",
+  "updated_at": "2026-10-22T01:15:33.220063+00:00",
+  "sites_source_commit": "229482d04f57297d6e3132cecccf9fc996db1430",
+  "github_implementation_commit": "5eb1ae0eeda2f0c856d989a49bfdebb766d73dce",
+  "audience": "public",
+  "userInputsCompared": 18,
+  "userInputDifferences": 0,
+  "practiceScopeSavedByAssistant": false
+}

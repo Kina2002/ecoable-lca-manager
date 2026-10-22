@@ -24,8 +24,8 @@
 | [manifest.json](manifest.json) | 원본 파일명·해시·확인한 상태·다음 할 일 |
 | [roleplay/hanbit-LCA-2026-009/실습기록.md](roleplay/hanbit-LCA-2026-009/실습기록.md) | 문의/회신·입력값·이유·화면·배운 점·다음 행동의 누적 기록 |
 | [실습기록 미리보기](roleplay/hanbit-LCA-2026-009/실습기록-미리보기.html) | 같은 내용을 읽거나 인쇄할 수 있는 HTML |
-| [화면 목록](roleplay/hanbit-LCA-2026-009/화면목록.md) | 20개 캡처의 출처와 설명 |
-| roleplay/hanbit-LCA-2026-009/images/ | 실제 캡처 14장 + 과거 첨부/보관 화면 6장 |
+| [화면 목록](roleplay/hanbit-LCA-2026-009/화면목록.md) | 21개 캡처의 출처와 설명 |
+| roleplay/hanbit-LCA-2026-009/images/ | 실제 캡처 15장 + 과거 첨부/보관 화면 6장 |
 | roleplay/hanbit-LCA-2026-009/evidence/ | 화면 텍스트·입력값·이전 복원 근거 파일 |
 
 최신 백업은 Chrome 공개 사이트의 **백업 내려받기**로 새로 만든 파일이다. 원본 이름은 `LCA-백업-2026-10-20-144633.json`이며 크기는 **2,432바이트**다. 백업 직전 범위 입력 16개와 대조했을 때 차이는 없었다. 다른 화면의 모든 미저장 입력을 검사했다는 뜻은 아니다.

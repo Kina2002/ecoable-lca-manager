@@ -1,0 +1,137 @@
+{
+  "observedAtUtc": "2026-10-22T01:16:35.948Z",
+  "browser": "ChatGPT in-app browser",
+  "sourceUrl": "https://lca-project-manager-kina2002.flowy-pony-5289.chatgpt.site/",
+  "preservedAll18Inputs": true,
+  "fields": [
+    {
+      "checked": false,
+      "id": "scope-scopeStatus",
+      "name": "scopeStatus",
+      "type": "select-one",
+      "value": "고객 요청안"
+    },
+    {
+      "checked": false,
+      "id": "scope-scopeMemo",
+      "name": "scopeMemo",
+      "type": "textarea",
+      "value": "대상 제품: 종이 포장 상자 A형 1종(HB-BOX-01)\n대상 사업장: 제1공장\n평가 기준량: 제품 1kg\n요청 결과: 제품 1kg당 온실가스 배출량\n\n평가 범위: 원료 생산 → 공장까지 원료 운송 → 상자 제조 → 공장 출하\n이번 요청에서 제외: 출하 후 배송·사용·폐기\n자료 기간: 2025-01-01~2025-12-31\n\n자료 취합 담당: 김민지\n적용 기준 및 거래처 지정 양식: 추가 확인 필요"
+    },
+    {
+      "checked": false,
+      "id": "scope-qty",
+      "name": "qty",
+      "type": "text",
+      "value": "1"
+    },
+    {
+      "checked": false,
+      "id": "scope-unit",
+      "name": "unit",
+      "type": "text",
+      "value": "kg"
+    },
+    {
+      "checked": false,
+      "id": "scope-boundary",
+      "name": "boundary",
+      "type": "select-one",
+      "value": "요람~문"
+    },
+    {
+      "checked": false,
+      "id": "scope-refStart",
+      "name": "refStart",
+      "type": "text",
+      "value": "2025-01-01"
+    },
+    {
+      "checked": false,
+      "id": "",
+      "name": "",
+      "type": "date",
+      "value": ""
+    },
+    {
+      "checked": false,
+      "id": "scope-refEnd",
+      "name": "refEnd",
+      "type": "text",
+      "value": "2025-12-31"
+    },
+    {
+      "checked": false,
+      "id": "",
+      "name": "",
+      "type": "date",
+      "value": ""
+    },
+    {
+      "checked": false,
+      "id": "scope-periodReason",
+      "name": "periodReason",
+      "type": "textarea",
+      "value": ""
+    },
+    {
+      "checked": true,
+      "id": "scope-standard-0",
+      "name": "",
+      "type": "checkbox",
+      "value": "ISO 14040/44"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-1",
+      "name": "",
+      "type": "checkbox",
+      "value": "ISO 14067"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-2",
+      "name": "",
+      "type": "checkbox",
+      "value": "GHG Protocol Product"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-3",
+      "name": "",
+      "type": "checkbox",
+      "value": "PEF"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-4",
+      "name": "",
+      "type": "checkbox",
+      "value": "EN 15804+A2"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-5",
+      "name": "",
+      "type": "checkbox",
+      "value": "작성지침(PCR)"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-6",
+      "name": "",
+      "type": "checkbox",
+      "value": "PACT"
+    },
+    {
+      "checked": false,
+      "id": "scope-standard-7",
+      "name": "",
+      "type": "checkbox",
+      "value": "Catena-X"
+    }
+  ],
+  "scopeSavedByAssistant": false,
+  "practiceEvent": "R08",
+  "practiceStatus": "사용자 입력·저장 대기"
+}
