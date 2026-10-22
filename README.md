@@ -71,7 +71,6 @@ python -m http.server 5180 --bind 127.0.0.1 --directory web
 - [업무 자료조사](docs/01-research/lca-research.md)
 - [프로그램 설계서](docs/02-design/lca-webapp-design.md)
 - [기능별 SPEC과 확인 결과](docs/04-webapp-spec/README.md)
-- [이전 README·개발 기록](docs/DEVELOPMENT-HISTORY.md)
 - [다른 노트북에서 개발 이어가기](CONTINUE-HERE.md)
 - [실습 기록과 백업 안내](handoff/README.md)
 
