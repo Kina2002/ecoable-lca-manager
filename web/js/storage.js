@@ -9,7 +9,7 @@ LCA.storage = (() => {
   const KEYS = [...DATA_KEYS, SAMPLE_KEY];
   const LOCK = `${PREFIX}review-workflow-write`;
   let epoch = null; let ready = false;
-  const raw = () => window.localStorage;
+  const raw = () => LCA.cloud ? LCA.cloud.raw() : window.localStorage;
   const token = () => `${Date.now()}-${crypto.randomUUID()}`;
   function locked(action) { return navigator.locks?.request ? navigator.locks.request(LOCK, action) : Promise.resolve().then(action); }
   function readAll() {

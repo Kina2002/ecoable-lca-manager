@@ -13,9 +13,11 @@
   });
   let sampleDate; let recovery;
   try {
+    if (LCA.cloud && !(await LCA.cloud.connect()).ready) return;
     recovery = await LCA.storage.bootstrap();
     sampleDate = LCA.storage.get().getItem(LCA.storage.SAMPLE_KEY) || LCA.rules.today();
     if (!LCA.requests.validDate(sampleDate)) throw Error();
+    LCA.cloud?.start();
   } catch {
     showStorageReload('저장 기록을 안전하게 열지 못했어요. 중단된 복원 기록이나 브라우저 저장 설정을 확인한 뒤 새로고침해 주세요. 기존 백업 파일은 보관해 주세요.'); return;
   }
@@ -683,4 +685,5 @@
   window.setInterval(refreshDates, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDates(); });
   window.addEventListener('pageshow', refreshDates);
+  document.querySelector('.app-shell').inert = false;
 })();

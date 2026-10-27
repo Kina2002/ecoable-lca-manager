@@ -8,9 +8,10 @@
     <title>홈 | LCA 프로젝트 관리</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./css/app.css?v=web-041">
-    <link rel="stylesheet" href="./css/compact.css?v=web-068">
+    <link rel="stylesheet" href="./css/compact.css?v=web-071">
     <script src="./js/views/compact.js?v=web-042" defer></script>
-    <script src="./js/storage.js?v=web-038" defer></script>
+    <script src="./js/storage.js?v=web-071" defer></script>
+    <script src="./js/cloud.js?v=web-071" defer></script>
     <script src="./js/constants.js?v=web-062" defer></script>
     <script src="./js/rules.js?v=web-002" defer></script>
     <script src="./js/data.js?v=web-017" defer></script>
@@ -83,11 +84,25 @@
     <script src="./js/views/glossary.js?v=web-066" defer></script>
     <script src="./js/views/request-templates.js?v=web-058" defer></script>
     <script src="./js/views/project-researcher.js?v=web-067" defer></script>
-    <script src="./js/app.js?v=web-067" defer></script>
+    <script src="./js/app.js?v=web-071" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
-    <div class="app-shell">
+    <section id="cloud-bar" class="cloud-bar" aria-label="내 기록 저장">
+      <strong id="cloud-account" hidden></strong>
+      <span id="cloud-status" role="status" aria-live="polite">저장 연결을 확인하고 있어요.</span>
+      <div class="cloud-actions">
+        <a id="cloud-signin" target="_top" hidden>로그인하고 내 기록 저장</a>
+        <a id="cloud-server" target="_top" hidden>내 서버 기록 열기</a>
+        <a id="cloud-local" target="_top" hidden>브라우저 체험</a>
+        <button id="cloud-retry" type="button" hidden>서버 저장 재시도</button>
+        <button id="cloud-export" type="button" hidden>이 기기 기록 내려받기</button>
+        <a id="cloud-signout" target="_top" hidden>로그아웃</a>
+        <label id="cloud-confirm-label" hidden><input id="cloud-confirm" type="checkbox">백업 파일 저장과 저장 전 입력 보관을 마쳤어요.</label>
+        <button id="cloud-reload" type="button" hidden disabled>서버 최신 기록 다시 열기</button>
+      </div>
+    </section>
+    <div class="app-shell" inert>
       <aside class="sidebar" aria-label="워크스페이스">
         <a id="brand-home" class="brand" href="#home-view" aria-label="LCA 프로젝트 관리 · 홈으로">
           <span class="brand-mark" aria-hidden="true">
@@ -266,7 +281,7 @@
               <button id="project-target-calendar-button" class="request-action-button" type="button">목표 완료일 달력</button>
               <p id="project-target-help" class="detail-help">이 업무를 마치려는 날짜예요. 숫자 8자리로 입력하거나 달력을 사용할 수 있어요.</p>
               <p id="project-create-error" role="alert" hidden></p>
-              <p class="detail-help">등록한 내용은 이 브라우저에 저장돼요. 같은 회사·제품의 다른 업무도 등록할 수 있으며 프로젝트 번호로 구분해요.</p>
+              <p class="detail-help">저장 위치와 완료 여부는 화면 위 안내에서 확인해 주세요. 같은 회사·제품의 다른 업무도 등록할 수 있으며 프로젝트 번호로 구분해요.</p>
               <div class="receipt-form-actions"><button id="project-create-cancel" class="request-action-button" type="button">취소</button><button class="primary-button" type="submit">프로젝트 등록</button></div>
             </form>
           </dialog>
@@ -309,7 +324,7 @@
                   </div>
                   <p id="request-form-error" class="form-error" role="alert" hidden></p>
                   <button id="register-request" class="primary-button" type="submit">자료 요청 등록</button>
-                  <p class="request-save-note">이 브라우저에 저장돼요. 등록은 요청 내용을 기록하는 것이며, 고객사에 메일을 보내지는 않아요.</p>
+                  <p class="request-save-note">저장 위치와 완료 여부는 화면 위 안내에서 확인해 주세요. 등록은 요청 내용을 기록하는 것이며, 고객사에 메일을 보내지는 않아요.</p>
                 </form>
               </details>
               <section class="request-list-card" aria-labelledby="request-list-title">
@@ -487,7 +502,7 @@
                 <label for="researcher-company">회사명 (선택 · 최대 100자)</label><div><input id="researcher-company" type="text" maxlength="100" autocomplete="organization"></div>
                 <label for="researcher-department">부서명 (선택 · 최대 100자)</label><div><input id="researcher-department" type="text" maxlength="100" autocomplete="organization-title"></div>
                 <button type="submit" class="primary-button">연구원 등록</button>
-                <p id="researcher-register-help" class="detail-help">등록 후 계약 단계 프로젝트에서 선택할 수 있어요. 같은 이름도 고유 번호로 구분하며 이 브라우저에 저장돼요.</p>
+                <p id="researcher-register-help" class="detail-help">등록 후 계약 단계 프로젝트에서 선택할 수 있어요. 같은 이름도 고유 번호로 구분해요. 저장 위치와 완료 여부는 화면 위 안내에서 확인해 주세요.</p>
               </form>
             </details>
             <p id="researcher-save-status" role="status" aria-live="polite"></p>

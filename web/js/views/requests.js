@@ -355,7 +355,7 @@ LCA.views.requests = (() => {
       // 이어서 등록하기 쉽도록 제출 기한은 유지한다.
       showGuide();
       renderItems();
-      showFeedback(result.item, `${result.item.id} · ${category.name} 자료 요청을 이 브라우저에 저장했어요.`);
+      showFeedback(result.item, `${result.item.id} · ${category.name} 자료 요청을 기록했어요. 저장 위치와 완료 여부는 화면 위 안내에서 확인해 주세요.`);
     });
     showGuide();
     refreshCurrent = renderItems;

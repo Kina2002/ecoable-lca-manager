@@ -367,3 +367,15 @@ h1 { font-size: 25px; }
   .scope-form-compact > .scope-period { grid-template-columns: minmax(0, 1fr); }
   .scope-period > .scope-field-periodReason { max-width: none; }
 }
+
+/* 계정별 저장 안내는 앱이 잠겨도 백업·다시 열기를 사용할 수 있게 바깥에 둔다. */
+.cloud-bar { padding: 12px 24px; background: #eaf4ed; color: #174c3d; border-bottom: 1px solid #c8d9cd; font-size: 14px; }
+.cloud-bar strong { margin-right: 10px; overflow-wrap: anywhere; }
+.cloud-actions { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 8px; }
+.cloud-actions a, .cloud-actions button { font: inherit; color: #174c3d; text-decoration: underline; cursor: pointer; }
+.cloud-actions button { background: white; border: 1px solid #a7bdb0; border-radius: 5px; padding: 4px 8px; text-decoration: none; }
+.cloud-actions button:disabled { cursor: default; opacity: .55; }
+.cloud-actions label { display: flex; gap: 6px; align-items: center; }
+.cloud-error { background: #fff0e7; color: #763513; }
+.cloud-actions [hidden] { display: none !important; }
+@media (max-width: 600px) { .cloud-bar { padding: 12px 16px; } }
