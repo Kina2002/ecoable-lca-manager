@@ -1,6 +1,7 @@
 # LCA 프로젝트 관리 — 기능 체크리스트
 
-- [x] WEB-071 계정별 서버 저장 구현: Sites 로그인·D1·체험 분리·충돌 보호. 로컬 수동 확인·기존 주소 버전 4 배포·본인 로그인/빈 개인 기록 저장/재열기 완료. 실제 두 계정/두 기기 왕복 등 자세한 확인 범위는 [SPEC](docs/04-webapp-spec/WEB-071-account-server-storage.md) 참고.
+- [x] WEB-072 사용자 요청에 따른 로그인·서버 저장 연결 해제와 브라우저 저장 복귀. 공개 배포 확인은 [SPEC](docs/04-webapp-spec/WEB-072-disconnect-server-storage.md) 참고.
+
 
 최종 갱신: **2026-10-22** · 구현 기준: **WEB-070 기능 + Sites 공개 버전 2** · 확인 범위는 WEB-070 SPEC 참조
 

@@ -12,3 +12,6 @@ node_modules/
 .sf/
 .sfdx/
 *.log
+
+# Previously shared local screenshots
+/server/outputs/
